@@ -1,0 +1,6 @@
+@CentralDatos.Api_HostAddress = http://localhost:5113
+
+GET {{CentralDatos.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

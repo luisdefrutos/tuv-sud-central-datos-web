@@ -1,0 +1,20 @@
+{
+  "name": "central-datos-mcp",
+  "version": "1.0.0",
+  "description": "Read-only Model Context Protocol (MCP) server for TÜV SÜD Central Datos (Oracle Thin + CentralITV SOAP dual transport)",
+  "type": "module",
+  "main": "index.mjs",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.10.2",
+    "fast-xml-parser": "^5.0.9",
+    "oracledb": "^6.7.2",
+    "zod": "^3.24.2"
+  }
+}
+

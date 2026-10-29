@@ -1,0 +1,10 @@
+# Plantilla de acceso al feed privado de TÜV SÜD Algorithm Design System en Azure DevOps.
+# 1. Copie este archivo a `.npmrc` (ignorado por Git).
+# 2. Defina la variable de entorno TUVSUD_AZURE_PAT (Base64 o token según guía de Azure Artifacts con permiso Packaging: Read).
+
+@tuvsud:registry=https://pkgs.dev.azure.com/tuvsud01/_packaging/design-system/npm/registry/
+always-auth=true
+//pkgs.dev.azure.com/tuvsud01/_packaging/design-system/npm/registry/:username=tuvsud01
+//pkgs.dev.azure.com/tuvsud01/_packaging/design-system/npm/registry/:_password=${TUVSUD_AZURE_PAT}
+//pkgs.dev.azure.com/tuvsud01/_packaging/design-system/npm/registry/:email=npm@tuvsud.com
+

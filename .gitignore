@@ -1,0 +1,21 @@
+# .NET build artifacts
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.suo
+TestResults/
+
+# Secrets & local configuration (NEVER commit credentials or PATs)
+.env
+.env.*
+!.env.example
+.npmrc
+!.npmrc.example
+appsettings.*.Local.json
+
+# Node.js
+node_modules/
+dist/
+*.log
+

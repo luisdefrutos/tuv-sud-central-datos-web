@@ -1,0 +1,51 @@
+/*
+ * Fallback local de tokens semánticos del TÜV SÜD Algorithm Design System (create.tuvsud.com).
+ * Se utiliza únicamente en entorno local cuando aún no se ha configurado el PAT de Azure DevOps
+ * para instalar `@tuvsud/design-system`. En cuanto el paquete oficial esté instalado, importe:
+ *   @tuvsud/design-system/theme/fonts.css
+ *   @tuvsud/design-system/tokens/css/light.css
+ *   @tuvsud/design-system/tokens/css/dark.css
+ *   @tuvsud/design-system/styles/all.css
+ */
+:root,
+.ts-theme-light {
+  --ts-font-family-sans: 'TUV SUD Pro', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --ts-semantic-color-surface-default: #ffffff;
+  --ts-semantic-color-surface-subtle: #f4f6f9;
+  --ts-semantic-color-surface-muted: #e8edf3;
+  --ts-semantic-color-surface-brand-blue: #0046ad;
+  --ts-semantic-color-surface-brand-blue-hover: #003687;
+  --ts-semantic-color-surface-inverted-default: #0b253b;
+  --ts-semantic-color-text-default: #0b253b;
+  --ts-semantic-color-text-subtle: #4a5d70;
+  --ts-semantic-color-text-on-brand: #ffffff;
+  --ts-semantic-color-border-default: #d0dae5;
+  --ts-semantic-color-border-brand: #0046ad;
+  --ts-semantic-color-status-success: #0f7b3f;
+  --ts-semantic-color-status-warning: #b45309;
+  --ts-semantic-color-status-danger: #c81e1e;
+  --ts-semantic-radius-sm: 4px;
+  --ts-semantic-radius-md: 8px;
+  --ts-semantic-spacing-xs: 0.25rem;
+  --ts-semantic-spacing-sm: 0.5rem;
+  --ts-semantic-spacing-md: 1rem;
+  --ts-semantic-spacing-lg: 1.5rem;
+}
+
+.ts-theme-dark {
+  --ts-semantic-color-surface-default: #0b253b;
+  --ts-semantic-color-surface-subtle: #102f4a;
+  --ts-semantic-color-surface-muted: #173d5e;
+  --ts-semantic-color-surface-brand-blue: #2b74e2;
+  --ts-semantic-color-text-default: #f4f6f9;
+  --ts-semantic-color-text-subtle: #b5c4d4;
+  --ts-semantic-color-border-default: #264b6e;
+}
+
+body {
+  margin: 0;
+  font-family: var(--ts-font-family-sans);
+  background-color: var(--ts-semantic-color-surface-subtle);
+  color: var(--ts-semantic-color-text-default);
+}
+

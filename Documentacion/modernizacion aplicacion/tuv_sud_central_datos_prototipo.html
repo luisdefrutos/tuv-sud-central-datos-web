@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TÜV SÜD — Central Datos Web (Prototipo Modernización)</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    .tuv-blue { background-color: #004F9F; }
+    .tuv-blue-hover:hover { background-color: #003D7A; }
+    .tuv-text-blue { color: #005DA2; }
+    .tuv-border-blue { border-color: #004F9F; }
+    .tab-active {
+      border-bottom: 3px solid #004F9F;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased">
+  <!-- Top Corporate Header TÜV SÜD -->
+  <header class="border-b border-[var(--border)] bg-[var(--card)] sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-5 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3.5">
+        <!-- TÜV SÜD Octagon Emblem SVG -->
+        <svg width="40" height="40" viewBox="0 0 64 64" aria-label="TÜV SÜD Octagon">
+          <polygon points="20,3 44,3 61,20 61,44 44,61 20,61 3,44 3,20" fill="#004F9F" />
+          <polygon points="22,8 42,8 56,22 56,42 42,56 22,56 8,42 8,22" fill="none" stroke="#FFFFFF" stroke-width="2.2" />
+          <text x="32" y="29" text-anchor="middle" fill="#FFFFFF" font-size="11" font-weight="700" font-family="Arial, sans-serif">TÜV</text>
+          <text x="32" y="42" text-anchor="middle" fill="#FFFFFF" font-size="11" font-weight="700" font-family="Arial, sans-serif">SÜD</text>
+        </svg>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base font-bold tracking-tight text-[var(--foreground)]">CENTRAL DATOS ITV</h1>
+            <span class="px-2 py-0.5 rounded text-xs font-semibold text-white tuv-blue">Web v3.0 · .NET 10</span>
+          </div>
+          <p class="text-xs text-[var(--muted-foreground)]">Plataforma Unificada de Explotación, Analítica, CRM y Gestión Operativa PTI</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-xs">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span class="text-[var(--muted-foreground)]">34/34 Estaciones Sincronizadas</span>
+        </div>
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border)] text-xs">
+          <span class="font-semibold">Entra ID SSO</span>
+          <span class="text-[var(--muted-foreground)]">· Ámbito: TSA + CAL</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="max-w-7xl mx-auto px-5 flex gap-1 overflow-x-auto text-sm">
+      <button onclick="switchTab('dashboard')" id="tab-dashboard" class="px-4 py-2.5 tab-active whitespace-nowrap transition-colors">
+        1. Dashboard &amp; Facturación
+      </button>
+      <button onclick="switchTab('inspecciones')" id="tab-inspecciones" class="px-4 py-2.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)] whitespace-nowrap transition-colors">
+        2. Explorador Inspecciones &amp; OBD
+      </button>
+      <button onclick="switchTab('campanas')" id="tab-campanas" class="px-4 py-2.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)] whitespace-nowrap transition-colors">
+        3. Campañas SMS DigitalServi
+      </button>
+      <button onclick="switchTab('empleados')" id="tab-empleados" class="px-4 py-2.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)] whitespace-nowrap transition-colors">
+        4. Empleados, RBAC &amp; QR
+      </button>
+      <button onclick="switchTab('design')" id="tab-design" class="px-4 py-2.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)] whitespace-nowrap transition-colors">
+        5. Sistema de Diseño TÜV SÜD
+      </button>
+    </nav>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-5 space-y-5">
+
+    <!-- VIEW 1: DASHBOARD EJECUTIVO & FACTURACIÓN -->
+    <section id="view-dashboard" class="space-y-5">
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-[var(--card)] border border-[var(--border)] rounded-xl p-4">
+        <div>
+          <h2 class="text-base font-semibold">Cuadro de Mando Operativo y Comparativa de Facturación</h2>
+          <p class="text-xs text-[var(--muted-foreground)]">Sustituye <code class="px-1 py-0.5 rounded border border-[var(--border)]">frmCriterios</code> (Crystal Reports), <code class="px-1 py-0.5 rounded border border-[var(--border)]">clsExcelFacturacion</code> y <code class="px-1 py-0.5 rounded border border-[var(--border)]">frmUltimaInspeccion</code> (sin N+1 queries)</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <select id="sociedadFilter" onchange="renderStations()" class="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+            <option value="ALL">Todas las Sociedades (TSA + CAL)</option>
+            <option value="TSA">TÜV SÜD ATISAE (TSA - 29 Estaciones)</option>
+            <option value="CAL">Castellana de ITV (CAL - 5 Estaciones)</option>
+          </select>
+          <button onclick="showToast('Generando Informe Comparativo OpenXML (.xlsx) en streaming (180 ms)...')" class="px-3.5 py-1.5 rounded-lg text-white font-medium tuv-blue tuv-blue-hover">
+            Exportar Excel Facturación
+          </button>
+          <button onclick="showToast('Generando PDF Corporativo TÜV SÜD vía QuestPDF (sin Crystal Reports)...')" class="px-3.5 py-1.5 rounded-lg border border-[var(--border)] hover:bg-[var(--background)] font-medium">
+            Descargar PDF Resumen
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 border-l-4 tuv-border-blue">
+          <div class="text-xs text-[var(--muted-foreground)] font-medium">INSPECCIONES 1ª FASE (YTD)</div>
+          <div class="text-2xl font-bold mt-1">1.148.920</div>
+          <div class="text-xs text-emerald-600 font-medium mt-1">+6,4% vs periodo anterior</div>
+        </div>
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 border-l-4 border-emerald-600">
+          <div class="text-xs text-[var(--muted-foreground)] font-medium">RATIO FAVORABLES 1ª INSP.</div>
+          <div class="text-2xl font-bold mt-1">81,7%</div>
+          <div class="text-xs text-[var(--muted-foreground)] mt-1">Rechazadas 1ª: 18,3% · 2ª Fase: 98,9%</div>
+        </div>
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 border-l-4 tuv-border-blue">
+          <div class="text-xs text-[var(--muted-foreground)] font-medium">FACTURACIÓN NETA (SIN TASAS)</div>
+          <div class="text-2xl font-bold mt-1">41,82 M€</div>
+          <div class="text-xs text-emerald-600 font-medium mt-1">+7,1% · Contado 68% / Terceros 32%</div>
+        </div>
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 border-l-4 border-amber-500">
+          <div class="text-xs text-[var(--muted-foreground)] font-medium">DURACIÓN PROMEDIO PISTA</div>
+          <div class="text-2xl font-bold mt-1">14m 22s</div>
+          <div class="text-xs text-[var(--muted-foreground)] mt-1">Alertas VIN OBD hoy: 19 vehículos</div>
+        </div>
+      </div>
+
+      <!-- Comparative Table + Hourly Chart -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 bg-[var(--card)] border border-[var(--border)] rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold">Rendimiento y Sincronización por Estación ITV (Dinámico desde BD)</h3>
+            <span class="text-xs text-[var(--muted-foreground)]">1 única consulta agregada (antes 34 llamadas SOAP)</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead class="border-b border-[var(--border)] text-[var(--muted-foreground)]">
+                <tr>
+                  <th class="py-2 pr-3">Estación</th>
+                  <th class="py-2 pr-3">Soc. / CCAA</th>
+                  <th class="py-2 pr-3 text-right">Insp. Periodo</th>
+                  <th class="py-2 pr-3 text-right">Var. %</th>
+                  <th class="py-2 pr-3 text-right">Último Dato Centralizado</th>
+                  <th class="py-2 text-center">Estado</th>
+                </tr>
+              </thead>
+              <tbody id="stationsBody" class="divide-y divide-[var(--border)]"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 flex flex-col justify-between">
+          <div>
+            <h3 class="text-sm font-semibold mb-1">Ocupación por Franja Horaria</h3>
+            <p class="text-xs text-[var(--muted-foreground)] mb-4">Reemplazo interactivo de <code class="px-1 rounded border border-[var(--border)]">InspeccionesRangoHorario</code></p>
+            <div class="space-y-2.5 text-xs">
+              <div>
+                <div class="flex justify-between mb-1"><span>07:00 – 09:00</span><span class="font-semibold">14%</span></div>
+                <div class="w-full h-2 rounded bg-[var(--border)]"><div class="h-2 rounded tuv-blue" style="width:45%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-1"><span>09:00 – 12:00 (Pico Mañana)</span><span class="font-semibold">34%</span></div>
+                <div class="w-full h-2 rounded bg-[var(--border)]"><div class="h-2 rounded tuv-blue" style="width:92%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-1"><span>12:00 – 15:00</span><span class="font-semibold">21%</span></div>
+                <div class="w-full h-2 rounded bg-[var(--border)]"><div class="h-2 rounded tuv-blue" style="width:62%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-1"><span>15:00 – 18:00 (Pico Tarde)</span><span class="font-semibold">23%</span></div>
+                <div class="w-full h-2 rounded bg-[var(--border)]"><div class="h-2 rounded tuv-blue" style="width:70%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-1"><span>18:00 – 21:00</span><span class="font-semibold">8%</span></div>
+                <div class="w-full h-2 rounded bg-[var(--border)]"><div class="h-2 rounded tuv-blue" style="width:28%"></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-[var(--border)] text-xs text-[var(--muted-foreground)]">
+            Caché híbrida L1/L2 (<code class="px-1 rounded border border-[var(--border)]">HybridCache</code> .NET 10) con invalidación por estación.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: EXPLORADOR UNIFICADO DE INSPECCIONES, DEFECTOS, MEDICIONES Y OBD -->
+    <section id="view-inspecciones" class="hidden space-y-4">
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 class="text-base font-semibold">Motor Unificado de Localización ITV (Inspecciones · Defectos · Elementos · Mediciones · OBD)</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Unifica los 4 formularios <code class="px-1 rounded border border-[var(--border)]">frmCriteriosLocalizacion*.vb</code> (9.391 líneas) con consultas parametrizadas Bind Variables y paginación Keyset</p>
+          </div>
+          <div class="flex gap-2 text-xs">
+            <button onclick="showToast('Selector de columnas dinámicas (CAMPOS_INSPECCIONESLOCALIZADAS) aplicado')" class="px-3 py-1.5 rounded-lg border border-[var(--border)] font-medium">
+              Columnas Visibles (12/48)
+            </button>
+            <button onclick="showToast('Streaming directo a Excel (.xlsx) iniciado: 50.000 filas en 1,1 seg sin Interop.Excel')" class="px-3.5 py-1.5 rounded-lg text-white font-medium tuv-blue tuv-blue-hover">
+              Exportar Selección (.xlsx)
+            </button>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+          <div>
+            <label class="block text-[var(--muted-foreground)] mb-1">Matrícula / VIN Bastidor</label>
+            <input id="plateSearch" oninput="renderInspections()" type="text" placeholder="Ej: 4821MKL o WVWZZZ..." class="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)]" />
+          </div>
+          <div>
+            <label class="block text-[var(--muted-foreground)] mb-1">Resultado Inspección</label>
+            <select id="resFilter" onchange="renderInspections()" class="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+              <option value="ALL">Todos los resultados</option>
+              <option value="FAVORABLE">Favorable</option>
+              <option value="DESFAVORABLE">Desfavorable</option>
+              <option value="NEGATIVA">Negativa</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[var(--muted-foreground)] mb-1">Vista Especializada</label>
+            <select id="modeFilter" onchange="renderInspections()" class="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+              <option value="ALL">Todas las Inspecciones</option>
+              <option value="OBD_MISMATCH">Bastidor OBD No Coincidente</option>
+              <option value="DEFECT_OBD">Con Defectos Bloque 15 (OBD)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[var(--muted-foreground)] mb-1">Clasificación MINER / Categoría</label>
+            <select class="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+              <option>Todas (M1, N1, L3e, O4...)</option>
+              <option>Turismos Particulares (M1)</option>
+              <option>Furgonetas y Ligeros (N1)</option>
+              <option>Pesados y Autobuses (M3/N3)</option>
+            </select>
+          </div>
+          <div class="flex items-end">
+            <label class="flex items-center gap-2 cursor-pointer py-1.5">
+              <input type="checkbox" class="rounded" checked />
+              <span>Excluir re-inspeccionados post.</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Results Grid -->
+        <div class="overflow-x-auto border border-[var(--border)] rounded-lg">
+          <table class="w-full text-xs text-left">
+            <thead class="bg-[var(--background)] border-b border-[var(--border)] text-[var(--muted-foreground)]">
+              <tr>
+                <th class="p-2.5">Estación</th>
+                <th class="p-2.5">Nº Insp.</th>
+                <th class="p-2.5">Fecha / Hora</th>
+                <th class="p-2.5">Matrícula</th>
+                <th class="p-2.5">Cat.</th>
+                <th class="p-2.5">Bastidor Documentado vs ECU OBD</th>
+                <th class="p-2.5">Defectos (`LISTAGG`)</th>
+                <th class="p-2.5">Resultado</th>
+              </tr>
+            </thead>
+            <tbody id="inspectionsBody" class="divide-y divide-[var(--border)]"></tbody>
+          </table>
+        </div>
+
+        <div class="flex items-center justify-between text-xs text-[var(--muted-foreground)]">
+          <span>Paginación Server-Side Keyset: mostrando registros en 42 ms (sin cargar DataTable gigante en RAM)</span>
+          <div class="flex gap-1.5">
+            <span class="px-2.5 py-1 rounded border border-[var(--border)]">Página 1 de 1.240</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: CAMPAÑAS SMS DIGITALSERVI V2 -->
+    <section id="view-campanas" class="hidden space-y-4">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-base font-semibold">Orquestador Asíncrono de Campañas SMS (DigitalServi API v2)</h2>
+              <p class="text-xs text-[var(--muted-foreground)]">Ejecución en background vía Worker/Hangfire con TLS estricto y telemetría <code class="px-1 rounded border border-[var(--border)]">stats_sms</code> activada</p>
+            </div>
+            <button onclick="showToast('Lote encolado en Worker Backend: validación RGPD/Robinson vía prepare_sms en progreso')" class="px-3.5 py-1.5 rounded-lg text-white text-xs font-medium tuv-blue tuv-blue-hover">
+              + Lanzar Campaña Vencimientos
+            </button>
+          </div>
+
+          <div class="overflow-x-auto border border-[var(--border)] rounded-lg">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-[var(--background)] border-b border-[var(--border)] text-[var(--muted-foreground)]">
+                <tr>
+                  <th class="p-2.5">Ref. Paquete</th>
+                  <th class="p-2.5">Estación</th>
+                  <th class="p-2.5">Tipo / Modo</th>
+                  <th class="p-2.5 text-right">OK</th>
+                  <th class="p-2.5 text-right">Bloq. RGPD</th>
+                  <th class="p-2.5 text-right">Entregados / Clics</th>
+                  <th class="p-2.5">Estado 2PC</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-[var(--border)]">
+                <tr>
+                  <td class="p-2.5 font-mono">2801_19402</td>
+                  <td class="p-2.5">2801 - Leganés</td>
+                  <td class="p-2.5">PRE -15 días (Auto)</td>
+                  <td class="p-2.5 text-right font-semibold">194</td>
+                  <td class="p-2.5 text-right text-amber-600">6</td>
+                  <td class="p-2.5 text-right">191 (98%) · 64 clics</td>
+                  <td class="p-2.5"><span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 font-semibold">3 · CONFIRMADO</span></td>
+                </tr>
+                <tr>
+                  <td class="p-2.5 font-mono">0804_19403</td>
+                  <td class="p-2.5">0804 - Les Borges (CAT)</td>
+                  <td class="p-2.5">PRE -15 días (Auto)</td>
+                  <td class="p-2.5 text-right font-semibold">188</td>
+                  <td class="p-2.5 text-right text-amber-600">12</td>
+                  <td class="p-2.5 text-right">185 (98%) · 59 clics</td>
+                  <td class="p-2.5"><span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 font-semibold">3 · CONFIRMADO</span></td>
+                </tr>
+                <tr>
+                  <td class="p-2.5 font-mono">4502_19404</td>
+                  <td class="p-2.5">4502 - Toledo</td>
+                  <td class="p-2.5">Campaña Flotas Excel</td>
+                  <td class="p-2.5 text-right font-semibold">200</td>
+                  <td class="p-2.5 text-right text-amber-600">0</td>
+                  <td class="p-2.5 text-right">En proceso...</td>
+                  <td class="p-2.5"><span class="px-2 py-0.5 rounded bg-blue-500/15 tuv-text-blue font-semibold">2 · REMITIDO</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Live SMS Preview ESP/CAT -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-semibold">Simulador Plantilla Bilingüe</h3>
+            <select id="smsLang" onchange="updateSmsPreview()" class="px-2 py-1 rounded border border-[var(--border)] bg-[var(--background)] text-xs">
+              <option value="ESP">Castellano (ESP)</option>
+              <option value="CAT">Català (CAT)</option>
+            </select>
+          </div>
+          <p class="text-xs text-[var(--muted-foreground)]">Corrige bug de <code class="px-1 rounded border border-[var(--border)]">NUM_DIAS_DESFASE_FILTRO</code> al editar envíos automáticos</p>
+          <div class="p-3.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs leading-relaxed font-mono" id="smsPreviewBox">
+            TÜV SÜD ITV Leganés: Le recordamos que la ITV de su vehículo 4821MKL caduca el 15/11/2026. Reserve cita previa con descuento en https://itv.smsdg.es/?a8F9k2
+          </div>
+          <div class="text-xs text-[var(--muted-foreground)] flex justify-between">
+            <span>Longitud: 158 caracteres (1 SMS)</span>
+            <span class="text-emerald-600 font-medium">Variables válidas ✓</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: EMPLEADOS, RBAC MULTI-ESTACIÓN & ETIQUETA QR -->
+    <section id="view-empleados" class="hidden space-y-4">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-base font-semibold">Gestión Centralizada de Inspectores, Adscripción a Centros y RBAC</h2>
+              <p class="text-xs text-[var(--muted-foreground)]">Sincronización directa con <code class="px-1 rounded border border-[var(--border)]">COMUN.PERSONA</code> (corrige cruce de columnas SAP al insertar) + auditoría en <code class="px-1 rounded border border-[var(--border)]">LOG_PERMISOS_USUARIO</code></p>
+            </div>
+            <button onclick="showToast('Sincronizado con maestro corporativo COMUN.PERSONA')" class="px-3 py-1.5 rounded-lg border border-[var(--border)] text-xs font-medium">
+              Sincronizar RRHH / SAP
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs p-3 rounded-lg bg-[var(--background)] border border-[var(--border)]">
+            <div><span class="text-[var(--muted-foreground)] block">Empleado (COMUN.PERSONA)</span><strong>Laura Gómez Serrano</strong> · 50842911K</div>
+            <div><span class="text-[var(--muted-foreground)] block">Usuario AD / Códigos SAP</span><strong>lgomez@tuvsud.com</strong> · SAP: U04912 / C2801</div>
+            <div><span class="text-[var(--muted-foreground)] block">Credenciales Operativas Pista</span><span class="text-emerald-600 font-semibold">PIN Activo ✓</span> · Firma exp: 14/05/2028</div>
+          </div>
+
+          <div class="overflow-x-auto border border-[var(--border)] rounded-lg">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-[var(--background)] border-b border-[var(--border)] text-[var(--muted-foreground)]">
+                <tr>
+                  <th class="p-2.5">Estación Adscrita</th>
+                  <th class="p-2.5">Cód. Local</th>
+                  <th class="p-2.5">Rol Pista</th>
+                  <th class="p-2.5">CENTRAL_GENERAL</th>
+                  <th class="p-2.5">GESTION_EMPL</th>
+                  <th class="p-2.5">SOPORTE_IT</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-[var(--border)]">
+                <tr>
+                  <td class="p-2.5 font-medium">2801 - ITV Leganés</td>
+                  <td class="p-2.5 font-mono">INSP_14</td>
+                  <td class="p-2.5">Resp. Técnico + Inspector</td>
+                  <td class="p-2.5"><input type="checkbox" checked /></td>
+                  <td class="p-2.5"><input type="checkbox" checked /></td>
+                  <td class="p-2.5"><input type="checkbox" /></td>
+                </tr>
+                <tr>
+                  <td class="p-2.5 font-medium">2805 - ITV Collado Villalba</td>
+                  <td class="p-2.5 font-mono">INSP_22</td>
+                  <td class="p-2.5">Inspector Línea</td>
+                  <td class="p-2.5"><input type="checkbox" checked /></td>
+                  <td class="p-2.5"><input type="checkbox" /></td>
+                  <td class="p-2.5"><input type="checkbox" /></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Browser-native QR Badge replacing ThoughtWorks.QRCode + rptEtiqueta.rpt -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 flex flex-col items-center justify-between text-center">
+          <div>
+            <h3 class="text-sm font-semibold">Etiqueta Identificativa QR (Nativa Web)</h3>
+            <p class="text-xs text-[var(--muted-foreground)] mt-0.5">Sustituye <code class="px-1 rounded border border-[var(--border)]">ThoughtWorks.QRCode</code> + <code class="px-1 rounded border border-[var(--border)]">rptEtiqueta.rpt</code></p>
+          </div>
+          <div class="my-3 p-4 rounded-xl border-2 tuv-border-blue bg-white text-black w-52 shadow-sm">
+            <div class="text-xs font-bold tracking-wider" style="color:#004F9F">TÜV SÜD ATISAE</div>
+            <svg viewBox="0 0 100 100" class="w-28 h-28 mx-auto my-2">
+              <rect width="100" height="100" fill="#FFFFFF"/>
+              <rect x="10" y="10" width="24" height="24" fill="none" stroke="#000" stroke-width="6"/>
+              <rect x="18" y="18" width="8" height="8" fill="#000"/>
+              <rect x="66" y="10" width="24" height="24" fill="none" stroke="#000" stroke-width="6"/>
+              <rect x="74" y="18" width="8" height="8" fill="#000"/>
+              <rect x="10" y="66" width="24" height="24" fill="none" stroke="#000" stroke-width="6"/>
+              <rect x="18" y="74" width="8" height="8" fill="#000"/>
+              <rect x="44" y="14" width="8" height="8" fill="#000"/>
+              <rect x="44" y="30" width="12" height="12" fill="#000"/>
+              <rect x="14" y="44" width="16" height="8" fill="#000"/>
+              <rect x="40" y="50" width="20" height="8" fill="#000"/>
+              <rect x="68" y="46" width="18" height="12" fill="#000"/>
+              <rect x="46" y="68" width="12" height="18" fill="#000"/>
+              <rect x="68" y="70" width="18" height="16" fill="#004F9F"/>
+            </svg>
+            <div class="text-xs font-bold">LAURA GÓMEZ SERRANO</div>
+            <div class="text-xs font-mono text-gray-600">ID Interno: 50842911</div>
+          </div>
+          <button onclick="showToast('Imprimiendo etiqueta QR directamente desde navegador / QuestPDF')" class="w-full py-1.5 rounded-lg text-white text-xs font-medium tuv-blue tuv-blue-hover">
+            Imprimir Etiqueta Inspector
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 5: SISTEMA DE DISEÑO CORPORATIVO TÜV SÜD -->
+    <section id="view-design" class="hidden space-y-4">
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+        <div>
+          <h2 class="text-base font-semibold">Tokens del Sistema de Diseño Web — Identidad Visual TÜV SÜD</h2>
+          <p class="text-xs text-[var(--muted-foreground)]">Guía cromática, tipográfica y de densidad de datos para portales técnicos e industriales de TÜV SÜD ("Choose certainty. Add value.")</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+          <div class="border border-[var(--border)] rounded-xl overflow-hidden">
+            <div class="h-16" style="background:#004F9F"></div>
+            <div class="p-3">
+              <div class="font-bold">TÜV SÜD Primary Blue</div>
+              <div class="font-mono text-[var(--muted-foreground)]">#004F9F · Pantone 293</div>
+              <p class="mt-1 text-[var(--muted-foreground)]">Cabecera octágono, CTA primarios, indicadores activos.</p>
+            </div>
+          </div>
+          <div class="border border-[var(--border)] rounded-xl overflow-hidden">
+            <div class="h-16" style="background:#005DA2"></div>
+            <div class="p-3">
+              <div class="font-bold">TÜV SÜD Interactive Blue</div>
+              <div class="font-mono text-[var(--muted-foreground)]">#005DA2 · Hover #003D7A</div>
+              <p class="mt-1 text-[var(--muted-foreground)]">Enlaces, filtros seleccionados, foco accesible AA/AAA.</p>
+            </div>
+          </div>
+          <div class="border border-[var(--border)] rounded-xl overflow-hidden">
+            <div class="h-16" style="background:#4A5568"></div>
+            <div class="p-3">
+              <div class="font-bold">Corporate Technical Slate</div>
+              <div class="font-mono text-[var(--muted-foreground)]">#4A5568 / #E2E8F0</div>
+              <p class="mt-1 text-[var(--muted-foreground)]">Área neutral corporativa, cabeceras de rejillas densas.</p>
+            </div>
+          </div>
+          <div class="border border-[var(--border)] rounded-xl overflow-hidden">
+            <div class="h-16 flex">
+              <div class="flex-1" style="background:#059669"></div>
+              <div class="flex-1" style="background:#D97706"></div>
+              <div class="flex-1" style="background:#DC2626"></div>
+            </div>
+            <div class="p-3">
+              <div class="font-bold">Semántica Reglamentaria ITV</div>
+              <div class="font-mono text-[var(--muted-foreground)]">#059669 · #D97706 · #DC2626</div>
+              <p class="mt-1 text-[var(--muted-foreground)]">Favorable / Defecto Leve / Desfavorable o Negativa.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Toast feedback -->
+  <div id="toast" class="fixed bottom-4 right-4 hidden px-4 py-2.5 rounded-xl text-xs font-medium text-white tuv-blue shadow-lg z-50"></div>
+
+  <script>
+    const stations = [
+      { code: '2801', name: 'ITV Leganés', soc: 'TSA', ccaa: 'Madrid', count: '68.420', diff: '+8,2%', sync: 'Hace 2 min (09:05)', ok: true },
+      { code: '2805', name: 'ITV Collado Villalba', soc: 'TSA', ccaa: 'Madrid', count: '54.190', diff: '+5,7%', sync: 'Hace 1 min (09:06)', ok: true },
+      { code: '4502', name: 'ITV Toledo', soc: 'TSA', ccaa: 'C.-La Mancha', count: '49.810', diff: '+6,9%', sync: 'Hace 3 min (09:04)', ok: true },
+      { code: '0804', name: 'ITV Les Borges Blanques', soc: 'TSA', ccaa: 'Cataluña', count: '31.205', diff: '+4,1%', sync: 'Hace 4 min (09:03)', ok: true },
+      { code: '0906', name: 'ITV Miranda de Ebro', soc: 'CAL', ccaa: 'Castilla y León', count: '38.740', diff: '+7,5%', sync: 'Hace 2 min (09:05)', ok: true },
+      { code: '0908', name: 'ITV Briviesca', soc: 'CAL', ccaa: 'Castilla y León', count: '19.615', diff: '+3,8%', sync: 'Hace 5 min (09:02)', ok: true }
+    ];
+
+    const inspections = [
+      { est: '2801 Leganés', num: '2026-094812', dt: '29/10/2026 08:54', plate: '4821MKL', cat: 'M1', vinDoc: 'WVWZZZAUZJW104921', vinObd: 'WVWZZZAUZJW104921', def: '04.01.02 (L)', res: 'FAVORABLE', obdErr: false, obdDef: false },
+      { est: '4502 Toledo', num: '2026-061209', dt: '29/10/2026 08:49', plate: '9104KRT', cat: 'N1', vinDoc: 'VF1MA000461928371', vinObd: 'VF1MA000461999999', def: '15.04.01 (G); 06.01.03 (G)', res: 'DESFAVORABLE', obdErr: true, obdDef: true },
+      { est: '0906 Miranda', num: '2026-033814', dt: '29/10/2026 08:41', plate: '1189LDF', cat: 'M1', vinDoc: 'VSSZZZ5FZJR028194', vinObd: 'VSSZZZ5FZJR028194', def: '15.10.01 (G) MIL Encendida', res: 'DESFAVORABLE', obdErr: false, obdDef: true },
+      { est: '2805 C. Villalba', num: '2026-051902', dt: '29/10/2026 08:36', plate: '7732JBC', cat: 'N3', vinDoc: 'WMA06XZZ4HP081233', vinObd: 'WMA06XZZ4HP081233', def: '06.02.05 (MG) Frenado', res: 'NEGATIVA', obdErr: false, obdDef: false },
+      { est: '0804 Les Borges', num: '2026-021490', dt: '29/10/2026 08:30', plate: '3390MNP', cat: 'M1', vinDoc: 'TMBJJ7NE9J0192834', vinObd: 'TMBJJ7NE9J0192834', def: 'Sin defectos', res: 'FAVORABLE', obdErr: false, obdDef: false }
+    ];
+
+    function switchTab(id) {
+      ['dashboard', 'inspecciones', 'campanas', 'empleados', 'design'].forEach(t => {
+        document.getElementById('view-' + t).classList.toggle('hidden', t !== id);
+        const btn = document.getElementById('tab-' + t);
+        if (t === id) {
+          btn.classList.add('tab-active');
+          btn.classList.remove('text-[var(--muted-foreground)]');
+        } else {
+          btn.classList.remove('tab-active');
+          btn.classList.add('text-[var(--muted-foreground)]');
+        }
+      });
+    }
+
+    function renderStations() {
+      const soc = document.getElementById('sociedadFilter').value;
+      const tbody = document.getElementById('stationsBody');
+      tbody.innerHTML = stations
+        .filter(s => soc === 'ALL' || s.soc === soc)
+        .map(s => `
+          <tr>
+            <td class="py-2.5 pr-3 font-medium">${s.code} · ${s.name}</td>
+            <td class="py-2.5 pr-3 text-[var(--muted-foreground)]">${s.soc} · ${s.ccaa}</td>
+            <td class="py-2.5 pr-3 text-right font-mono font-semibold">${s.count}</td>
+            <td class="py-2.5 pr-3 text-right text-emerald-600 font-semibold">${s.diff}</td>
+            <td class="py-2.5 pr-3 text-right text-[var(--muted-foreground)]">${s.sync}</td>
+            <td class="py-2.5 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 font-semibold">ONLINE</span></td>
+          </tr>
+        `).join('');
+    }
+
+    function renderInspections() {
+      const q = document.getElementById('plateSearch').value.trim().toUpperCase();
+      const res = document.getElementById('resFilter').value;
+      const mode = document.getElementById('modeFilter').value;
+      const tbody = document.getElementById('inspectionsBody');
+      tbody.innerHTML = inspections
+        .filter(r => (!q || r.plate.includes(q) || r.vinDoc.includes(q))
+          && (res === 'ALL' || r.res === res)
+          && (mode === 'ALL' || (mode === 'OBD_MISMATCH' && r.obdErr) || (mode === 'DEFECT_OBD' && r.obdDef)))
+        .map(r => {
+          const badge = r.res === 'FAVORABLE'
+            ? 'bg-emerald-500/15 text-emerald-600'
+            : (r.res === 'DESFAVORABLE' ? 'bg-amber-500/15 text-amber-600' : 'bg-red-500/15 text-red-600');
+          const vinCell = r.obdErr
+            ? `<div class="font-mono">${r.vinDoc}</div><div class="font-mono text-red-600 font-semibold">OBD: ${r.vinObd} ≠</div>`
+            : `<div class="font-mono">${r.vinDoc} <span class="text-emerald-600">✓</span></div>`;
+          return `
+            <tr>
+              <td class="p-2.5 font-medium">${r.est}</td>
+              <td class="p-2.5 font-mono">${r.num}</td>
+              <td class="p-2.5 text-[var(--muted-foreground)]">${r.dt}</td>
+              <td class="p-2.5 font-mono font-bold">${r.plate}</td>
+              <td class="p-2.5">${r.cat}</td>
+              <td class="p-2.5">${vinCell}</td>
+              <td class="p-2.5">${r.def}</td>
+              <td class="p-2.5"><span class="px-2 py-0.5 rounded font-semibold ${badge}">${r.res}</span></td>
+            </tr>
+          `;
+        }).join('');
+    }
+
+    function updateSmsPreview() {
+      const lang = document.getElementById('smsLang').value;
+      const box = document.getElementById('smsPreviewBox');
+      box.textContent = lang === 'ESP'
+        ? 'TÜV SÜD ITV Leganés: Le recordamos que la ITV de su vehículo 4821MKL caduca el 15/11/2026. Reserve cita previa con descuento en https://itv.smsdg.es/?a8F9k2'
+        : 'TÜV SÜD ITV Les Borges: Li recordem que la ITV del seu vehicle 3390MNP caduca el 15/11/2026. Reservi cita prèvia amb descompte a https://itv.smsdg.es/?c4M7p1';
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.remove('hidden');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => t.classList.add('hidden'), 3200);
+    }
+
+    renderStations();
+    renderInspections();
+  </script>
+</body>
+</html>
