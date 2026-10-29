@@ -1,1 +1,0 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/api/estacionesapi.ts","./src/components/layout/header.tsx","./src/components/layout/navbar.tsx","./src/features/estaciones/components/ultimosdatoscentralizados.tsx","./src/features/estaciones/types/estaciones.types.ts"],"version":"5.7.3"}

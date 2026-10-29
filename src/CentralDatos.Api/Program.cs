@@ -9,11 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Servicios del sistema y OpenAPI
 builder.Services.AddOpenApi();
-builder.Services.AddCorsPolicy();
+builder.Services.AddCorsPolicy(builder.Configuration);
 
-// Inyección de dependencias Clean Architecture
+// Inyección de dependencias Clean Architecture con IConfiguration
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 

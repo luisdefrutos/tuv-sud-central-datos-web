@@ -1,3 +1,5 @@
+using CentralDatos.Domain.Constants;
+
 namespace CentralDatos.Domain.Entities.Estaciones;
 
 public class EstacionUltimoDato
@@ -10,8 +12,8 @@ public class EstacionUltimoDato
 
     public string NombreEmpresa => CodEmpresa switch
     {
-        "01" => "TÜV SÜD ATISAE (TSA)",
-        "03" => "TÜV SÜD CAL",
+        EmpresasConstants.CodigoAtisae => EmpresasConstants.NombreAtisae,
+        EmpresasConstants.CodigoCal => EmpresasConstants.NombreCal,
         _ => !string.IsNullOrEmpty(CodEmpresa) ? $"Sociedad {CodEmpresa}" : "General"
     };
 
@@ -27,4 +29,3 @@ public class EstacionUltimoDato
         }
     }
 }
-

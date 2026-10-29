@@ -1,6 +1,11 @@
 import { TsBadge } from '@tuvsud/design-system/react';
+import { UI_CONSTANTS } from '../../constants/ui.constants';
+import { API_ENDPOINTS } from '../../constants/api.constants';
+import { TuvSudLogo } from '../common/TuvSudLogo';
 
 export function Header() {
+  const { BRAND } = UI_CONSTANTS;
+
   return (
     <header
       style={{
@@ -14,40 +19,21 @@ export function Header() {
         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
       }}
     >
-      {/* 1. Logotipo y Título de la Aplicación */}
+      {/* 1. Logotipo Oficial Vectorial y Título de la Aplicación */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-        {/* Octágono TÜV SÜD Corporativo */}
-        <div
-          style={{
-            backgroundColor: '#0046ad',
-            color: '#ffffff',
-            fontWeight: 900,
-            fontSize: '0.95rem',
-            letterSpacing: '1px',
-            padding: '0.35rem 0.75rem',
-            borderRadius: '3px',
-            border: '2px solid rgba(255, 255, 255, 0.95)',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            userSelect: 'none',
-          }}
-        >
-          TÜV SÜD
-        </div>
+        <TuvSudLogo size={44} />
 
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <span style={{ fontWeight: 800, fontSize: '1.12rem', letterSpacing: '-0.2px' }}>
-              Central Datos ITV
+              {BRAND.TITULO_APLICACION}
             </span>
             <TsBadge variant="primary" style={{ fontSize: '0.72rem' }}>
-              Plataforma Web
+              {BRAND.BADGE_HEADER}
             </TsBadge>
           </div>
           <div style={{ fontSize: '0.78rem', color: '#a0b3c6', marginTop: '1px' }}>
-            TÜV SÜD ATISAE &amp; CAL · Gestión Centralizada de Inspecciones
+            {BRAND.SUBTITULO_APLICACION}
           </div>
         </div>
       </div>
@@ -56,7 +42,7 @@ export function Header() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', fontSize: '0.85rem' }}>
         {/* Acceso directo a Swagger */}
         <a
-          href="/swagger"
+          href={API_ENDPOINTS.DOCS.SWAGGER}
           target="_blank"
           rel="noreferrer"
           style={{
@@ -90,7 +76,7 @@ export function Header() {
         {/* Estado Oracle */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#cbd5e1' }}>
           <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }} />
-          <span style={{ fontSize: '0.82rem' }}>ORCLDV</span>
+          <span style={{ fontSize: '0.82rem' }}>{BRAND.DB_NAME}</span>
         </div>
 
         {/* Chip de Usuario */}
@@ -108,7 +94,7 @@ export function Header() {
           }}
         >
           <span style={{ opacity: 0.75 }}>👤</span>
-          <span>CENTRALITV</span>
+          <span>{BRAND.DEFAULT_USER}</span>
         </div>
       </div>
     </header>

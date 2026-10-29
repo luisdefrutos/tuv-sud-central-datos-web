@@ -11,6 +11,8 @@ import {
 } from '@tuvsud/design-system/react';
 import type { ResumenEstaciones, FiltroSociedad } from '../types/estaciones.types';
 import { fetchUltimosDatosEstaciones } from '../../../api/estacionesApi';
+import { SOCIEDADES } from '../../../constants/companies.constants';
+import { UI_CONSTANTS } from '../../../constants/ui.constants';
 
 export function UltimosDatosCentralizados() {
   const [data, setData] = useState<ResumenEstaciones | null>(null);
@@ -18,6 +20,8 @@ export function UltimosDatosCentralizados() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroSociedad, setFiltroSociedad] = useState<FiltroSociedad>('TODAS');
+
+  const { MODULO_ULTIMOS_DATOS: UI } = UI_CONSTANTS;
 
   const cargarDatos = async () => {
     try {
@@ -46,8 +50,8 @@ export function UltimosDatosCentralizados() {
 
       const matchSociedad =
         filtroSociedad === 'TODAS' ||
-        (filtroSociedad === 'TSA' && item.codEmpresa === '01') ||
-        (filtroSociedad === 'CAL' && item.codEmpresa === '03');
+        (filtroSociedad === SOCIEDADES.ATISAE.clave && item.codEmpresa === SOCIEDADES.ATISAE.codigo) ||
+        (filtroSociedad === SOCIEDADES.CAL.clave && item.codEmpresa === SOCIEDADES.CAL.codigo);
 
       return matchText && matchSociedad;
     });
@@ -96,7 +100,7 @@ export function UltimosDatosCentralizados() {
                   fontFamily: 'var(--ts-font-family-sans, system-ui)',
                 }}
               >
-                Consultando Base de Datos Central
+                {UI.SPINNER_TITULO}
               </div>
               <div
                 style={{
@@ -106,7 +110,7 @@ export function UltimosDatosCentralizados() {
                   lineHeight: 1.4,
                 }}
               >
-                Recuperando las últimas fechas y horas de inspección para las estaciones ITV. Por favor, espere...
+                {UI.SPINNER_SUBTITULO}
               </div>
             </div>
           </div>
@@ -115,9 +119,9 @@ export function UltimosDatosCentralizados() {
 
       {/* 2. Miga de Pan (Breadcrumb Oficial Algorithm DS) */}
       <TsBreadcrumb>
-        <TsBreadcrumbItem>Inicio</TsBreadcrumbItem>
-        <TsBreadcrumbItem>Aplicación</TsBreadcrumbItem>
-        <TsBreadcrumbItem>Última fecha de inspección centralizada</TsBreadcrumbItem>
+        {UI.BREADCRUMB.map((item, idx) => (
+          <TsBreadcrumbItem key={idx}>{item}</TsBreadcrumbItem>
+        ))}
       </TsBreadcrumb>
 
       {/* 3. Cabecera del Módulo */}
@@ -142,7 +146,7 @@ export function UltimosDatosCentralizados() {
               letterSpacing: '-0.3px',
             }}
           >
-            Última fecha de inspección centralizada
+            {UI.TITULO}
           </h1>
           <p
             style={{
@@ -151,7 +155,7 @@ export function UltimosDatosCentralizados() {
               fontSize: '0.92rem',
             }}
           >
-            Consulta del último registro de inspección recibido por estación ITV en la base de datos central de TÜV SÜD.
+            {UI.DESCRIPCION}
           </p>
         </div>
 
@@ -161,7 +165,7 @@ export function UltimosDatosCentralizados() {
           disabled={loading}
           style={{ minWidth: '160px' }}
         >
-          🔄 Actualizar Datos
+          {UI.BOTON_ACTUALIZAR}
         </TsButton>
       </div>
 
@@ -182,34 +186,34 @@ export function UltimosDatosCentralizados() {
       >
         <TsCard style={{ borderLeft: '4px solid var(--ts-semantic-color-surface-brand-blue, #0046ad)' }}>
           <div style={{ fontSize: '0.82rem', color: 'var(--ts-semantic-color-text-subtle, #5c768d)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Total Estaciones ITV
+            {UI.CARD_TOTAL_ESTACIONES}
           </div>
           <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.3rem', color: 'var(--ts-semantic-color-surface-inverted-default, #0b253b)' }}>
             {data?.totalEstaciones ?? (loading ? '...' : 0)}
           </div>
         </TsCard>
 
-        <TsCard style={{ borderLeft: '4px solid #0046ad' }}>
+        <TsCard style={{ borderLeft: `4px solid ${SOCIEDADES.ATISAE.colorBorde}` }}>
           <div style={{ fontSize: '0.82rem', color: 'var(--ts-semantic-color-text-subtle, #5c768d)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            TÜV SÜD ATISAE (TSA)
+            {SOCIEDADES.ATISAE.nombreCompleto}
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.3rem', color: '#0046ad' }}>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.3rem', color: SOCIEDADES.ATISAE.colorBorde }}>
             {data?.totalTsa ?? (loading ? '...' : 0)}
           </div>
         </TsCard>
 
-        <TsCard style={{ borderLeft: '4px solid #00875a' }}>
+        <TsCard style={{ borderLeft: `4px solid ${SOCIEDADES.CAL.colorBorde}` }}>
           <div style={{ fontSize: '0.82rem', color: 'var(--ts-semantic-color-text-subtle, #5c768d)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            TÜV SÜD CAL
+            {SOCIEDADES.CAL.nombreCompleto}
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.3rem', color: '#00875a' }}>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.3rem', color: SOCIEDADES.CAL.colorBorde }}>
             {data?.totalCal ?? (loading ? '...' : 0)}
           </div>
         </TsCard>
 
         <TsCard style={{ borderLeft: '4px solid #4a607a' }}>
           <div style={{ fontSize: '0.82rem', color: 'var(--ts-semantic-color-text-subtle, #5c768d)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Última Fecha Registrada
+            {UI.CARD_ULTIMA_FECHA}
           </div>
           <div style={{ fontSize: '1.25rem', fontWeight: 700, marginTop: '0.5rem', color: 'var(--ts-semantic-color-surface-inverted-default, #0b253b)', fontFamily: 'monospace' }}>
             {data?.ultimaFechaGlobal ?? (loading ? '...' : 'N/D')}
@@ -230,7 +234,7 @@ export function UltimosDatosCentralizados() {
         >
           <div style={{ flex: '1 1 320px', minWidth: '260px' }}>
             <TsInput
-              placeholder="Buscar por código (ej. 0202) o nombre de estación..."
+              placeholder={UI.PLACEHOLDER_BUSQUEDA}
               value={searchTerm}
               onTsInput={(e: any) => setSearchTerm(e.target.value)}
               clearable
@@ -239,7 +243,7 @@ export function UltimosDatosCentralizados() {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span style={{ fontSize: '0.85rem', color: 'var(--ts-semantic-color-text-subtle, #5c768d)', fontWeight: 600 }}>
-              Sociedad:
+              {UI.FILTRO_SOCIEDAD_LABEL}
             </span>
             <button
               type="button"
@@ -256,41 +260,41 @@ export function UltimosDatosCentralizados() {
                 transition: 'all 0.15s ease',
               }}
             >
-              Todas ({data?.totalEstaciones ?? 0})
+              {UI.FILTRO_TODAS} ({data?.totalEstaciones ?? 0})
             </button>
             <button
               type="button"
-              onClick={() => setFiltroSociedad('TSA')}
+              onClick={() => setFiltroSociedad(SOCIEDADES.ATISAE.clave)}
               style={{
                 border: '1px solid var(--ts-semantic-color-border-default, #d0dae5)',
-                background: filtroSociedad === 'TSA' ? 'var(--ts-semantic-color-surface-brand-blue, #0046ad)' : '#ffffff',
-                color: filtroSociedad === 'TSA' ? '#ffffff' : 'var(--ts-semantic-color-surface-inverted-default, #0b253b)',
+                background: filtroSociedad === SOCIEDADES.ATISAE.clave ? 'var(--ts-semantic-color-surface-brand-blue, #0046ad)' : '#ffffff',
+                color: filtroSociedad === SOCIEDADES.ATISAE.clave ? '#ffffff' : 'var(--ts-semantic-color-surface-inverted-default, #0b253b)',
                 padding: '0.4rem 0.85rem',
                 borderRadius: '4px',
                 cursor: 'pointer',
-                fontWeight: filtroSociedad === 'TSA' ? 700 : 500,
+                fontWeight: filtroSociedad === SOCIEDADES.ATISAE.clave ? 700 : 500,
                 fontSize: '0.85rem',
                 transition: 'all 0.15s ease',
               }}
             >
-              TSA (01)
+              {SOCIEDADES.ATISAE.nombreCorto}
             </button>
             <button
               type="button"
-              onClick={() => setFiltroSociedad('CAL')}
+              onClick={() => setFiltroSociedad(SOCIEDADES.CAL.clave)}
               style={{
                 border: '1px solid var(--ts-semantic-color-border-default, #d0dae5)',
-                background: filtroSociedad === 'CAL' ? 'var(--ts-semantic-color-surface-brand-blue, #0046ad)' : '#ffffff',
-                color: filtroSociedad === 'CAL' ? '#ffffff' : 'var(--ts-semantic-color-surface-inverted-default, #0b253b)',
+                background: filtroSociedad === SOCIEDADES.CAL.clave ? 'var(--ts-semantic-color-surface-brand-blue, #0046ad)' : '#ffffff',
+                color: filtroSociedad === SOCIEDADES.CAL.clave ? '#ffffff' : 'var(--ts-semantic-color-surface-inverted-default, #0b253b)',
                 padding: '0.4rem 0.85rem',
                 borderRadius: '4px',
                 cursor: 'pointer',
-                fontWeight: filtroSociedad === 'CAL' ? 700 : 500,
+                fontWeight: filtroSociedad === SOCIEDADES.CAL.clave ? 700 : 500,
                 fontSize: '0.85rem',
                 transition: 'all 0.15s ease',
               }}
             >
-              CAL (03)
+              {SOCIEDADES.CAL.nombreCorto}
             </button>
           </div>
         </div>
@@ -316,23 +320,23 @@ export function UltimosDatosCentralizados() {
                   color: 'var(--ts-semantic-color-surface-inverted-default, #0b253b)',
                 }}
               >
-                <th style={{ padding: '0.85rem 1.25rem', width: '100px', fontWeight: 700 }}>Cod.</th>
-                <th style={{ padding: '0.85rem 1.25rem', fontWeight: 700 }}>Descripción</th>
-                <th style={{ padding: '0.85rem 1.25rem', width: '220px', fontWeight: 700 }}>Sociedad</th>
-                <th style={{ padding: '0.85rem 1.25rem', width: '220px', fontWeight: 700 }}>Última fecha</th>
+                <th style={{ padding: '0.85rem 1.25rem', width: '100px', fontWeight: 700 }}>{UI.TABLA.COL_CODIGO}</th>
+                <th style={{ padding: '0.85rem 1.25rem', fontWeight: 700 }}>{UI.TABLA.COL_DESCRIPCION}</th>
+                <th style={{ padding: '0.85rem 1.25rem', width: '220px', fontWeight: 700 }}>{UI.TABLA.COL_SOCIEDAD}</th>
+                <th style={{ padding: '0.85rem 1.25rem', width: '220px', fontWeight: 700 }}>{UI.TABLA.COL_ULTIMA_FECHA}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
                   <td colSpan={4} style={{ padding: '3rem', textAlign: 'center', color: 'var(--ts-semantic-color-text-subtle, #5c768d)' }}>
-                    Cargando datos de estaciones ITV...
+                    {UI.TABLA.CARGANDO}
                   </td>
                 </tr>
               ) : estacionesFiltradas.length === 0 ? (
                 <tr>
                   <td colSpan={4} style={{ padding: '3rem', textAlign: 'center', color: 'var(--ts-semantic-color-text-subtle, #5c768d)' }}>
-                    No se encontraron estaciones que coincidan con la búsqueda.
+                    {UI.TABLA.SIN_RESULTADOS}
                   </td>
                 </tr>
               ) : (
@@ -366,7 +370,13 @@ export function UltimosDatosCentralizados() {
                       {estacion.desEstacion}
                     </td>
                     <td style={{ padding: '0.85rem 1.25rem' }}>
-                      <TsBadge variant={estacion.codEmpresa === '03' ? 'success' : 'primary'}>
+                      <TsBadge
+                        variant={
+                          estacion.codEmpresa === SOCIEDADES.CAL.codigo
+                            ? SOCIEDADES.CAL.badgeVariant
+                            : SOCIEDADES.ATISAE.badgeVariant
+                        }
+                      >
                         {estacion.nombreEmpresa}
                       </TsBadge>
                     </td>
@@ -401,7 +411,7 @@ export function UltimosDatosCentralizados() {
           }}
         >
           <span>
-            Mostrando <strong>{estacionesFiltradas.length}</strong> estaciones ITV
+            Mostrando <strong>{estacionesFiltradas.length}</strong> {UI.TABLA.FOOTER_LABEL}
           </span>
           <span style={{ fontSize: '0.78rem' }}>TÜV SÜD Algorithm Design System</span>
         </div>

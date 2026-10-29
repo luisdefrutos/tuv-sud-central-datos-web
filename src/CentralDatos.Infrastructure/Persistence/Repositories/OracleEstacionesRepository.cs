@@ -4,45 +4,42 @@ using System.Text;
 using System.Xml.Linq;
 using CentralDatos.Application.Features.Estaciones.Interfaces;
 using CentralDatos.Domain.Entities.Estaciones;
-using Microsoft.Extensions.Configuration;
+using CentralDatos.Infrastructure.Configuration;
+using CentralDatos.Infrastructure.Persistence.Sql;
+using Dapper;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Oracle.ManagedDataAccess.Client;
 
 namespace CentralDatos.Infrastructure.Persistence.Repositories;
 
 public class OracleEstacionesRepository : IEstacionesRepository
 {
-    private readonly string _connectionString;
-    private readonly string _soapUrl;
+    private readonly CentralItvOptions _options;
+    private readonly ISqlLoader _sqlLoader;
     private readonly ILogger<OracleEstacionesRepository> _logger;
 
-    private const string SqlUltimosDatos = @"
-        SELECT LPAD(TRIM(TO_CHAR(e.CodEstacion)), 4, '0') AS CODESTACION,
-               e.DesEstacion,
-               e.Cod_Empresa,
-               'ITV' AS TIPO_ESTACION,
-               (SELECT MAX(i.FECHAINSPECCION) 
-                  FROM CENTRALITV.INSPECCION i 
-                 WHERE i.CODESTACION = LPAD(TRIM(TO_CHAR(e.CodEstacion)), 4, '0')) AS ULTIMA_INSPECCION
-          FROM CENTRALITV.ESTACIONES e
-         WHERE e.Central_Datos = -1
-         ORDER BY e.DesEstacion";
-
-    public OracleEstacionesRepository(IConfiguration configuration, ILogger<OracleEstacionesRepository> logger)
+    public OracleEstacionesRepository(
+        IOptions<CentralItvOptions> options,
+        ISqlLoader sqlLoader,
+        ILogger<OracleEstacionesRepository> logger)
     {
-        _connectionString = configuration.GetConnectionString("CentralItv") ?? string.Empty;
-        _soapUrl = configuration["CentralItv:SoapUrl"] ?? "https://gestion-desa.atisae.com/centralitvwebservice/centralitv.asmx";
-        _logger = logger;
+        _options = options.Value ?? throw new ArgumentNullException(nameof(options));
+        _sqlLoader = sqlLoader ?? throw new ArgumentNullException(nameof(sqlLoader));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<IReadOnlyList<EstacionUltimoDato>> ObtenerUltimosDatosCentralizadosAsync(CancellationToken cancellationToken = default)
     {
-        // 1. Intentar conexión directa ODP.NET Thin
-        if (!string.IsNullOrWhiteSpace(_connectionString))
+        // 1. Cargar consulta SQL externalizada y cacheada
+        var sql = _sqlLoader.GetQuery("ObtenerUltimosDatosCentralizados");
+
+        // 2. Intentar conexión directa ODP.NET Thin con Dapper
+        if (!string.IsNullOrWhiteSpace(_options.ConnectionString))
         {
             try
             {
-                return await ObtenerPorOracleDirectoAsync(cancellationToken);
+                return await ObtenerPorDapperAsync(sql, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -50,45 +47,32 @@ public class OracleEstacionesRepository : IEstacionesRepository
             }
         }
 
-        // 2. Fallback de desarrollo mediante CentralITV_Svc SOAP
-        return await ObtenerPorSoapAsync(cancellationToken);
+        // 3. Fallback mediante pasarela SOAP CentralITV_Svc
+        return await ObtenerPorSoapAsync(sql, cancellationToken);
     }
 
-    private async Task<IReadOnlyList<EstacionUltimoDato>> ObtenerPorOracleDirectoAsync(CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<EstacionUltimoDato>> ObtenerPorDapperAsync(string sql, CancellationToken cancellationToken)
     {
-        var lista = new List<EstacionUltimoDato>();
-        using var conn = new OracleConnection(_connectionString);
-        await conn.OpenAsync(cancellationToken);
+        using var conn = new OracleConnection(_options.ConnectionString);
+        var command = new CommandDefinition(sql, cancellationToken: cancellationToken);
+        var resultado = await conn.QueryAsync<EstacionUltimoDato>(command);
+        return resultado.ToList();
+    }
 
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = SqlUltimosDatos;
-        cmd.CommandType = CommandType.Text;
-
-        using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-        while (await reader.ReadAsync(cancellationToken))
+    private async Task<IReadOnlyList<EstacionUltimoDato>> ObtenerPorSoapAsync(string sql, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(_options.SoapUrl))
         {
-            lista.Add(new EstacionUltimoDato
-            {
-                CodEstacion = reader.GetString(0).Trim(),
-                DesEstacion = reader.IsDBNull(1) ? string.Empty : reader.GetString(1).Trim(),
-                CodEmpresa = reader.IsDBNull(2) ? null : reader.GetString(2).Trim(),
-                TipoEstacion = reader.IsDBNull(3) ? null : reader.GetString(3).Trim(),
-                UltimaInspeccion = reader.IsDBNull(4) ? null : reader.GetDateTime(4)
-            });
+            throw new InvalidOperationException("La URL del servicio SOAP ('CentralItv:SoapUrl') no está configurada.");
         }
 
-        return lista;
-    }
-
-    private async Task<IReadOnlyList<EstacionUltimoDato>> ObtenerPorSoapAsync(CancellationToken cancellationToken)
-    {
         var soapEnvelope = $@"<?xml version=""1.0"" encoding=""utf-8""?>
 <soap:Envelope xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" 
                xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" 
                xmlns:soap=""http://schemas.xmlsoap.org/soap/envelope/"">
   <soap:Body>
     <ExecuteQuery xmlns=""http://tempuri.org/"">
-      <sql>{System.Security.SecurityElement.Escape(SqlUltimosDatos)}</sql>
+      <sql>{System.Security.SecurityElement.Escape(sql)}</sql>
     </ExecuteQuery>
   </soap:Body>
 </soap:Envelope>";
@@ -98,9 +82,9 @@ public class OracleEstacionesRepository : IEstacionesRepository
             ServerCertificateCustomValidationCallback = (_, _, _, _) => true
         };
         using var client = new HttpClient(handler);
-        client.Timeout = TimeSpan.FromSeconds(30);
+        client.Timeout = TimeSpan.FromSeconds(_options.TimeoutSeconds > 0 ? _options.TimeoutSeconds : 30);
 
-        var request = new HttpRequestMessage(HttpMethod.Post, _soapUrl)
+        var request = new HttpRequestMessage(HttpMethod.Post, _options.SoapUrl)
         {
             Content = new StringContent(soapEnvelope, Encoding.UTF8, "text/xml")
         };
@@ -110,12 +94,11 @@ public class OracleEstacionesRepository : IEstacionesRepository
         response.EnsureSuccessStatusCode();
 
         var xmlBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
-        return DesencriptarYParsearRespuesta(xmlBytes);
+        return DesencriptarYParsearRespuesta(xmlBytes, _options.SoapDesKey);
     }
 
-    private static IReadOnlyList<EstacionUltimoDato> DesencriptarYParsearRespuesta(byte[] encryptedBytes)
+    private static IReadOnlyList<EstacionUltimoDato> DesencriptarYParsearRespuesta(byte[] encryptedBytes, string desKey)
     {
-        // 1. Extraer contenido Base64 de la respuesta SOAP
         var responseXml = Encoding.UTF8.GetString(encryptedBytes);
         var xdoc = XDocument.Parse(responseXml);
         XNamespace ns = "http://tempuri.org/";
@@ -127,8 +110,13 @@ public class OracleEstacionesRepository : IEstacionesRepository
 
         var rawPayload = Convert.FromBase64String(base64Result);
 
-        // 2. Desencriptar DES Legacy (Key/IV fijos de CentralITV_Svc)
-        var key = Encoding.ASCII.GetBytes("20030514");
+        // Clave DES configurada en appsettings.json
+        if (string.IsNullOrEmpty(desKey))
+        {
+            throw new InvalidOperationException("La clave DES ('CentralItv:SoapDesKey') no está configurada.");
+        }
+
+        var key = Encoding.ASCII.GetBytes(desKey);
         using var des = DES.Create();
         des.Key = key;
         des.IV = key;
@@ -139,7 +127,6 @@ public class OracleEstacionesRepository : IEstacionesRepository
         var decryptedBytes = decryptor.TransformFinalBlock(rawPayload, 0, rawPayload.Length);
         var datasetXml = Encoding.UTF8.GetString(decryptedBytes);
 
-        // 3. Parsear Diffgram / DataSet
         var dataDoc = XDocument.Parse(datasetXml);
         var rows = dataDoc.Descendants().Where(e => e.Name.LocalName == "Table");
 
@@ -169,4 +156,3 @@ public class OracleEstacionesRepository : IEstacionesRepository
         return lista;
     }
 }
-

@@ -1,18 +1,13 @@
 import { useState } from 'react';
 import { Header } from './components/layout/Header';
-import { Navbar, type NavItem } from './components/layout/Navbar';
+import { Navbar } from './components/layout/Navbar';
 import { UltimosDatosCentralizados } from './features/estaciones/components/UltimosDatosCentralizados';
+import { NAV_ITEMS, SECCION_INICIAL_ID } from './constants/navigation.constants';
+import { UI_CONSTANTS } from './constants/ui.constants';
 
 export function App() {
-  const [seccionActiva, setSeccionActiva] = useState('ultimos-datos');
-
-  const navItems: NavItem[] = [
-    { id: 'ultimos-datos', label: 'Últimas Fechas', icon: '📊', badge: '32 ITV' },
-    { id: 'inspecciones', label: 'Inspecciones ITV', icon: '🚗' },
-    { id: 'informes', label: 'Informes & MINER', icon: '📑' },
-    { id: 'comercial', label: 'Campañas SMS', icon: '📱' },
-    { id: 'mantenimientos', label: 'Mantenimientos', icon: '👥' },
-  ];
+  const [seccionActiva, setSeccionActiva] = useState(SECCION_INICIAL_ID);
+  const { BRAND } = UI_CONSTANTS;
 
   return (
     <div
@@ -29,7 +24,7 @@ export function App() {
 
       {/* 2. Barra de Navegación por Módulos */}
       <Navbar
-        items={navItems}
+        items={NAV_ITEMS}
         activeId={seccionActiva}
         onSelect={setSeccionActiva}
       />
@@ -60,7 +55,7 @@ export function App() {
             }}
           >
             <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>
-              {navItems.find((n) => n.id === seccionActiva)?.icon}
+              {NAV_ITEMS.find((n) => n.id === seccionActiva)?.icon}
             </div>
             <h2
               style={{
@@ -70,7 +65,7 @@ export function App() {
                 fontWeight: 700,
               }}
             >
-              Módulo: {navItems.find((n) => n.id === seccionActiva)?.label}
+              Módulo: {NAV_ITEMS.find((n) => n.id === seccionActiva)?.label}
             </h2>
             <p
               style={{
@@ -100,9 +95,9 @@ export function App() {
           alignItems: 'center',
         }}
       >
-        <span>TÜV SÜD España · ITV Central Datos</span>
+        <span>{BRAND.FOOTER_TEXT}</span>
         <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
-          .NET 10 Web API + React 19 + TypeScript + TÜV SÜD Algorithm Design System
+          {BRAND.FOOTER_TECH}
         </span>
       </footer>
     </div>

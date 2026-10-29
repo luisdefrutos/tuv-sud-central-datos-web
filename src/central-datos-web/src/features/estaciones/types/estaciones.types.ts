@@ -1,3 +1,5 @@
+import type { ClaveSociedad } from '../../../constants/companies.constants';
+
 export interface EstacionDato {
   codEstacion: string;
   desEstacion: string;
@@ -18,4 +20,4 @@ export interface ResumenEstaciones {
   estaciones: EstacionDato[];
 }
 
-export type FiltroSociedad = 'TODAS' | 'TSA' | 'CAL';
+export type FiltroSociedad = ClaveSociedad;

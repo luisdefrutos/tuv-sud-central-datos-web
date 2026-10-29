@@ -1,5 +1,6 @@
 using CentralDatos.Application.Features.Estaciones.DTOs;
 using CentralDatos.Application.Features.Estaciones.Interfaces;
+using CentralDatos.Domain.Constants;
 
 namespace CentralDatos.Application.Features.Estaciones.Services;
 
@@ -27,15 +28,15 @@ public class EstacionesService
                 e.DesEstacion,
                 e.CodEmpresa,
                 e.NombreEmpresa,
-                e.TipoEstacion ?? "ITV",
+                e.TipoEstacion ?? EmpresasConstants.TipoEstacionDefault,
                 e.UltimaInspeccion,
                 formatted,
                 e.UltimaInspeccion.HasValue
             );
         }).ToList();
 
-        var totalTsa = dtos.Count(d => d.CodEmpresa == "01");
-        var totalCal = dtos.Count(d => d.CodEmpresa == "03");
+        var totalTsa = dtos.Count(d => d.CodEmpresa == EmpresasConstants.CodigoAtisae);
+        var totalCal = dtos.Count(d => d.CodEmpresa == EmpresasConstants.CodigoCal);
         var conInspecciones = dtos.Count(d => d.TieneInspecciones);
 
         var maxFecha = dtos.Where(d => d.UltimaInspeccion.HasValue)
