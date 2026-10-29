@@ -1,13 +1,50 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { AuthProvider, useAuth } from './features/auth/context/AuthContext';
+import { LoginPage } from './features/auth/pages/LoginPage';
 import { Header } from './components/layout/Header';
 import { Navbar } from './components/layout/Navbar';
 import { UltimosDatosCentralizados } from './features/estaciones/components/UltimosDatosCentralizados';
 import { NAV_ITEMS, SECCION_INICIAL_ID } from './constants/navigation.constants';
 import { UI_CONSTANTS } from './constants/ui.constants';
+import { TsSpinner } from '@tuvsud/design-system/react';
 
-export function App() {
+function AppContent() {
+  const { isAuthenticated, isLoading, logNavigation } = useAuth();
   const [seccionActiva, setSeccionActiva] = useState(SECCION_INICIAL_ID);
   const { BRAND } = UI_CONSTANTS;
+
+  // Registrar auditoría de navegación al cambiar de sección
+  useEffect(() => {
+    if (isAuthenticated) {
+      logNavigation(`/modulo/${seccionActiva}`);
+    }
+  }, [seccionActiva, isAuthenticated, logNavigation]);
+
+  if (isLoading) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#f8fafc',
+          gap: '16px',
+        }}
+      >
+        <TsSpinner size="large" />
+        <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 500 }}>
+          Verificando sesión de Central Datos...
+        </span>
+      </div>
+    );
+  }
+
+  // Si no está autenticado, mostrar la pantalla de Login oficial
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
 
   return (
     <div
@@ -29,11 +66,11 @@ export function App() {
         onSelect={setSeccionActiva}
       />
 
-      {/* 3. Área de Contenido Principal */}
+      {/* 3. Área de Contenido Principal Responsiva */}
       <main
         style={{
           flex: 1,
-          padding: '1.75rem',
+          padding: 'clamp(0.75rem, 2.5vw, 1.75rem)',
           maxWidth: '1440px',
           width: '100%',
           margin: '0 auto',
@@ -101,6 +138,14 @@ export function App() {
         </span>
       </footer>
     </div>
+  );
+}
+
+export function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

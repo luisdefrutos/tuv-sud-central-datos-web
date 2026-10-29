@@ -14,15 +14,16 @@ interface NavbarProps {
 export function Navbar({ items, activeId, onSelect }: NavbarProps) {
   return (
     <nav
+      className="cd-touch-scroll"
       style={{
         backgroundColor: '#ffffff',
         borderBottom: '1px solid var(--ts-semantic-color-border-default, #d0dae5)',
-        padding: '0 1.75rem',
+        padding: '0 clamp(0.75rem, 2vw, 1.75rem)',
         display: 'flex',
         alignItems: 'center',
         gap: '0.25rem',
-        overflowX: 'auto',
         boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+        whiteSpace: 'nowrap',
       }}
     >
       {items.map((item) => {
@@ -35,18 +36,18 @@ export function Navbar({ items, activeId, onSelect }: NavbarProps) {
             style={{
               border: 'none',
               background: 'transparent',
-              padding: '0.85rem 1rem',
+              padding: 'clamp(0.65rem, 1.5vw, 0.85rem) clamp(0.75rem, 1.5vw, 1rem)',
               cursor: 'pointer',
               borderBottom: isActive ? '3px solid #0046ad' : '3px solid transparent',
               color: isActive ? '#0046ad' : '#4a607a',
               fontWeight: isActive ? 700 : 500,
-              fontSize: '0.9rem',
+              fontSize: '0.88rem',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.5rem',
+              gap: '0.45rem',
               transition: 'all 0.15s ease',
               outline: 'none',
-              whiteSpace: 'nowrap',
+              flexShrink: 0,
             }}
             onMouseEnter={(e) => {
               if (!isActive) {
