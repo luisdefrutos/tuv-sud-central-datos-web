@@ -11,5 +11,6 @@ public class CentralItvOptions
     public string ConnectionString { get; set; } = string.Empty;
     public string SoapUrl { get; set; } = string.Empty;
     public string SoapDesKey { get; set; } = string.Empty;
+    public string SoapSecret { get; set; } = "HELKFN23AJURJSK2D";
     public int TimeoutSeconds { get; set; } = 30;
 }

@@ -1,7 +1,9 @@
+using CentralDatos.Application.Features.Auth.Interfaces;
 using CentralDatos.Application.Features.Estaciones.Interfaces;
 using CentralDatos.Infrastructure.Configuration;
 using CentralDatos.Infrastructure.Persistence.Repositories;
 using CentralDatos.Infrastructure.Persistence.Sql;
+using CentralDatos.Infrastructure.Services.Auth;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,11 +20,25 @@ public static class DependencyInjection
             options.ConnectionString = configuration.GetConnectionString("CentralItv") ?? string.Empty;
         });
 
+        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.SectionName));
+
+        // HttpClient para WebService SOAP de Login
+        services.AddHttpClient<ISoapLoginClient, SoapLoginClient>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(15);
+        });
+
         // Cargador de consultas SQL embebidas y cacheadas
         services.AddSingleton<ISqlLoader, SqlLoader>();
 
-        // Repositorios de Persistencia (Dapper ODP.NET Thin / Fallback SOAP)
+        // Generador de tokens JWT
+        services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
+
+        // Repositorios de Persistencia
         services.AddScoped<IEstacionesRepository, OracleEstacionesRepository>();
+        services.AddScoped<IAuthRepository, OracleAuthRepository>();
+        services.AddScoped<IAuditRepository, OracleAuditRepository>();
 
         return services;
     }

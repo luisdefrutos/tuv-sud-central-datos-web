@@ -1,3 +1,5 @@
+using CentralDatos.Application.Features.Auth.Interfaces;
+using CentralDatos.Application.Features.Auth.Services;
 using CentralDatos.Application.Features.Estaciones.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -9,6 +11,7 @@ public static class DependencyInjection
     {
         // Servicios de Características / Casos de Uso
         services.AddScoped<EstacionesService>();
+        services.AddScoped<IAuthService, AuthService>();
 
         return services;
     }
