@@ -9,11 +9,70 @@ import {
   TsSpinner,
 } from '@tuvsud/design-system/react';
 import { useUltimosDatos } from '../hooks/useUltimosDatos';
+import type { ColumnaOrden } from '../types/estaciones.types';
 import { SOCIEDADES } from '../../../constants/companies.constants';
 import { UI_CONSTANTS } from '../../../constants/ui.constants';
 
-export function UltimosDatosCentralizados() {
-  // Lógica y estados desacoplados limpiamente en el Custom Hook
+interface SortIndicatorProps {
+  direction: 'asc' | 'desc' | null;
+}
+
+function SortIndicator({ direction }: SortIndicatorProps) {
+  const isAsc = direction === 'asc';
+  const isDesc = direction === 'desc';
+
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginLeft: '7px',
+        lineHeight: 0,
+        flexShrink: 0,
+        gap: '2px',
+      }}
+      aria-hidden="true"
+    >
+      {/* Flecha Arriba ▲ (Ascendente) */}
+      <svg
+        width="11"
+        height="7"
+        viewBox="0 0 11 7"
+        fill="currentColor"
+        style={{
+          color: isAsc ? '#ffffff' : 'rgba(255, 255, 255, 0.45)',
+          filter: isAsc ? 'drop-shadow(0 0 2px rgba(255,255,255,0.8))' : 'none',
+          transition: 'color 0.15s ease, filter 0.15s ease',
+        }}
+      >
+        <path d="M5.5 0.5L11 6.5H0L5.5 0.5Z" />
+      </svg>
+      {/* Flecha Abajo ▼ (Descendente) */}
+      <svg
+        width="11"
+        height="7"
+        viewBox="0 0 11 7"
+        fill="currentColor"
+        style={{
+          color: isDesc ? '#ffffff' : 'rgba(255, 255, 255, 0.45)',
+          filter: isDesc ? 'drop-shadow(0 0 2px rgba(255,255,255,0.8))' : 'none',
+          transition: 'color 0.15s ease, filter 0.15s ease',
+        }}
+      >
+        <path d="M5.5 6.5L0 0.5H11L5.5 6.5Z" />
+      </svg>
+    </span>
+  );
+}
+
+interface UltimosDatosCentralizadosProps {
+  onNavigateHome?: () => void;
+}
+
+export function UltimosDatosCentralizados({ onNavigateHome }: UltimosDatosCentralizadosProps = {}) {
+  // Lógica, estados y exportación autónoma desacoplados limpiamente en el Custom Hook
   const {
     data,
     loading,
@@ -22,11 +81,64 @@ export function UltimosDatosCentralizados() {
     setSearchTerm,
     filtroSociedad,
     setFiltroSociedad,
+    ordenColumna,
+    ordenDireccion,
+    cambiarOrden,
     estacionesFiltradas,
     recargar,
+    alertaExportacion,
+    limpiarAlertaExportacion,
+    exportarExcelCsv,
   } = useUltimosDatos();
 
   const { MODULO_ULTIMOS_DATOS: UI } = UI_CONSTANTS;
+
+  const renderThOrdenable = (
+    columna: ColumnaOrden,
+    etiqueta: string,
+    width?: string,
+    tooltip?: string,
+    isLast: boolean = false
+  ) => {
+    const activo = ordenColumna === columna;
+    const direccionColumna = activo ? ordenDireccion : null;
+    const direccionAria = direccionColumna ? (direccionColumna === 'asc' ? 'ascending' : 'descending') : 'none';
+
+    return (
+      <th
+        key={columna}
+        scope="col"
+        className={`cd-table-th ${activo ? 'cd-table-th-active' : ''}`}
+        aria-sort={direccionAria}
+        onClick={() => cambiarOrden(columna)}
+        title={
+          tooltip ||
+          (activo
+            ? ordenDireccion === 'asc'
+              ? `Haga clic para ordenar por ${etiqueta} de forma descendente`
+              : `Haga clic para ordenar por ${etiqueta} de forma ascendente`
+            : `Haga clic para ordenar por ${etiqueta} de forma ascendente`)
+        }
+        style={{
+          padding: '0.85rem 1.15rem',
+          width,
+          fontWeight: 700,
+          fontSize: '0.875rem',
+          letterSpacing: '0.02em',
+          color: '#ffffff',
+          borderRight: isLast ? 'none' : '1px solid rgba(255, 255, 255, 0.2)',
+          borderBottom: '2px solid #002d73',
+          boxSizing: 'border-box',
+          position: 'relative',
+        }}
+      >
+        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '6px' }}>
+          <span>{etiqueta}</span>
+          <SortIndicator direction={direccionColumna} />
+        </div>
+      </th>
+    );
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', position: 'relative' }}>
@@ -89,11 +201,23 @@ export function UltimosDatosCentralizados() {
         </div>
       )}
 
-      {/* 2. Miga de Pan (Breadcrumb Oficial Algorithm DS) */}
+      {/* 2. Miga de Pan Interactiva (Breadcrumb Oficial Algorithm DS) */}
       <TsBreadcrumb>
-        {UI.BREADCRUMB.map((item, idx) => (
-          <TsBreadcrumbItem key={idx}>{item}</TsBreadcrumbItem>
-        ))}
+        <TsBreadcrumbItem
+          onClick={onNavigateHome}
+          title="Regresar a la pantalla de Inicio"
+          style={{
+            cursor: onNavigateHome ? 'pointer' : 'default',
+            color: '#0046ad',
+            fontWeight: 600,
+          }}
+        >
+          {UI.BREADCRUMB[0]}
+        </TsBreadcrumbItem>
+        <TsBreadcrumbItem>{UI.BREADCRUMB[1]}</TsBreadcrumbItem>
+        <TsBreadcrumbItem style={{ fontWeight: 700, color: 'var(--ts-semantic-color-surface-inverted-default, #0b253b)' }}>
+          {UI.BREADCRUMB[2]}
+        </TsBreadcrumbItem>
       </TsBreadcrumb>
 
       {/* 3. Cabecera del Módulo Responsiva */}
@@ -148,6 +272,19 @@ export function UltimosDatosCentralizados() {
         </TsAlert>
       )}
 
+      {/* 4.1. Alerta si se intenta exportar con la tabla vacía */}
+      {alertaExportacion && (
+        <TsAlert
+          variant="warning"
+          open
+          closable
+          onTsAfterHide={limpiarAlertaExportacion}
+          heading="Exportación no disponible"
+        >
+          {alertaExportacion}
+        </TsAlert>
+      )}
+
       {/* 5. Tarjetas de Resumen Operativo (Grid Responsivo) */}
       <div
         style={{
@@ -193,7 +330,7 @@ export function UltimosDatosCentralizados() {
         </TsCard>
       </div>
 
-      {/* 6. Barra de Búsqueda y Filtros Rápidos Responsiva */}
+      {/* 6. Barra de Búsqueda, Filtros de Sociedad y Exportación Autónoma a Excel */}
       <TsCard>
         <div
           className="cd-stack-mobile"
@@ -205,7 +342,8 @@ export function UltimosDatosCentralizados() {
             justifyContent: 'space-between',
           }}
         >
-          <div style={{ flex: '1 1 280px', minWidth: '240px', width: '100%' }}>
+          {/* Campo de Búsqueda Reactivo */}
+          <div style={{ flex: '1 1 280px', minWidth: '220px', width: '100%' }}>
             <TsInput
               placeholder={UI.PLACEHOLDER_BUSQUEDA}
               value={searchTerm}
@@ -215,64 +353,77 @@ export function UltimosDatosCentralizados() {
             />
           </div>
 
+          {/* Grupo de Filtros y Acción de Exportar */}
           <div
             className="cd-filter-buttons"
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}
           >
-            <span style={{ fontSize: '0.85rem', color: 'var(--ts-semantic-color-text-subtle, #5c768d)', fontWeight: 600 }}>
-              {UI.FILTRO_SOCIEDAD_LABEL}
-            </span>
-            <button
-              type="button"
-              onClick={() => setFiltroSociedad('TODAS')}
-              style={{
-                border: '1px solid var(--ts-semantic-color-border-default, #d0dae5)',
-                background: filtroSociedad === 'TODAS' ? 'var(--ts-semantic-color-surface-brand-blue, #0046ad)' : '#ffffff',
-                color: filtroSociedad === 'TODAS' ? '#ffffff' : 'var(--ts-semantic-color-surface-inverted-default, #0b253b)',
-                padding: '0.4rem 0.85rem',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: filtroSociedad === 'TODAS' ? 700 : 500,
-                fontSize: '0.85rem',
-                transition: 'all 0.15s ease',
-              }}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--ts-semantic-color-text-subtle, #5c768d)', fontWeight: 600 }}>
+                {UI.FILTRO_SOCIEDAD_LABEL}
+              </span>
+              <button
+                type="button"
+                onClick={() => setFiltroSociedad('TODAS')}
+                style={{
+                  border: '1px solid var(--ts-semantic-color-border-default, #d0dae5)',
+                  background: filtroSociedad === 'TODAS' ? 'var(--ts-semantic-color-surface-brand-blue, #0046ad)' : '#ffffff',
+                  color: filtroSociedad === 'TODAS' ? '#ffffff' : 'var(--ts-semantic-color-surface-inverted-default, #0b253b)',
+                  padding: '0.4rem 0.85rem',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontWeight: filtroSociedad === 'TODAS' ? 700 : 500,
+                  fontSize: '0.85rem',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                Todas ({data?.totalEstaciones ?? 0})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroSociedad(SOCIEDADES.ATISAE.clave)}
+                style={{
+                  border: '1px solid var(--ts-semantic-color-border-default, #d0dae5)',
+                  background: filtroSociedad === SOCIEDADES.ATISAE.clave ? 'var(--ts-semantic-color-surface-brand-blue, #0046ad)' : '#ffffff',
+                  color: filtroSociedad === SOCIEDADES.ATISAE.clave ? '#ffffff' : 'var(--ts-semantic-color-surface-inverted-default, #0b253b)',
+                  padding: '0.4rem 0.85rem',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontWeight: filtroSociedad === SOCIEDADES.ATISAE.clave ? 700 : 500,
+                  fontSize: '0.85rem',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                TSA ({data?.totalTsa ?? 0})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroSociedad(SOCIEDADES.CAL.clave)}
+                style={{
+                  border: '1px solid var(--ts-semantic-color-border-default, #d0dae5)',
+                  background: filtroSociedad === SOCIEDADES.CAL.clave ? 'var(--ts-semantic-color-surface-brand-blue, #0046ad)' : '#ffffff',
+                  color: filtroSociedad === SOCIEDADES.CAL.clave ? '#ffffff' : 'var(--ts-semantic-color-surface-inverted-default, #0b253b)',
+                  padding: '0.4rem 0.85rem',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontWeight: filtroSociedad === SOCIEDADES.CAL.clave ? 700 : 500,
+                  fontSize: '0.85rem',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                CAL ({data?.totalCal ?? 0})
+              </button>
+            </div>
+
+            {/* Botón Autónomo de Exportación a Excel/CSV */}
+            <TsButton
+              variant="secondary"
+              onClick={exportarExcelCsv}
+              title="Descarga directamente un fichero Excel (.CSV con codificación UTF-8 para España) con los datos visibles en pantalla"
+              style={{ whiteSpace: 'nowrap' }}
             >
-              {UI.FILTRO_TODAS} ({data?.totalEstaciones ?? 0})
-            </button>
-            <button
-              type="button"
-              onClick={() => setFiltroSociedad(SOCIEDADES.ATISAE.clave)}
-              style={{
-                border: '1px solid var(--ts-semantic-color-border-default, #d0dae5)',
-                background: filtroSociedad === SOCIEDADES.ATISAE.clave ? 'var(--ts-semantic-color-surface-brand-blue, #0046ad)' : '#ffffff',
-                color: filtroSociedad === SOCIEDADES.ATISAE.clave ? '#ffffff' : 'var(--ts-semantic-color-surface-inverted-default, #0b253b)',
-                padding: '0.4rem 0.85rem',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: filtroSociedad === SOCIEDADES.ATISAE.clave ? 700 : 500,
-                fontSize: '0.85rem',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              {SOCIEDADES.ATISAE.nombreCorto}
-            </button>
-            <button
-              type="button"
-              onClick={() => setFiltroSociedad(SOCIEDADES.CAL.clave)}
-              style={{
-                border: '1px solid var(--ts-semantic-color-border-default, #d0dae5)',
-                background: filtroSociedad === SOCIEDADES.CAL.clave ? 'var(--ts-semantic-color-surface-brand-blue, #0046ad)' : '#ffffff',
-                color: filtroSociedad === SOCIEDADES.CAL.clave ? '#ffffff' : 'var(--ts-semantic-color-surface-inverted-default, #0b253b)',
-                padding: '0.4rem 0.85rem',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: filtroSociedad === SOCIEDADES.CAL.clave ? 700 : 500,
-                fontSize: '0.85rem',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              {SOCIEDADES.CAL.nombreCorto}
-            </button>
+              📥 Exportar a Excel
+            </TsButton>
           </div>
         </div>
       </TsCard>
@@ -318,11 +469,20 @@ export function UltimosDatosCentralizados() {
           <span>↔️ Deslice horizontalmente para consultar todas las columnas</span>
         </div>
 
-        <div className="cd-touch-scroll" style={{ width: '100%' }}>
+        <div
+          className="cd-touch-scroll"
+          style={{
+            width: '100%',
+            border: '1px solid var(--ts-semantic-color-border-default, #cbd5e1)',
+            borderRadius: '6px',
+            overflow: 'hidden',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+          }}
+        >
           <table
             style={{
               width: '100%',
-              minWidth: '680px',
+              minWidth: '720px',
               borderCollapse: 'collapse',
               textAlign: 'left',
               fontFamily: 'var(--ts-font-family-sans, system-ui)',
@@ -332,16 +492,16 @@ export function UltimosDatosCentralizados() {
             <thead>
               <tr
                 style={{
-                  backgroundColor: 'var(--ts-semantic-color-surface-subtle, #f4f6f9)',
-                  borderBottom: '2px solid var(--ts-semantic-color-border-default, #d0dae5)',
-                  color: 'var(--ts-semantic-color-surface-inverted-default, #0b253b)',
+                  backgroundColor: 'var(--ts-table-header-bg, var(--ts-semantic-color-background-primary-default, #0046ad))',
+                  borderBottom: '2px solid #002d73',
+                  color: 'var(--ts-table-header-color, #ffffff)',
                 }}
               >
-                <th style={{ padding: '0.85rem 1.25rem', width: '100px', fontWeight: 700 }}>{UI.TABLA.COL_CODIGO}</th>
-                <th style={{ padding: '0.85rem 1.25rem', fontWeight: 700 }}>{UI.TABLA.COL_DESCRIPCION}</th>
-                <th style={{ padding: '0.85rem 1.25rem', width: '180px', fontWeight: 700 }}>{UI.TABLA.COL_SOCIEDAD}</th>
-                <th style={{ padding: '0.85rem 1.25rem', width: '180px', fontWeight: 700 }}>{UI.TABLA.COL_ULTIMA_FECHA}</th>
-                <th style={{ padding: '0.85rem 1.25rem', width: '180px', fontWeight: 700 }}>Estado Centralización</th>
+                {renderThOrdenable('codEstacion', UI.TABLA.COL_CODIGO, '110px', 'Ordenar por código de estación')}
+                {renderThOrdenable('desEstacion', UI.TABLA.COL_DESCRIPCION, undefined, 'Ordenar por nombre de estación')}
+                {renderThOrdenable('nombreEmpresa', UI.TABLA.COL_SOCIEDAD, '170px', 'Ordenar por sociedad (TSA / CAL)')}
+                {renderThOrdenable('ultimaInspeccion', UI.TABLA.COL_ULTIMA_FECHA, '190px', 'Ordenar por fecha y hora de última inspección')}
+                {renderThOrdenable('estadoSincronizacion', 'Estado Centralización', '190px', 'Ordenar por nivel o días de retraso de sincronización', true)}
               </tr>
             </thead>
             <tbody>
@@ -358,69 +518,77 @@ export function UltimosDatosCentralizados() {
                   </td>
                 </tr>
               ) : (
-                estacionesFiltradas.map((estacion) => (
-                  <tr
-                    key={estacion.codEstacion}
-                    style={{
-                      borderBottom: '1px solid var(--ts-semantic-color-border-default, #d0dae5)',
-                      transition: 'background-color 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'var(--ts-semantic-color-surface-subtle, #f4f6f9)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
-                  >
-                    <td
+                estacionesFiltradas.map((estacion, index) => {
+                  const isEven = index % 2 === 1;
+                  return (
+                    <tr
+                      key={estacion.codEstacion}
                       style={{
-                        padding: '0.85rem 1.25rem',
-                        fontFamily: 'monospace',
-                        fontWeight: 700,
-                        fontSize: '0.95rem',
-                        color: 'var(--ts-semantic-color-surface-brand-blue, #0046ad)',
-                        fontVariantNumeric: 'tabular-nums',
+                        backgroundColor: isEven ? 'var(--ts-semantic-color-background-neutral-subtle-default, #f8fafc)' : '#ffffff',
+                        borderBottom: '1px solid var(--ts-semantic-color-border-default, #e2e8f0)',
+                        transition: 'background-color 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--ts-semantic-color-background-primary-subtle-hover, #edf5ff)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = isEven ? 'var(--ts-semantic-color-background-neutral-subtle-default, #f8fafc)' : '#ffffff';
                       }}
                     >
-                      {estacion.codEstacion}
-                    </td>
-                    <td style={{ padding: '0.85rem 1.25rem', fontWeight: 600, color: '#1a202c' }}>
-                      {estacion.desEstacion}
-                    </td>
-                    <td style={{ padding: '0.85rem 1.25rem' }}>
-                      <TsBadge
-                        variant={
-                          estacion.codEmpresa === SOCIEDADES.CAL.codigo
-                            ? SOCIEDADES.CAL.badgeVariant
-                            : SOCIEDADES.ATISAE.badgeVariant
-                        }
+                      <td
+                        className="cd-table-td"
+                        style={{
+                          padding: '0.75rem 1.15rem',
+                          fontFamily: 'monospace',
+                          fontWeight: 700,
+                          fontSize: '0.92rem',
+                          color: 'var(--ts-semantic-color-surface-brand-blue, #0046ad)',
+                          fontVariantNumeric: 'tabular-nums',
+                          borderRight: '1px solid #edf2f7',
+                        }}
                       >
-                        {estacion.nombreEmpresa}
-                      </TsBadge>
-                    </td>
-                    <td
-                      style={{
-                        padding: '0.85rem 1.25rem',
-                        fontFamily: 'monospace',
-                        fontWeight: 600,
-                        fontSize: '0.95rem',
-                        color: estacion.tieneInspecciones ? '#0b253b' : 'var(--ts-semantic-color-text-subtle, #5c768d)',
-                        fontVariantNumeric: 'tabular-nums',
-                      }}
-                    >
-                      {estacion.ultimaInspeccionFormatted}
-                    </td>
-                    <td style={{ padding: '0.85rem 1.25rem' }}>
-                      <TsBadge
-                        variant={estacion.nivelSincronizacion ?? 'neutral'}
-                        title={estacion.tooltipSincronizacion}
-                        style={{ fontSize: '0.76rem', fontWeight: 600 }}
+                        {estacion.codEstacion}
+                      </td>
+                      <td className="cd-table-td" style={{ padding: '0.75rem 1.15rem', fontWeight: 600, color: '#1a202c', borderRight: '1px solid #edf2f7' }}>
+                        {estacion.desEstacion}
+                      </td>
+                      <td className="cd-table-td" style={{ padding: '0.75rem 1.15rem', borderRight: '1px solid #edf2f7' }}>
+                        <TsBadge
+                          variant={
+                            estacion.codEmpresa === SOCIEDADES.CAL.codigo
+                              ? SOCIEDADES.CAL.badgeVariant
+                              : SOCIEDADES.ATISAE.badgeVariant
+                          }
+                        >
+                          {estacion.nombreEmpresa}
+                        </TsBadge>
+                      </td>
+                      <td
+                        className="cd-table-td"
+                        style={{
+                          padding: '0.75rem 1.15rem',
+                          fontFamily: 'monospace',
+                          fontWeight: 600,
+                          fontSize: '0.92rem',
+                          color: estacion.tieneInspecciones ? '#0b253b' : 'var(--ts-semantic-color-text-subtle, #5c768d)',
+                          fontVariantNumeric: 'tabular-nums',
+                          borderRight: '1px solid #edf2f7',
+                        }}
                       >
-                        {estacion.estadoSincronizacionLabel ?? 'Sin datos'}
-                      </TsBadge>
-                    </td>
-                  </tr>
-                ))
+                        {estacion.ultimaInspeccionFormatted}
+                      </td>
+                      <td className="cd-table-td" style={{ padding: '0.75rem 1.15rem' }}>
+                        <TsBadge
+                          variant={estacion.nivelSincronizacion ?? 'neutral'}
+                          title={estacion.tooltipSincronizacion}
+                          style={{ fontSize: '0.76rem', fontWeight: 600 }}
+                        >
+                          {estacion.estadoSincronizacionLabel ?? 'Sin datos'}
+                        </TsBadge>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -433,16 +601,13 @@ export function UltimosDatosCentralizados() {
             fontSize: '0.85rem',
             color: 'var(--ts-semantic-color-text-subtle, #5c768d)',
             display: 'flex',
-            justifyContent: 'space-between',
+            justifyContent: 'flex-start',
             alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '0.5rem',
           }}
         >
           <span>
-            Mostrando <strong>{estacionesFiltradas.length}</strong> {UI.TABLA.FOOTER_LABEL}
+            Mostrando <strong>{estacionesFiltradas.length}</strong> de <strong>{data?.totalEstaciones ?? 0}</strong> {UI.TABLA.FOOTER_LABEL}
           </span>
-          <span style={{ fontSize: '0.78rem' }}>TÜV SÜD Algorithm Design System</span>
         </div>
       </TsCard>
     </div>

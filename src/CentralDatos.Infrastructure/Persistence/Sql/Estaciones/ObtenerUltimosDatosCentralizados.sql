@@ -14,4 +14,5 @@ SELECT LPAD(TRIM(TO_CHAR(e.CodEstacion)), 4, '0') AS CodEstacion,
          WHERE i.CODESTACION = LPAD(TRIM(TO_CHAR(e.CodEstacion)), 4, '0')) AS UltimaInspeccion
   FROM CENTRALITV.ESTACIONES e
  WHERE e.Central_Datos = -1
- ORDER BY e.DesEstacion
+   AND e.Cod_Empresa IN ('01', '03')
+ ORDER BY e.Cod_Empresa, e.DesEstacion

@@ -8,74 +8,84 @@ import {
 import { TuvSudLogo } from '../../../components/common/TuvSudLogo';
 import { useAuth } from '../context/AuthContext';
 
+interface AlertState {
+  variant: 'danger' | 'warning' | 'primary';
+  heading: string;
+  message: string;
+}
+
 export const LoginPage: React.FC = () => {
-  const { login, isLoading } = useAuth();
+  const { login } = useAuth();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isSso, setIsSso] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<{ username?: string; password?: string }>({});
+  const [alert, setAlert] = useState<AlertState | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const handleUsernameChange = (e: any) => {
     const val = e.target?.value ?? e.detail?.value ?? '';
     setUsername(val);
-    if (fieldErrors.username) {
-      setFieldErrors((prev) => ({ ...prev, username: undefined }));
-    }
   };
 
   const handlePasswordChange = (e: any) => {
     const val = e.target?.value ?? e.detail?.value ?? '';
     setPassword(val);
-    if (fieldErrors.password) {
-      setFieldErrors((prev) => ({ ...prev, password: undefined }));
-    }
   };
 
-  // Doble Validación: 1) Frontend (inmediata) -> 2) Backend (reglas de negocio)
-  const validateForm = (): boolean => {
-    const errors: { username?: string; password?: string } = {};
-
-    if (!username.trim()) {
-      errors.username = 'Introduzca su usuario corporativo, código de inspector o SUPERVISOR.';
-    } else if (username.trim().length < 2) {
-      errors.username = 'El identificador de usuario debe contener al menos 2 caracteres.';
-    }
-
-    if (!isSso) {
-      if (!password.trim()) {
-        errors.password = 'Introduzca la contraseña para iniciar sesión.';
-      } else if (password.trim().length < 2) {
-        errors.password = 'La contraseña debe contener al menos 2 caracteres.';
-      }
-    }
-
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleSubmit = async (e?: React.FormEvent | React.MouseEvent | React.KeyboardEvent) => {
+  const handleSubmit = async (e?: React.SyntheticEvent) => {
     if (e && 'preventDefault' in e) {
       e.preventDefault();
     }
-    setErrorMessage(null);
 
-    // 1. Validación en Frontend
-    if (!validateForm()) {
+    if (isLoggingIn) {
       return;
     }
 
-    // 2. Validación en Backend (reglas de negocio en C# / Oracle / AD)
-    const result = await login({
-      username: username.trim(),
-      password: isSso ? undefined : password.trim(),
-      isSso,
-    });
+    const userClean = username.trim();
+    const passClean = password.trim();
 
-    if (!result.success) {
-      // Mensaje seguro sin fuga de información interna (OWASP A04 / A05)
-      setErrorMessage(result.errorMessage ?? 'Credenciales no válidas o acceso no autorizado.');
+    // 1. Validación de campos obligatorios
+    if (!userClean || (!isSso && !passClean)) {
+      setAlert({
+        variant: 'warning',
+        heading: 'Campos requeridos',
+        message: 'Debe introducir tanto el usuario como la contraseña para iniciar sesión.',
+      });
+      return;
+    }
+
+    setIsLoggingIn(true);
+
+    // 2. Validación de credenciales en Backend (C# / Oracle / AD)
+    try {
+      const result = await login({
+        username: userClean,
+        password: isSso ? undefined : passClean,
+        isSso,
+      });
+
+      if (!result.success) {
+        const isNetworkErr =
+          result.errorMessage?.toLowerCase().includes('conexión') ||
+          result.errorMessage?.toLowerCase().includes('servidor');
+
+        setAlert({
+          variant: 'danger',
+          heading: isNetworkErr ? 'Incidencia de comunicación' : 'Acceso no autorizado',
+          message: isNetworkErr
+            ? 'No ha sido posible verificar las credenciales en este momento. Por favor, inténtelo de nuevo más tarde.'
+            : 'Las credenciales introducidas no son válidas o no dispone de autorización para acceder al sistema.',
+        });
+      }
+    } catch {
+      setAlert({
+        variant: 'danger',
+        heading: 'Incidencia de comunicación',
+        message: 'No ha sido posible verificar las credenciales en este momento. Por favor, inténtelo de nuevo más tarde.',
+      });
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -129,20 +139,12 @@ export const LoginPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Mensaje de Error del Backend */}
-          {errorMessage && (
-            <div style={{ marginBottom: '20px' }}>
-              <TsAlert
-                variant="danger"
-                heading="Acceso Denegado"
-              >
-                {errorMessage}
-              </TsAlert>
-            </div>
-          )}
-
-          {/* Formulario con Doble Validación */}
-          <form onSubmit={handleSubmit} noValidate>
+          {/* Formulario con Validación Segura */}
+          <form
+            onSubmit={handleSubmit}
+            action="javascript:void(0);"
+            noValidate
+          >
             {/* Campo Usuario */}
             <div style={{ marginBottom: '18px' }}>
               <label
@@ -161,25 +163,12 @@ export const LoginPage: React.FC = () => {
                     value={username}
                     placeholder="Usuario corporativo, DNI o código (ej. 0001)"
                     onTsInput={handleUsernameChange}
-                    onTsChange={handleUsernameChange}
-                    onInput={handleUsernameChange}
-                    onChange={handleUsernameChange}
-                    onKeyDown={(e: any) => {
-                      if (e.key === 'Enter') {
-                        handleSubmit(e);
-                      }
-                    }}
-                    disabled={isLoading}
+                    disabled={isLoggingIn}
                     autoFocus
                     style={{ width: '100%' }}
                   />
                 </div>
               </label>
-              {fieldErrors.username && (
-                <div style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: '4px', fontWeight: 500 }}>
-                  ⚠️ {fieldErrors.username}
-                </div>
-              )}
             </div>
 
             {/* Campo Contraseña */}
@@ -201,15 +190,7 @@ export const LoginPage: React.FC = () => {
                     value={password}
                     placeholder={isSso ? 'Autenticación Windows (SSO activado)' : 'Contraseña corporativa o interna'}
                     onTsInput={handlePasswordChange}
-                    onTsChange={handlePasswordChange}
-                    onInput={handlePasswordChange}
-                    onChange={handlePasswordChange}
-                    onKeyDown={(e: any) => {
-                      if (e.key === 'Enter') {
-                        handleSubmit(e);
-                      }
-                    }}
-                    disabled={isLoading || isSso}
+                    disabled={isLoggingIn || isSso}
                     style={{
                       width: '100%',
                       backgroundColor: isSso ? '#f1f5f9' : '#ffffff',
@@ -217,11 +198,6 @@ export const LoginPage: React.FC = () => {
                   />
                 </div>
               </label>
-              {!isSso && fieldErrors.password && (
-                <div style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: '4px', fontWeight: 500 }}>
-                  ⚠️ {fieldErrors.password}
-                </div>
-              )}
             </div>
 
             {/* Checkbox Single Sign-On (SSO) */}
@@ -230,7 +206,7 @@ export const LoginPage: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                marginBottom: '24px',
+                marginBottom: alert ? '14px' : '22px',
                 padding: '8px 10px',
                 backgroundColor: isSso ? '#f0fdf4' : 'transparent',
                 borderRadius: '6px',
@@ -245,10 +221,10 @@ export const LoginPage: React.FC = () => {
                   setIsSso(e.target.checked);
                   if (e.target.checked) {
                     setPassword('');
-                    setFieldErrors((prev) => ({ ...prev, password: undefined }));
+                    setAlert(null);
                   }
                 }}
-                disabled={isLoading}
+                disabled={isLoggingIn}
                 style={{
                   width: '16px',
                   height: '16px',
@@ -269,13 +245,38 @@ export const LoginPage: React.FC = () => {
               </label>
             </div>
 
+            {/* Alerta de Autenticación / Validación (Visible, Cerrable, Responsiva en Móvil y Pentest-Safe) */}
+            {alert && (
+              <div
+                style={{
+                  marginBottom: '18px',
+                  maxWidth: '100%',
+                  overflowWrap: 'break-word',
+                }}
+              >
+                <TsAlert
+                  variant={alert.variant}
+                  open
+                  closable
+                  onTsAfterHide={() => setAlert(null)}
+                  style={{
+                    wordBreak: 'break-word',
+                    fontSize: '0.84rem',
+                    lineHeight: 1.45,
+                  }}
+                >
+                  <div style={{ fontWeight: 700, marginBottom: '2px' }}>{alert.heading}</div>
+                  <div>{alert.message}</div>
+                </TsAlert>
+              </div>
+            )}
+
             {/* Botón de envío */}
             <TsButton
-              type="button"
+              type="submit"
               variant="primary"
-              disabled={isLoading}
-              loading={isLoading}
-              onClick={handleSubmit}
+              disabled={isLoggingIn}
+              loading={isLoggingIn}
               style={{
                 width: '100%',
                 padding: '10px 16px',
@@ -283,26 +284,9 @@ export const LoginPage: React.FC = () => {
                 fontSize: '14px',
               }}
             >
-              {isLoading ? 'Comprobando credenciales...' : 'Iniciar Sesión'}
+              {isLoggingIn ? 'Comprobando credenciales...' : 'Iniciar Sesión'}
             </TsButton>
-            <button type="submit" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
           </form>
-
-          {/* Información de ayuda sobre tipos de acceso */}
-          <div
-            style={{
-              marginTop: '24px',
-              paddingTop: '18px',
-              borderTop: '1px solid var(--ts-semantic-color-border-subtle, #f1f5f9)',
-              fontSize: '11px',
-              color: 'var(--ts-semantic-color-text-subtle, #94a3b8)',
-              lineHeight: '1.5',
-            }}
-          >
-            <div>• <strong>Directorio Activo:</strong> Inicie sesión con su usuario de red corporativo.</div>
-            <div style={{ marginTop: '4px' }}>• <strong>Usuario Interno / Planta:</strong> Código numérico (ej. <code>0001</code>) o DNI sin letra.</div>
-            <div style={{ marginTop: '4px' }}>• <strong>Soporte del Sistema:</strong> Cuenta técnica <code>SUPERVISOR</code>.</div>
-          </div>
         </TsCard>
       </div>
     </div>

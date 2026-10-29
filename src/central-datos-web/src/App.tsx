@@ -4,21 +4,30 @@ import { LoginPage } from './features/auth/pages/LoginPage';
 import { Header } from './components/layout/Header';
 import { Navbar } from './components/layout/Navbar';
 import { UltimosDatosCentralizados } from './features/estaciones/components/UltimosDatosCentralizados';
-import { NAV_ITEMS, SECCION_INICIAL_ID } from './constants/navigation.constants';
+import { DESKTOP_MENUS } from './constants/navigation.constants';
 import { UI_CONSTANTS } from './constants/ui.constants';
-import { TsSpinner } from '@tuvsud/design-system/react';
+import {
+  TsBreadcrumb,
+  TsBreadcrumbItem,
+  TsButton,
+  TsCard,
+  TsBadge,
+  TsSpinner,
+} from '@tuvsud/design-system/react';
 
 function AppContent() {
   const { isAuthenticated, isLoading, logNavigation } = useAuth();
-  const [seccionActiva, setSeccionActiva] = useState(SECCION_INICIAL_ID);
+  // Estado inicial: null (solo se muestran los menús superiores sin cargar pantallas ni realizar consultas)
+  const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
+  const [activeItemId, setActiveItemId] = useState<string | null>(null);
   const { BRAND } = UI_CONSTANTS;
 
-  // Registrar auditoría de navegación al cambiar de sección
+  // Registrar auditoría de navegación al cambiar de módulo o volver al inicio
   useEffect(() => {
     if (isAuthenticated) {
-      logNavigation(`/modulo/${seccionActiva}`);
+      logNavigation(activeItemId ? `/modulo/${activeItemId}` : '/inicio');
     }
-  }, [seccionActiva, isAuthenticated, logNavigation]);
+  }, [activeItemId, isAuthenticated, logNavigation]);
 
   if (isLoading) {
     return (
@@ -41,10 +50,23 @@ function AppContent() {
     );
   }
 
-  // Si no está autenticado, mostrar la pantalla de Login oficial
+  // Si no está autenticado, mostrar la pantalla de Login oficial (sin leyendas innecesarias)
   if (!isAuthenticated) {
     return <LoginPage />;
   }
+
+  const handleSelectItem = (itemId: string, groupId: string) => {
+    setActiveGroupId(groupId);
+    setActiveItemId(itemId);
+  };
+
+  const handleGoHome = () => {
+    setActiveGroupId(null);
+    setActiveItemId(null);
+  };
+
+  const currentGroup = DESKTOP_MENUS.find((g) => g.id === activeGroupId);
+  const currentItem = currentGroup?.items.find((i) => i.id === activeItemId);
 
   return (
     <div
@@ -59,11 +81,13 @@ function AppContent() {
       {/* 1. Header Corporativo TÜV SÜD */}
       <Header />
 
-      {/* 2. Barra de Navegación por Módulos */}
+      {/* 2. Barra Superior de Menús de la Aplicación de Escritorio */}
       <Navbar
-        items={NAV_ITEMS}
-        activeId={seccionActiva}
-        onSelect={setSeccionActiva}
+        menus={DESKTOP_MENUS}
+        activeGroupId={activeGroupId}
+        activeItemId={activeItemId}
+        onSelectItem={handleSelectItem}
+        onGoHome={handleGoHome}
       />
 
       {/* 3. Área de Contenido Principal Responsiva */}
@@ -77,49 +101,232 @@ function AppContent() {
           boxSizing: 'border-box',
         }}
       >
-        {seccionActiva === 'ultimos-datos' && <UltimosDatosCentralizados />}
+        {/* CASO A: Pantalla Inicial Limpia (Al entrar solo se muestran los menús de arriba; no se carga nada hasta pinchar) */}
+        {activeItemId === null && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '0.5rem' }}>
+            <TsCard style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)', backgroundColor: '#ffffff' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+                <div
+                  style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '12px',
+                    backgroundColor: '#f0f6ff',
+                    border: '2px solid #0046ad',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '2rem',
+                    flexShrink: 0,
+                  }}
+                >
+                  🖥️
+                </div>
+                <div>
+                  <h1
+                    style={{
+                      margin: '0 0 0.35rem 0',
+                      fontSize: 'clamp(1.4rem, 2.5vw, 1.85rem)',
+                      color: 'var(--ts-semantic-color-surface-inverted-default, #0b253b)',
+                      fontWeight: 800,
+                    }}
+                  >
+                    TÜV SÜD Central Datos Web
+                  </h1>
+                  <p style={{ margin: 0, color: '#5c768d', fontSize: '0.95rem' }}>
+                    Gestión y Control Operativo Centralizado de Estaciones ITV. Seleccione una opción del menú superior para abrir un módulo de trabajo.
+                  </p>
+                </div>
+              </div>
+            </TsCard>
 
-        {seccionActiva !== 'ultimos-datos' && (
-          <div
-            style={{
-              padding: '4rem 2rem',
-              textAlign: 'center',
-              backgroundColor: '#ffffff',
-              borderRadius: '8px',
-              border: '1px solid var(--ts-semantic-color-border-default, #d0dae5)',
-              marginTop: '1rem',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-            }}
-          >
-            <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>
-              {NAV_ITEMS.find((n) => n.id === seccionActiva)?.icon}
+            {/* Accesos Rápidos Principales */}
+            <div>
+              <h2
+                style={{
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  color: '#0b253b',
+                  marginBottom: '0.75rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                Módulos de la Aplicación
+              </h2>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
+                  gap: '1rem',
+                }}
+              >
+                {/* Tarjeta de Acceso Directo: Última fecha inspección */}
+                <TsCard
+                  style={{
+                    padding: '1.5rem',
+                    backgroundColor: '#ffffff',
+                    borderLeft: '4px solid #0046ad',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                      <span style={{ fontSize: '1.75rem' }}>📊</span>
+                      <TsBadge variant="primary">Activo (30 ITV)</TsBadge>
+                    </div>
+                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0046ad', fontWeight: 700 }}>
+                      Última fecha inspección
+                    </h3>
+                    <p style={{ margin: '0 0 1.25rem 0', color: '#64748b', fontSize: '0.88rem', lineHeight: 1.5 }}>
+                      Consulta del estado de sincronización y fecha de última inspección recibida en Central Datos para las 30 estaciones de la red.
+                    </p>
+                  </div>
+                  <TsButton
+                    variant="primary"
+                    onClick={() => handleSelectItem('ultima-fecha', 'aplicacion')}
+                    style={{ width: '100%' }}
+                  >
+                    Abrir Módulo
+                  </TsButton>
+                </TsCard>
+
+                {/* Tarjeta Fase 2: Informes */}
+                <TsCard style={{ padding: '1.5rem', backgroundColor: '#ffffff', opacity: 0.9 }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                      <span style={{ fontSize: '1.75rem' }}>📑</span>
+                      <TsBadge variant="neutral">Próximamente</TsBadge>
+                    </div>
+                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0b253b', fontWeight: 700 }}>
+                      Informes y MINER Excel
+                    </h3>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '0.88rem', lineHeight: 1.5 }}>
+                      Estadísticas oficiales MINER, informes de facturación, defectología y tiempos de inspección.
+                    </p>
+                  </div>
+                </TsCard>
+
+                {/* Tarjeta Fase 2: Inspecciones */}
+                <TsCard style={{ padding: '1.5rem', backgroundColor: '#ffffff', opacity: 0.9 }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                      <span style={{ fontSize: '1.75rem' }}>🚗</span>
+                      <TsBadge variant="neutral">Próximamente</TsBadge>
+                    </div>
+                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0b253b', fontWeight: 700 }}>
+                      Localización de Inspecciones
+                    </h3>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '0.88rem', lineHeight: 1.5 }}>
+                      Búsqueda y trazabilidad por matrícula, bastidor, defectos y mediciones de vehículos.
+                    </p>
+                  </div>
+                </TsCard>
+
+                {/* Tarjeta Fase 2: Comercial */}
+                <TsCard style={{ padding: '1.5rem', backgroundColor: '#ffffff', opacity: 0.9 }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                      <span style={{ fontSize: '1.75rem' }}>📱</span>
+                      <TsBadge variant="neutral">Próximamente</TsBadge>
+                    </div>
+                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0b253b', fontWeight: 700 }}>
+                      Citas Previas & Campañas SMS
+                    </h3>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '0.88rem', lineHeight: 1.5 }}>
+                      Gestión de citas previas, recordatorios automáticos de vencimiento y campañas a clientes.
+                    </p>
+                  </div>
+                </TsCard>
+              </div>
             </div>
-            <h2
-              style={{
-                color: '#0046ad',
-                margin: '0 0 0.5rem 0',
-                fontSize: '1.35rem',
-                fontWeight: 700,
-              }}
-            >
-              Módulo: {NAV_ITEMS.find((n) => n.id === seccionActiva)?.label}
-            </h2>
-            <p
-              style={{
-                color: '#5c768d',
-                maxWidth: '540px',
-                margin: '0 auto',
-                fontSize: '0.92rem',
-                lineHeight: 1.5,
-              }}
-            >
-              Este módulo forma parte de las siguientes fases de migración planificadas para Central Datos.
-            </p>
+          </div>
+        )}
+
+        {/* CASO B: Módulo de Última Fecha de Inspección (Se carga únicamente al pinchar) */}
+        {activeItemId === 'ultima-fecha' && (
+          <UltimosDatosCentralizados onNavigateHome={handleGoHome} />
+        )}
+
+        {/* CASO C: Resto de Módulos de la Aplicación de Escritorio con su correspondiente miga de pan */}
+        {activeItemId !== null && activeItemId !== 'ultima-fecha' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {/* Miga de Pan Correspondiente Interactiva */}
+            <TsBreadcrumb>
+              <TsBreadcrumbItem
+                onClick={handleGoHome}
+                title="Regresar a la pantalla de Inicio"
+                style={{ cursor: 'pointer', color: '#0046ad', fontWeight: 600 }}
+              >
+                Inicio
+              </TsBreadcrumbItem>
+              {currentGroup && (
+                <TsBreadcrumbItem
+                  onClick={() => {
+                    if (currentGroup.items.length === 1) {
+                      handleSelectItem(currentGroup.items[0].id, currentGroup.id);
+                    }
+                  }}
+                  style={{
+                    cursor: currentGroup.items.length === 1 ? 'pointer' : 'default',
+                    color: currentGroup.items.length === 1 ? '#0046ad' : undefined,
+                  }}
+                >
+                  {currentGroup.label}
+                </TsBreadcrumbItem>
+              )}
+              {currentItem && (
+                <TsBreadcrumbItem style={{ fontWeight: 700, color: 'var(--ts-semantic-color-surface-inverted-default, #0b253b)' }}>
+                  {currentItem.label}
+                </TsBreadcrumbItem>
+              )}
+            </TsBreadcrumb>
+
+            <TsCard style={{ padding: '3.5rem 2rem', textAlign: 'center', backgroundColor: '#ffffff' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
+                {currentItem?.icon ?? '📑'}
+              </div>
+              <h2
+                style={{
+                  color: '#0046ad',
+                  margin: '0 0 0.75rem 0',
+                  fontSize: '1.45rem',
+                  fontWeight: 700,
+                }}
+              >
+                Módulo: {currentItem?.label}
+              </h2>
+              <p
+                style={{
+                  color: '#5c768d',
+                  maxWidth: '560px',
+                  margin: '0 auto 1.5rem auto',
+                  fontSize: '0.95rem',
+                  lineHeight: 1.6,
+                }}
+              >
+                Esta funcionalidad forma parte de la aplicación de escritorio (<code>mdiMain.vb</code>) y está integrada en la hoja de ruta de modernización de Central Datos.
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <TsButton variant="secondary" onClick={handleGoHome}>
+                  🏠 Volver al Inicio
+                </TsButton>
+                <TsButton
+                  variant="primary"
+                  onClick={() => handleSelectItem('ultima-fecha', 'aplicacion')}
+                >
+                  📊 Ir a Última fecha inspección
+                </TsButton>
+              </div>
+            </TsCard>
           </div>
         )}
       </main>
 
-      {/* 4. Pie de Página */}
+      {/* 4. Pie de Página Limpio */}
       <footer
         style={{
           borderTop: '1px solid var(--ts-semantic-color-border-default, #d0dae5)',
@@ -130,6 +337,8 @@ function AppContent() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '0.5rem',
         }}
       >
         <span>{BRAND.FOOTER_TEXT}</span>

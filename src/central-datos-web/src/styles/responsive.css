@@ -3,7 +3,7 @@
  * Optimizado para Escritorio (PC), Portátiles, Tabletas y Dispositivos Móviles
  */
 
-/* Breakpoint Móvil (< 768px) */
+/* Breakpoint Móvil / Tablet estrecha (< 768px) */
 @media (max-width: 768px) {
   .cd-hide-mobile {
     display: none !important;
@@ -12,6 +12,7 @@
   .cd-stack-mobile {
     flex-direction: column !important;
     align-items: stretch !important;
+    gap: 0.75rem !important;
   }
   
   .cd-fullwidth-mobile {
@@ -24,12 +25,75 @@
 
   .cd-filter-buttons {
     width: 100% !important;
-    justify-content: flex-start !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.65rem !important;
+  }
+
+  .cd-filter-buttons > div {
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
   }
 
   .cd-filter-buttons button {
     flex: 1 1 auto !important;
     text-align: center !important;
+    padding: 0.5rem 0.65rem !important;
+  }
+
+  /* Barra móvil de navegación */
+  .cd-nav-mobile-bar {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.65rem 0;
+  }
+
+  /* Menús en vertical en móvil cuando se pulsa el botón */
+  .cd-nav-container-desktop {
+    display: none !important;
+  }
+
+  .cd-nav-container-desktop.cd-nav-open-mobile {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    padding: 0.5rem 0 0.85rem 0 !important;
+    gap: 0.35rem !important;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .cd-nav-group-wrapper {
+    width: 100% !important;
+  }
+
+  .cd-nav-btn-mobile {
+    width: 100% !important;
+    justify-content: space-between !important;
+    border-radius: 4px !important;
+    border-bottom: none !important;
+    padding: 0.75rem 1rem !important;
+  }
+
+  .cd-nav-dropdown-mobile {
+    position: static !important;
+    box-shadow: none !important;
+    border: none !important;
+    background-color: #f8fafc !important;
+    border-left: 3px solid #0046ad !important;
+    border-radius: 0 !important;
+    margin-left: 0.75rem !important;
+    width: calc(100% - 0.75rem) !important;
+    padding: 4px 0 !important;
+  }
+
+  /* Celdas de tabla compactas en móvil */
+  .cd-table-th,
+  .cd-table-td {
+    padding: 0.65rem 0.85rem !important;
+    font-size: 0.84rem !important;
   }
 }
 
@@ -37,6 +101,16 @@
 @media (min-width: 769px) {
   .cd-scroll-hint {
     display: none !important;
+  }
+
+  .cd-nav-mobile-bar {
+    display: none !important;
+  }
+
+  .cd-nav-container-desktop {
+    display: flex !important;
+    align-items: center;
+    gap: 0.25rem;
   }
 }
 
@@ -56,3 +130,22 @@
   border-radius: 3px;
 }
 
+/* Cabeceras de tabla ordenables con soporte nativo CSS para hover y estado activo */
+.cd-table-th {
+  background-color: #0046ad;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.cd-table-th:hover {
+  background-color: #003a94;
+}
+
+.cd-table-th.cd-table-th-active {
+  background-color: #1e3b8a;
+}
+
+.cd-table-th.cd-table-th-active:hover {
+  background-color: #172e6c;
+}

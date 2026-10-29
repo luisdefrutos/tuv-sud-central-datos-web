@@ -4,6 +4,32 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.06.0] - 30/10/2026 — *Estabilidad de Login, Notificaciones Pentest-Safe y Ordenación Robusta de Red*
+
+### 🔐 Autenticación y Experiencia de Usuario (Login)
+* **Erradicación del Parpadeo y Pantalla en Blanco en Error de Acceso**:
+  * Desacoplamiento del estado global `isLoading` en `AuthContext.tsx`, impidiendo el desmontaje accidental de `LoginPage.tsx` durante el procesamiento de credenciales.
+  * Migración del estado de progreso a un indicador local (`isLoggingIn`) exclusivo del botón de acción.
+  * Incorporación de `action="javascript:void(0);"` en el formulario para neutralizar recargas nativas indeseadas del navegador.
+* **Componente `TsAlert` Cerrable y Móvil**:
+  * Integración estable de `<TsAlert>` corporativo situado sobre el botón de envío, con cierre manual (`closable` y `onTsAfterHide`).
+  * Estilos elásticos con `wordBreak: 'break-word'` y `maxWidth: '100%'` adaptados a pantallas de smartphone.
+* **Unificación y Cumplimiento Pentest (OWASP ASVS / CWE-204 & CWE-208)**:
+  * Eliminación de filtros asimétricos de longitud en frontend (`length < 2`) para evitar cualquier tipo de inferencia o enumeración de cuentas.
+  * Mensaje genérico y neutral ante cualquier fallo de validación o contraseña incorrecta: *"Las credenciales introducidas no son válidas o no dispone de autorización para acceder al sistema."*.
+
+### 📊 Monitor de Estaciones y Ordenación
+* **Agrupación Ponderada de Sociedades**:
+  * Implementación de la función `getPesoSociedad` en `useUltimosDatos.ts` (`TSA / ATISAE = 1`, `CAL = 2`, `Otras = 99`), asegurando que las estaciones pertenecientes a la misma sociedad permanezcan estrictamente agrupadas bajo cualquier ordenación.
+  * Criterio de desempate determinista secundario (*tie-breaker*) alfabético por denominación y código de estación.
+* **Solución al Bloqueo/Congelación de Columnas**:
+  * Unificación atómica del estado de ordenación en `orden: { columna, direccion }` dentro del hook `useUltimosDatos.ts`, eliminando los bailouts y side-effects de React 18 que congelaban la tabla tras sucesivos clics.
+  * Ordenación nativa SQL actualizada en `ObtenerUltimosDatosCentralizados.sql` con `ORDER BY e.Cod_Empresa, e.DesEstacion`.
+* **Optimización de Estilos en Tabla**:
+  * Reemplazo de manipulación DOM imperativa en cabeceras `th` por clases nativas CSS (`.cd-table-th`, `.cd-table-th-active`) en `responsive.css`.
+
+---
+
 ## [2.05.0] - 29/10/2026 — *Hito de Autenticación, Auditoría, Logging y Responsividad* (Commits: `504f50a`, `5860865`)
 
 ### 🔐 Seguridad y Autenticación

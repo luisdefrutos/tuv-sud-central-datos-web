@@ -26,3 +26,12 @@ export interface ResumenEstaciones {
 }
 
 export type FiltroSociedad = ClaveSociedad;
+
+export type ColumnaOrden =
+  | 'codEstacion'
+  | 'desEstacion'
+  | 'nombreEmpresa'
+  | 'ultimaInspeccion'
+  | 'estadoSincronizacion';
+
+export type DireccionOrden = 'asc' | 'desc';

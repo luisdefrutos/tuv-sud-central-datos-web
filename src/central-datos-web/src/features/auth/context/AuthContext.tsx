@@ -93,7 +93,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = useCallback(async (request: LoginRequest) => {
-    setIsLoading(true);
     try {
       const result = await authApi.login(request);
       if (result.success && result.token && result.user) {
@@ -101,14 +100,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sessionStorage.setItem(USER_KEY, JSON.stringify(result.user));
         setToken(result.token);
         setUser(result.user);
-        setIsLoading(false);
         return { success: true };
       }
 
-      setIsLoading(false);
       return { success: false, errorMessage: result.errorMessage ?? 'Error al iniciar sesión' };
     } catch {
-      setIsLoading(false);
       return { success: false, errorMessage: 'Error de conexión con el servidor de autenticación' };
     }
   }, []);
