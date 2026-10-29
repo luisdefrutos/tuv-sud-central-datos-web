@@ -1,0 +1,58 @@
+/*
+ * Reglas de Responsividad y Adaptabilidad para TÜV SÜD Central Datos
+ * Optimizado para Escritorio (PC), Portátiles, Tabletas y Dispositivos Móviles
+ */
+
+/* Breakpoint Móvil (< 768px) */
+@media (max-width: 768px) {
+  .cd-hide-mobile {
+    display: none !important;
+  }
+  
+  .cd-stack-mobile {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  
+  .cd-fullwidth-mobile {
+    width: 100% !important;
+  }
+
+  .cd-scroll-hint {
+    display: flex !important;
+  }
+
+  .cd-filter-buttons {
+    width: 100% !important;
+    justify-content: flex-start !important;
+  }
+
+  .cd-filter-buttons button {
+    flex: 1 1 auto !important;
+    text-align: center !important;
+  }
+}
+
+/* Breakpoint Desktop / Tablet (> 768px) */
+@media (min-width: 769px) {
+  .cd-scroll-hint {
+    display: none !important;
+  }
+}
+
+/* Contenedor con scroll táctil suave y optimizado */
+.cd-touch-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.cd-touch-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.cd-touch-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--ts-semantic-color-border-default, #d0dae5);
+  border-radius: 3px;
+}
+

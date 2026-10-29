@@ -31,7 +31,12 @@ public class EstacionesService
                 e.TipoEstacion ?? EmpresasConstants.TipoEstacionDefault,
                 e.UltimaInspeccion,
                 formatted,
-                e.UltimaInspeccion.HasValue
+                e.UltimaInspeccion.HasValue,
+                e.DiasSinTransmitir,
+                e.EstadoSincronizacion,
+                e.EstadoSincronizacionLabel,
+                e.NivelSincronizacion,
+                e.TooltipSincronizacion
             );
         }).ToList();
 

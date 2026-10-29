@@ -9,6 +9,11 @@ export interface EstacionDato {
   ultimaInspeccion: string | null;
   ultimaInspeccionFormatted: string;
   tieneInspecciones: boolean;
+  diasSinTransmitir?: number | null;
+  estadoSincronizacion: 'AlDia' | 'Alerta' | 'Critico' | 'SinDatos';
+  estadoSincronizacionLabel: string;
+  nivelSincronizacion: 'success' | 'warning' | 'danger' | 'neutral';
+  tooltipSincronizacion: string;
 }
 
 export interface ResumenEstaciones {

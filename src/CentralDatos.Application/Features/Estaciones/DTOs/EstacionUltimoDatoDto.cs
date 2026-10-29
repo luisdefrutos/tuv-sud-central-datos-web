@@ -8,7 +8,12 @@ public record EstacionUltimoDatoDto(
     string? TipoEstacion,
     DateTime? UltimaInspeccion,
     string UltimaInspeccionFormatted,
-    bool TieneInspecciones
+    bool TieneInspecciones,
+    int? DiasSinTransmitir,
+    string EstadoSincronizacion,
+    string EstadoSincronizacionLabel,
+    string NivelSincronizacion,
+    string TooltipSincronizacion
 );
 
 public record ResumenEstadoEstacionesDto(

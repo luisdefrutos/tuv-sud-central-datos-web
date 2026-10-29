@@ -1,4 +1,3 @@
-import { useState, useEffect, useMemo } from 'react';
 import {
   TsAlert,
   TsBadge,
@@ -9,53 +8,25 @@ import {
   TsInput,
   TsSpinner,
 } from '@tuvsud/design-system/react';
-import type { ResumenEstaciones, FiltroSociedad } from '../types/estaciones.types';
-import { fetchUltimosDatosEstaciones } from '../../../api/estacionesApi';
+import { useUltimosDatos } from '../hooks/useUltimosDatos';
 import { SOCIEDADES } from '../../../constants/companies.constants';
 import { UI_CONSTANTS } from '../../../constants/ui.constants';
 
 export function UltimosDatosCentralizados() {
-  const [data, setData] = useState<ResumenEstaciones | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filtroSociedad, setFiltroSociedad] = useState<FiltroSociedad>('TODAS');
+  // Lógica y estados desacoplados limpiamente en el Custom Hook
+  const {
+    data,
+    loading,
+    error,
+    searchTerm,
+    setSearchTerm,
+    filtroSociedad,
+    setFiltroSociedad,
+    estacionesFiltradas,
+    recargar,
+  } = useUltimosDatos();
 
   const { MODULO_ULTIMOS_DATOS: UI } = UI_CONSTANTS;
-
-  const cargarDatos = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const json = await fetchUltimosDatosEstaciones();
-      setData(json);
-    } catch (err: any) {
-      console.error('Error cargando últimas fechas:', err);
-      setError(err.message || 'No se pudo conectar con el servicio central de estaciones.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    cargarDatos();
-  }, []);
-
-  const estacionesFiltradas = useMemo(() => {
-    if (!data?.estaciones) return [];
-    return data.estaciones.filter((item) => {
-      const matchText =
-        item.codEstacion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.desEstacion.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchSociedad =
-        filtroSociedad === 'TODAS' ||
-        (filtroSociedad === SOCIEDADES.ATISAE.clave && item.codEmpresa === SOCIEDADES.ATISAE.codigo) ||
-        (filtroSociedad === SOCIEDADES.CAL.clave && item.codEmpresa === SOCIEDADES.CAL.codigo);
-
-      return matchText && matchSociedad;
-    });
-  }, [data, searchTerm, filtroSociedad]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', position: 'relative' }}>
@@ -79,13 +50,14 @@ export function UltimosDatosCentralizados() {
             style={{
               backgroundColor: '#ffffff',
               borderRadius: '8px',
-              padding: '2.25rem 3rem',
+              padding: 'clamp(1.5rem, 4vw, 2.25rem) clamp(1.5rem, 5vw, 3rem)',
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               gap: '1.25rem',
               maxWidth: '420px',
+              width: '90%',
               textAlign: 'center',
               border: '1px solid var(--ts-semantic-color-border-default, #d0dae5)',
             }}
@@ -124,12 +96,12 @@ export function UltimosDatosCentralizados() {
         ))}
       </TsBreadcrumb>
 
-      {/* 3. Cabecera del Módulo */}
+      {/* 3. Cabecera del Módulo Responsiva */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'flex-start',
+          alignItems: 'center',
           flexWrap: 'wrap',
           gap: '1rem',
           borderBottom: '1px solid var(--ts-semantic-color-border-default, #d0dae5)',
@@ -140,7 +112,7 @@ export function UltimosDatosCentralizados() {
           <h1
             style={{
               margin: 0,
-              fontSize: '1.65rem',
+              fontSize: 'clamp(1.35rem, 3vw, 1.65rem)',
               fontWeight: 700,
               color: 'var(--ts-semantic-color-surface-inverted-default, #0b253b)',
               letterSpacing: '-0.3px',
@@ -161,7 +133,7 @@ export function UltimosDatosCentralizados() {
 
         <TsButton
           variant="primary"
-          onClick={cargarDatos}
+          onClick={recargar}
           disabled={loading}
           style={{ minWidth: '160px' }}
         >
@@ -169,18 +141,18 @@ export function UltimosDatosCentralizados() {
         </TsButton>
       </div>
 
-      {/* 4. Alerta de Error si la conexión falla */}
+      {/* 4. Alerta de Error si la conexión falla (sanitizada contra Information Disclosure) */}
       {error && (
-        <TsAlert variant="danger" open>
-          <strong>Error de comunicación:</strong> {error}
+        <TsAlert variant="danger" open heading="Incidencia de comunicación">
+          {error}
         </TsAlert>
       )}
 
-      {/* 5. Tarjetas de Resumen Operativo */}
+      {/* 5. Tarjetas de Resumen Operativo (Grid Responsivo) */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
           gap: '1rem',
         }}
       >
@@ -215,15 +187,16 @@ export function UltimosDatosCentralizados() {
           <div style={{ fontSize: '0.82rem', color: 'var(--ts-semantic-color-text-subtle, #5c768d)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             {UI.CARD_ULTIMA_FECHA}
           </div>
-          <div style={{ fontSize: '1.25rem', fontWeight: 700, marginTop: '0.5rem', color: 'var(--ts-semantic-color-surface-inverted-default, #0b253b)', fontFamily: 'monospace' }}>
+          <div style={{ fontSize: '1.15rem', fontWeight: 700, marginTop: '0.5rem', color: 'var(--ts-semantic-color-surface-inverted-default, #0b253b)', fontFamily: 'monospace' }}>
             {data?.ultimaFechaGlobal ?? (loading ? '...' : 'N/D')}
           </div>
         </TsCard>
       </div>
 
-      {/* 6. Barra de Búsqueda y Filtros Rápidos */}
+      {/* 6. Barra de Búsqueda y Filtros Rápidos Responsiva */}
       <TsCard>
         <div
+          className="cd-stack-mobile"
           style={{
             display: 'flex',
             flexWrap: 'wrap',
@@ -232,16 +205,20 @@ export function UltimosDatosCentralizados() {
             justifyContent: 'space-between',
           }}
         >
-          <div style={{ flex: '1 1 320px', minWidth: '260px' }}>
+          <div style={{ flex: '1 1 280px', minWidth: '240px', width: '100%' }}>
             <TsInput
               placeholder={UI.PLACEHOLDER_BUSQUEDA}
               value={searchTerm}
               onTsInput={(e: any) => setSearchTerm(e.target.value)}
               clearable
+              style={{ width: '100%' }}
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div
+            className="cd-filter-buttons"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}
+          >
             <span style={{ fontSize: '0.85rem', color: 'var(--ts-semantic-color-text-subtle, #5c768d)', fontWeight: 600 }}>
               {UI.FILTRO_SOCIEDAD_LABEL}
             </span>
@@ -300,12 +277,52 @@ export function UltimosDatosCentralizados() {
         </div>
       </TsCard>
 
-      {/* 7. Tabla Oficial de Estaciones ITV */}
+      {/* 6.1 Leyenda de Estados de Sincronización */}
+      <TsCard style={{ padding: '14px 20px', backgroundColor: '#ffffff', border: '1px solid var(--ts-semantic-color-border-default, #d0dae5)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--ts-semantic-color-surface-inverted-default, #0b253b)' }}>
+              Leyenda de Sincronización de Datos:
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', fontSize: '0.82rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <TsBadge variant="success" style={{ fontSize: '0.75rem', fontWeight: 700 }}>Al día (≤ 48 horas)</TsBadge>
+              <span style={{ color: '#475569' }}>Inspecciones centralizadas hoy o ayer</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <TsBadge variant="warning" style={{ fontSize: '0.75rem', fontWeight: 700 }}>Alerta (3 - 5 días)</TsBadge>
+              <span style={{ color: '#475569' }}>Retraso de transmisión o fin de semana</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <TsBadge variant="danger" style={{ fontSize: '0.75rem', fontWeight: 700 }}>Crítico (&gt; 5 días)</TsBadge>
+              <span style={{ color: '#475569' }}>Estación sin comunicación reciente</span>
+            </div>
+          </div>
+        </div>
+      </TsCard>
+
+      {/* 7. Tabla Oficial de Estaciones ITV con Scroll Táctil */}
       <TsCard>
-        <div style={{ overflowX: 'auto' }}>
+        {/* Indicador de scroll para dispositivos táctiles */}
+        <div
+          className="cd-scroll-hint"
+          style={{
+            fontSize: '0.78rem',
+            color: '#64748b',
+            alignItems: 'center',
+            gap: '6px',
+            marginBottom: '8px',
+          }}
+        >
+          <span>↔️ Deslice horizontalmente para consultar todas las columnas</span>
+        </div>
+
+        <div className="cd-touch-scroll" style={{ width: '100%' }}>
           <table
             style={{
               width: '100%',
+              minWidth: '680px',
               borderCollapse: 'collapse',
               textAlign: 'left',
               fontFamily: 'var(--ts-font-family-sans, system-ui)',
@@ -322,20 +339,21 @@ export function UltimosDatosCentralizados() {
               >
                 <th style={{ padding: '0.85rem 1.25rem', width: '100px', fontWeight: 700 }}>{UI.TABLA.COL_CODIGO}</th>
                 <th style={{ padding: '0.85rem 1.25rem', fontWeight: 700 }}>{UI.TABLA.COL_DESCRIPCION}</th>
-                <th style={{ padding: '0.85rem 1.25rem', width: '220px', fontWeight: 700 }}>{UI.TABLA.COL_SOCIEDAD}</th>
-                <th style={{ padding: '0.85rem 1.25rem', width: '220px', fontWeight: 700 }}>{UI.TABLA.COL_ULTIMA_FECHA}</th>
+                <th style={{ padding: '0.85rem 1.25rem', width: '180px', fontWeight: 700 }}>{UI.TABLA.COL_SOCIEDAD}</th>
+                <th style={{ padding: '0.85rem 1.25rem', width: '180px', fontWeight: 700 }}>{UI.TABLA.COL_ULTIMA_FECHA}</th>
+                <th style={{ padding: '0.85rem 1.25rem', width: '180px', fontWeight: 700 }}>Estado Centralización</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={4} style={{ padding: '3rem', textAlign: 'center', color: 'var(--ts-semantic-color-text-subtle, #5c768d)' }}>
+                  <td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--ts-semantic-color-text-subtle, #5c768d)' }}>
                     {UI.TABLA.CARGANDO}
                   </td>
                 </tr>
               ) : estacionesFiltradas.length === 0 ? (
                 <tr>
-                  <td colSpan={4} style={{ padding: '3rem', textAlign: 'center', color: 'var(--ts-semantic-color-text-subtle, #5c768d)' }}>
+                  <td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--ts-semantic-color-text-subtle, #5c768d)' }}>
                     {UI.TABLA.SIN_RESULTADOS}
                   </td>
                 </tr>
@@ -392,6 +410,15 @@ export function UltimosDatosCentralizados() {
                     >
                       {estacion.ultimaInspeccionFormatted}
                     </td>
+                    <td style={{ padding: '0.85rem 1.25rem' }}>
+                      <TsBadge
+                        variant={estacion.nivelSincronizacion ?? 'neutral'}
+                        title={estacion.tooltipSincronizacion}
+                        style={{ fontSize: '0.76rem', fontWeight: 600 }}
+                      >
+                        {estacion.estadoSincronizacionLabel ?? 'Sin datos'}
+                      </TsBadge>
+                    </td>
                   </tr>
                 ))
               )}
@@ -408,6 +435,8 @@ export function UltimosDatosCentralizados() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '0.5rem',
           }}
         >
           <span>

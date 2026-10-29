@@ -2,8 +2,8 @@
 -- Query: ObtenerUltimosDatosCentralizados.sql
 -- Dominio: Estaciones ITV Centralizadas
 -- Descripción: Consulta la última fecha de inspección sincronizada para cada
---              estación ITV activa de TÜV SÜD (26 TSA + 3 CAL = 29 estaciones).
---              Excluye Maqueda (4510), Villasante (0905) y Tarancón Ext. (18).
+--              estación ITV activa de Central Datos (Central_Datos = -1),
+--              idéntico al formulario frmUltimaInspeccion de la aplicación de escritorio.
 -- ==============================================================================
 SELECT LPAD(TRIM(TO_CHAR(e.CodEstacion)), 4, '0') AS CodEstacion,
        e.DesEstacion                               AS DesEstacion,
@@ -14,6 +14,4 @@ SELECT LPAD(TRIM(TO_CHAR(e.CodEstacion)), 4, '0') AS CodEstacion,
          WHERE i.CODESTACION = LPAD(TRIM(TO_CHAR(e.CodEstacion)), 4, '0')) AS UltimaInspeccion
   FROM CENTRALITV.ESTACIONES e
  WHERE e.Central_Datos = -1
-   AND e.Cod_Empresa IN ('01', '03')
-   AND LPAD(TRIM(TO_CHAR(e.CodEstacion)), 4, '0') NOT IN ('4510', '0905')
  ORDER BY e.DesEstacion

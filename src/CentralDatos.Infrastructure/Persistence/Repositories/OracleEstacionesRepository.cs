@@ -34,21 +34,26 @@ public class OracleEstacionesRepository : IEstacionesRepository
         // 1. Cargar consulta SQL externalizada y cacheada
         var sql = _sqlLoader.GetQuery("ObtenerUltimosDatosCentralizados");
 
-        // 2. Intentar conexión directa ODP.NET Thin con Dapper
-        if (!string.IsNullOrWhiteSpace(_options.ConnectionString))
+        // 2. Prioridad: Pasarela SOAP CentralITV_Svc (idéntico a la aplicación de escritorio WinForms)
+        if (!string.IsNullOrWhiteSpace(_options.SoapUrl))
         {
             try
             {
-                return await ObtenerPorDapperAsync(sql, cancellationToken);
+                return await ObtenerPorSoapAsync(sql, cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Fallo en conexión directa Oracle. Probando pasarela SOAP gestion-desa...");
+                _logger.LogWarning(ex, "Fallo en pasarela SOAP CentralITV_Svc ({SoapUrl}). Probando conexión directa Oracle...", _options.SoapUrl);
             }
         }
 
-        // 3. Fallback mediante pasarela SOAP CentralITV_Svc
-        return await ObtenerPorSoapAsync(sql, cancellationToken);
+        // 3. Fallback: Conexión directa ODP.NET Thin con Dapper
+        if (!string.IsNullOrWhiteSpace(_options.ConnectionString))
+        {
+            return await ObtenerPorDapperAsync(sql, cancellationToken);
+        }
+
+        throw new InvalidOperationException("No se ha configurado ni pasarela SOAP ni cadena de conexión Oracle válida.");
     }
 
     private async Task<IReadOnlyList<EstacionUltimoDato>> ObtenerPorDapperAsync(string sql, CancellationToken cancellationToken)
@@ -66,14 +71,23 @@ public class OracleEstacionesRepository : IEstacionesRepository
             throw new InvalidOperationException("La URL del servicio SOAP ('CentralItv:SoapUrl') no está configurada.");
         }
 
+        // 1. Limpieza de SQL y cálculo de Clave y Passport (protocolo histórico CentralITV_Svc)
+        var sqlLimpia = System.Text.RegularExpressions.Regex.Replace(sql, @"[^A-Za-z0-9]", "");
+        var clave = ComputeMd5(sqlLimpia);
+        var passport = ComputeMd5(clave + _options.SoapSecret);
+
         var soapEnvelope = $@"<?xml version=""1.0"" encoding=""utf-8""?>
 <soap:Envelope xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" 
                xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" 
                xmlns:soap=""http://schemas.xmlsoap.org/soap/envelope/"">
   <soap:Body>
-    <ExecuteQuery xmlns=""http://tempuri.org/"">
-      <sql>{System.Security.SecurityElement.Escape(sql)}</sql>
-    </ExecuteQuery>
+    <GetDatos_Paginados_3 xmlns=""http://tempuri.org/"">
+      <strSQL>{System.Security.SecurityElement.Escape(sql)}</strSQL>
+      <intLimite_Inferior>-1</intLimite_Inferior>
+      <intLimite_Superior>-1</intLimite_Superior>
+      <Clave>{clave}</Clave>
+      <Passport>{passport}</Passport>
+    </GetDatos_Paginados_3>
   </soap:Body>
 </soap:Envelope>";
 
@@ -88,56 +102,38 @@ public class OracleEstacionesRepository : IEstacionesRepository
         {
             Content = new StringContent(soapEnvelope, Encoding.UTF8, "text/xml")
         };
-        request.Headers.Add("SOAPAction", "\"http://tempuri.org/ExecuteQuery\"");
+        request.Headers.Add("SOAPAction", "\"http://tempuri.org/GetDatos_Paginados_3\"");
 
         var response = await client.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
 
         var xmlBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
-        return DesencriptarYParsearRespuesta(xmlBytes, _options.SoapDesKey);
+        return ParsearRespuestaSoap(xmlBytes);
     }
 
-    private static IReadOnlyList<EstacionUltimoDato> DesencriptarYParsearRespuesta(byte[] encryptedBytes, string desKey)
+    private static string ComputeMd5(string input)
     {
-        var responseXml = Encoding.UTF8.GetString(encryptedBytes);
+        var bytes = Encoding.Latin1.GetBytes(input);
+        var hash = MD5.HashData(bytes);
+        return Convert.ToHexStringLower(hash);
+    }
+
+    private static IReadOnlyList<EstacionUltimoDato> ParsearRespuestaSoap(byte[] xmlBytes)
+    {
+        var responseXml = Encoding.UTF8.GetString(xmlBytes);
         var xdoc = XDocument.Parse(responseXml);
-        XNamespace ns = "http://tempuri.org/";
-        var base64Result = xdoc.Descendants(ns + "ExecuteQueryResult").FirstOrDefault()?.Value
-                           ?? xdoc.Descendants().FirstOrDefault(e => e.Name.LocalName == "ExecuteQueryResult")?.Value;
 
-        if (string.IsNullOrWhiteSpace(base64Result))
-            return Array.Empty<EstacionUltimoDato>();
-
-        var rawPayload = Convert.FromBase64String(base64Result);
-
-        // Clave DES configurada en appsettings.json
-        if (string.IsNullOrEmpty(desKey))
-        {
-            throw new InvalidOperationException("La clave DES ('CentralItv:SoapDesKey') no está configurada.");
-        }
-
-        var key = Encoding.ASCII.GetBytes(desKey);
-        using var des = DES.Create();
-        des.Key = key;
-        des.IV = key;
-        des.Mode = CipherMode.CBC;
-        des.Padding = PaddingMode.PKCS7;
-
-        using var decryptor = des.CreateDecryptor();
-        var decryptedBytes = decryptor.TransformFinalBlock(rawPayload, 0, rawPayload.Length);
-        var datasetXml = Encoding.UTF8.GetString(decryptedBytes);
-
-        var dataDoc = XDocument.Parse(datasetXml);
-        var rows = dataDoc.Descendants().Where(e => e.Name.LocalName == "Table");
+        var rows = xdoc.Descendants().Where(e => e.Name.LocalName.Equals("Datos", StringComparison.OrdinalIgnoreCase) ||
+                                                 e.Name.LocalName.Equals("Table", StringComparison.OrdinalIgnoreCase));
 
         var lista = new List<EstacionUltimoDato>();
         foreach (var row in rows)
         {
             var codEstacion = row.Elements().FirstOrDefault(e => e.Name.LocalName.Equals("CODESTACION", StringComparison.OrdinalIgnoreCase))?.Value?.Trim() ?? string.Empty;
             var desEstacion = row.Elements().FirstOrDefault(e => e.Name.LocalName.Equals("DESESTACION", StringComparison.OrdinalIgnoreCase))?.Value?.Trim() ?? string.Empty;
-            var codEmpresa = row.Elements().FirstOrDefault(e => e.Name.LocalName.Equals("COD_EMPRESA", StringComparison.OrdinalIgnoreCase))?.Value?.Trim();
-            var tipoEstacion = row.Elements().FirstOrDefault(e => e.Name.LocalName.Equals("TIPO_ESTACION", StringComparison.OrdinalIgnoreCase))?.Value?.Trim();
-            var fechaStr = row.Elements().FirstOrDefault(e => e.Name.LocalName.Equals("ULTIMA_INSPECCION", StringComparison.OrdinalIgnoreCase))?.Value;
+            var codEmpresa = row.Elements().FirstOrDefault(e => e.Name.LocalName.Equals("CODEMPRESA", StringComparison.OrdinalIgnoreCase) || e.Name.LocalName.Equals("COD_EMPRESA", StringComparison.OrdinalIgnoreCase))?.Value?.Trim();
+            var tipoEstacion = row.Elements().FirstOrDefault(e => e.Name.LocalName.Equals("TIPOESTACION", StringComparison.OrdinalIgnoreCase) || e.Name.LocalName.Equals("TIPO_ESTACION", StringComparison.OrdinalIgnoreCase))?.Value?.Trim() ?? "ITV";
+            var fechaStr = row.Elements().FirstOrDefault(e => e.Name.LocalName.Equals("ULTIMAINSPECCION", StringComparison.OrdinalIgnoreCase) || e.Name.LocalName.Equals("ULTIMA_INSPECCION", StringComparison.OrdinalIgnoreCase))?.Value;
 
             DateTime? fecha = null;
             if (DateTime.TryParse(fechaStr, out var parsed))
