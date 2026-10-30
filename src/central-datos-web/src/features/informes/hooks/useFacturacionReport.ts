@@ -7,6 +7,7 @@ import type {
 } from '../types/informes.types';
 import { consultarFacturacion, exportarFacturacionExcel } from '../api/facturacionApi';
 import { ESTACIONES_OFICIALES } from '../../../constants/estaciones.constants';
+import { useAuth } from '../../auth/context/AuthContext';
 
 function toDateInputValue(date: Date): string {
   const year = date.getFullYear();
@@ -27,16 +28,28 @@ export type SortableColumn =
 export type ChartViewMode = 'bar' | 'donut';
 
 export function useFacturacionReport() {
+  const { user } = useAuth();
   const now = new Date();
   const primerDiaMes = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  // Estaciones autorizadas para el usuario en sesión (o todas si es supervisor)
+  const estacionesPermitidas = useMemo(() => {
+    if (!user || user.isSupervisor || !user.allowedStations || user.allowedStations.length === 0) {
+      return ESTACIONES_OFICIALES.map((e) => e.codigo);
+    }
+    return user.allowedStations;
+  }, [user]);
 
   // 1. Estados de Filtros (inician con el mes en curso para reflejar los datos de Producción en vivo)
   const [fechaInicio, setFechaInicio] = useState<string>(toDateInputValue(primerDiaMes));
   const [fechaFin, setFechaFin] = useState<string>(toDateInputValue(now));
   const [sociedad, setSociedad] = useState<FiltroSociedad>('TODAS');
-  const [estacionesSeleccionadas, setEstacionesSeleccionadas] = useState<string[]>(() =>
-    ESTACIONES_OFICIALES.map((e) => e.codigo)
-  );
+  const [estacionesSeleccionadas, setEstacionesSeleccionadas] = useState<string[]>(estacionesPermitidas);
+
+  // Sincronizar estaciones seleccionadas si se cargan o actualizan las del usuario logueado
+  useEffect(() => {
+    setEstacionesSeleccionadas(estacionesPermitidas);
+  }, [estacionesPermitidas]);
 
   // 2. Estados de Carga y Datos
   const [data, setData] = useState<InformeFacturacionResponse | null>(null);
@@ -300,6 +313,7 @@ export function useFacturacionReport() {
     fechaFin,
     sociedad,
     estacionesSeleccionadas,
+    estacionesPermitidas,
     handleFechaInicioChange,
     handleFechaFinChange,
     setSociedad,

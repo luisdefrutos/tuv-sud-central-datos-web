@@ -8,14 +8,23 @@ import type {
 } from '../types/estaciones.types';
 import { fetchUltimosDatosEstaciones } from '../../../api/estacionesApi';
 import { SOCIEDADES } from '../../../constants/companies.constants';
+import { useAuth } from '../../auth/context/AuthContext';
 
 export interface EstadoOrden {
   columna: ColumnaOrden;
   direccion: DireccionOrden;
 }
 
+export interface ResumenMetricasEstaciones {
+  totalEstaciones: number;
+  totalTsa: number;
+  totalCal: number;
+  ultimaFechaGlobal: string;
+}
+
 export interface UseUltimosDatosReturn {
   data: ResumenEstaciones | null;
+  resumenMetricas: ResumenMetricasEstaciones;
   loading: boolean;
   error: string | null;
   searchTerm: string;
@@ -38,8 +47,10 @@ export interface UseUltimosDatosReturn {
  * Centraliza la obtención de datos, filtrado reactivo en memoria (búsqueda y sociedad),
  * ordenación multi-columna atómica e inquebrantable de 2 estados (asc <-> desc)
  * y la exportación autónoma a Excel/CSV en el navegador sin dependencias de servidor.
+ * Restringe de forma estricta las estaciones visibles a las autorizadas para el usuario activo.
  */
 export function useUltimosDatos(): UseUltimosDatosReturn {
+  const { user } = useAuth();
   const [data, setData] = useState<ResumenEstaciones | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,12 +62,18 @@ export function useUltimosDatos(): UseUltimosDatosReturn {
   });
   const [alertaExportacion, setAlertaExportacion] = useState<string | null>(null);
 
+  // Conjunto de códigos de estación permitidos para el usuario en sesión
+  const estacionesPermitidas = useMemo(() => {
+    if (!user || user.isSupervisor || !user.allowedStations || user.allowedStations.length === 0) {
+      return null; // Supervisor ve toda la red
+    }
+    return new Set(user.allowedStations.map((s) => String(s).padStart(4, '0')));
+  }, [user]);
+
   /**
    * Alternancia estricta y atómica de 2 estados (asc <-> desc):
    * - Si se pulsa una columna diferente: se activa en 'asc'.
    * - Si se pulsa la misma columna N veces: se invierte atómicamente ('asc' <-> 'desc').
-   * Al gestionar columna y dirección en un único estado atómico inmutable, React jamás
-   * cancela el renderizado (bailing out) y funciona de forma 100% fiable en cualquier columna.
    */
   const cambiarOrden = useCallback((columna: ColumnaOrden) => {
     setOrden((prev) => {
@@ -78,7 +95,6 @@ export function useUltimosDatos(): UseUltimosDatosReturn {
       setData(json);
     } catch (err: any) {
       console.error('[Estaciones] Error técnico al obtener datos:', err);
-      // Mensaje seguro sanitizado para pentest (cero fuga de ex.Message o infraestructura)
       setError('No ha sido posible recuperar los datos centralizados de las estaciones. Si la incidencia persiste, contacte con el departamento de soporte técnico.');
     } finally {
       setLoading(false);
@@ -89,13 +105,67 @@ export function useUltimosDatos(): UseUltimosDatosReturn {
     cargarDatos();
   }, [cargarDatos]);
 
-  // Filtrado reactivo y ordenación atómica en memoria (O(N log N) sobre ~30 elementos = <0.05ms)
-  const estacionesFiltradas = useMemo(() => {
+  // Estaciones base filtradas según los permisos de asignación del usuario
+  const estacionesBase = useMemo(() => {
     if (!data?.estaciones) return [];
+    if (!estacionesPermitidas) return data.estaciones;
+    return data.estaciones.filter((e) => {
+      const codePadded = String(e.codEstacion).padStart(4, '0');
+      return estacionesPermitidas.has(e.codEstacion) || estacionesPermitidas.has(codePadded);
+    });
+  }, [data?.estaciones, estacionesPermitidas]);
+
+  // Resumen métrico adaptado dinámicamente a las estaciones autorizadas del usuario
+  const resumenMetricas = useMemo((): ResumenMetricasEstaciones => {
+    if (!data) {
+      return {
+        totalEstaciones: 0,
+        totalTsa: 0,
+        totalCal: 0,
+        ultimaFechaGlobal: 'N/D',
+      };
+    }
+
+    if (!estacionesPermitidas) {
+      return {
+        totalEstaciones: data.totalEstaciones,
+        totalTsa: data.totalTsa,
+        totalCal: data.totalCal,
+        ultimaFechaGlobal: data.ultimaFechaGlobal,
+      };
+    }
+
+    const totalEstaciones = estacionesBase.length;
+    const totalTsa = estacionesBase.filter((e) => e.codEmpresa === SOCIEDADES.ATISAE.codigo).length;
+    const totalCal = estacionesBase.filter((e) => e.codEmpresa === SOCIEDADES.CAL.codigo).length;
+
+    let ultimaFechaStr = 'N/D';
+    let maxTimestamp = 0;
+    for (const est of estacionesBase) {
+      if (est.ultimaInspeccion) {
+        const t = new Date(est.ultimaInspeccion).getTime();
+        if (t > maxTimestamp) {
+          maxTimestamp = t;
+          ultimaFechaStr = est.ultimaInspeccionFormatted || est.ultimaInspeccion;
+        }
+      }
+    }
+
+    return {
+      totalEstaciones,
+      totalTsa,
+      totalCal,
+      ultimaFechaGlobal: ultimaFechaStr,
+    };
+  }, [data, estacionesBase, estacionesPermitidas]);
+
+  // Filtrado reactivo y ordenación atómica en memoria sobre las estaciones autorizadas
+  const estacionesFiltradas = useMemo(() => {
+    if (estacionesBase.length === 0) return [];
 
     const term = (searchTerm || '').trim().toLowerCase();
 
-    const filtradas = data.estaciones.filter((item) => {
+    const filtradas = estacionesBase.filter((item) => {
       const cod = (item.codEstacion || '').toLowerCase();
       const des = (item.desEstacion || '').toLowerCase();
       const matchText = term === '' || cod.includes(term) || des.includes(term);
@@ -124,8 +194,6 @@ export function useUltimosDatos(): UseUltimosDatosReturn {
           break;
         }
         case 'nombreEmpresa': {
-          // Asignación de pesos ponderados fijos para agrupación estricta y limpia de sociedades
-          // Peso 1 = TSA (ATISAE), Peso 2 = CAL, Peso 99 = Otras
           const getPesoSociedad = (e: EstacionDato): number => {
             if (e.codEmpresa === SOCIEDADES.ATISAE.codigo || (e.nombreEmpresa || '').includes('ATISAE') || (e.nombreEmpresa || '').includes('TSA')) {
               return 1;
@@ -156,14 +224,10 @@ export function useUltimosDatos(): UseUltimosDatosReturn {
           resultado = 0;
       }
 
-      // 1. Si la columna principal arroja diferencia, se respeta la dirección seleccionada (asc o desc)
       if (resultado !== 0) {
         return orden.direccion === 'asc' ? resultado : -resultado;
       }
 
-      // 2. CRITERIO DE DESEMPATE ESTABLE (Deterministic Tie-Breaker):
-      // Si dos filas coinciden en la columna ordenada, se desempatan siempre de la A a la Z
-      // de forma predecible por nombre de estación (y código secundario si fuera necesario).
       const nomA = a.desEstacion || '';
       const nomB = b.desEstacion || '';
       const desempateNombre = nomA.localeCompare(nomB, 'es', { sensitivity: 'base' });
@@ -172,7 +236,7 @@ export function useUltimosDatos(): UseUltimosDatosReturn {
       }
       return (a.codEstacion || '').localeCompare(b.codEstacion || '');
     });
-  }, [data, searchTerm, filtroSociedad, orden.columna, orden.direccion]);
+  }, [estacionesBase, searchTerm, filtroSociedad, orden.columna, orden.direccion]);
 
   const limpiarAlertaExportacion = useCallback(() => {
     setAlertaExportacion(null);
@@ -180,9 +244,7 @@ export function useUltimosDatos(): UseUltimosDatosReturn {
 
   /**
    * Exportación 100% autónoma en el navegador:
-   * Genera un fichero CSV con BOM UTF-8 (\uFEFF) y separador ';' para que Microsoft Excel
-   * lo abra directamente con tildes, columnas formateadas y sin requerir Excel en el servidor.
-   * Exporta estrictamente las estaciones visibles en el grid según los filtros actuales.
+   * Exporta estrictamente las estaciones visibles en el grid según los filtros actuales y permisos.
    */
   const exportarExcelCsv = useCallback(() => {
     if (!estacionesFiltradas || estacionesFiltradas.length === 0) {
@@ -210,7 +272,6 @@ export function useUltimosDatos(): UseUltimosDatosReturn {
       `"${e.diasSinTransmitir ?? ''}"`,
     ]);
 
-    // \uFEFF añade el Byte Order Mark para que Excel en Windows reconozca UTF-8 automáticamente
     const contenidoCsv = '\uFEFF' + [cabeceras.join(';'), ...filas.map((f) => f.join(';'))].join('\r\n');
     const blob = new Blob([contenidoCsv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -230,6 +291,7 @@ export function useUltimosDatos(): UseUltimosDatosReturn {
 
   return {
     data,
+    resumenMetricas,
     loading,
     error,
     searchTerm,

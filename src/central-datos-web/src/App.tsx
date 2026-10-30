@@ -5,6 +5,7 @@ import { Header } from './components/layout/Header';
 import { Navbar } from './components/layout/Navbar';
 import { UltimosDatosCentralizados } from './features/estaciones/components/UltimosDatosCentralizados';
 import { FacturacionReportPage } from './features/informes/pages/FacturacionReportPage';
+import { NumeroInspeccionesReportPage } from './features/informes/pages/NumeroInspeccionesReportPage';
 import { InformesHubPage } from './features/informes/pages/InformesHubPage';
 import { DESKTOP_MENUS, findMenuItem } from './constants/navigation.constants';
 import { UI_CONSTANTS } from './constants/ui.constants';
@@ -276,6 +277,38 @@ function AppContent() {
                   </TsButton>
                 </TsCard>
 
+                {/* Tarjeta Informes: Número de Inspecciones */}
+                <TsCard
+                  style={{
+                    padding: '1.5rem',
+                    backgroundColor: '#ffffff',
+                    borderLeft: '4px solid #00875a',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                      <span style={{ fontSize: '1.75rem' }}>📈</span>
+                      <TsBadge variant="success">Disponible</TsBadge>
+                    </div>
+                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0046ad', fontWeight: 700 }}>
+                      Número de Inspecciones
+                    </h3>
+                    <p style={{ margin: '0 0 1.25rem 0', color: '#64748b', fontSize: '0.88rem', lineHeight: 1.5 }}>
+                      Volumen de inspecciones periódicas: favorables, rechazadas y porcentajes de rechazo en Fase 1 y Fase 2.
+                    </p>
+                  </div>
+                  <TsButton
+                    variant="primary"
+                    onClick={() => handleSelectItem('num-inspecciones', 'informes')}
+                    style={{ width: '100%' }}
+                  >
+                    Abrir Módulo
+                  </TsButton>
+                </TsCard>
+
                 {/* Tarjeta Fase 2: Inspecciones */}
                 <TsCard style={{ padding: '1.5rem', backgroundColor: '#ffffff', opacity: 0.9 }}>
                   <div>
@@ -328,6 +361,17 @@ function AppContent() {
           />
         )}
 
+        {/* CASO C.2: Módulo de Número de Inspecciones (Favorables / Rechazadas por Fase) */}
+        {(activeItemId === 'num-inspecciones' || activeItemId === 'numero-inspecciones') && (
+          <NumeroInspeccionesReportPage
+            onNavigateHome={handleGoHome}
+            onNavigateToInformes={() => {
+              setActiveGroupId('informes');
+              setActiveItemId('informes');
+            }}
+          />
+        )}
+
         {/* CASO D: Catálogo / Hub de Informes */}
         {activeGroupId === 'informes' && (activeItemId === null || activeItemId === 'informes') && (
           <InformesHubPage
@@ -341,7 +385,9 @@ function AppContent() {
           activeItemId !== 'informes' &&
           activeItemId !== 'ultima-fecha' &&
           activeItemId !== 'facturacion' &&
-          activeItemId !== 'facturacion-excel' && (
+          activeItemId !== 'facturacion-excel' &&
+          activeItemId !== 'num-inspecciones' &&
+          activeItemId !== 'numero-inspecciones' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {/* Miga de Pan Correspondiente Interactiva */}
             <TsBreadcrumb>

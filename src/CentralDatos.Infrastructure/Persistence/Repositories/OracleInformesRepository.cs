@@ -93,6 +93,184 @@ public sealed class OracleInformesRepository : IInformesRepository
         throw new InvalidOperationException("No se ha configurado la cadena de conexión Oracle en ConnectionStrings:CentralItv.");
     }
 
+    public async Task<IReadOnlyList<EstacionNumeroInspeccionesDato>> ObtenerNumeroInspeccionesAsync(
+        DateTime fechaInicio,
+        DateTime fechaFin,
+        string? codEmpresa = null,
+        IReadOnlyList<string>? codEstaciones = null,
+        CancellationToken cancellationToken = default)
+    {
+        var sqlBase = _sqlLoader.GetQuery("ObtenerInformeNumeroInspecciones");
+
+        // 1. Filtrado dinámico adicional si aplica
+        var sqlFinal = sqlBase;
+        var whereExtraOuter = new StringBuilder();
+        var whereExtraCte = new StringBuilder();
+
+        if (!string.IsNullOrWhiteSpace(codEmpresa))
+        {
+            whereExtraOuter.Append($" AND e.Cod_Empresa = '{codEmpresa.Trim()}'");
+        }
+
+        if (codEstaciones != null && codEstaciones.Count > 0)
+        {
+            var codsIn = string.Join(", ", codEstaciones.Select(c => $"'{c.Trim()}'"));
+            whereExtraOuter.Append($" AND LPAD(TRIM(TO_CHAR(e.CodEstacion)), 4, '0') IN ({codsIn})");
+            whereExtraCte.Append($" AND i.CODESTACION IN ({codsIn})");
+        }
+
+        if (whereExtraCte.Length > 0)
+        {
+            var idxGroupCte = sqlFinal.IndexOf("GROUP BY i.CODESTACION", StringComparison.OrdinalIgnoreCase);
+            if (idxGroupCte > 0)
+            {
+                sqlFinal = sqlFinal.Insert(idxGroupCte, whereExtraCte.ToString() + "\n   ");
+            }
+        }
+
+        if (whereExtraOuter.Length > 0)
+        {
+            var idxOrder = sqlFinal.IndexOf("ORDER BY", StringComparison.OrdinalIgnoreCase);
+            if (idxOrder > 0)
+            {
+                sqlFinal = sqlFinal.Insert(idxOrder, whereExtraOuter.ToString() + "\n ");
+            }
+        }
+
+        // 2. Ejecución DIRECTA sobre Oracle (ODP.NET Thin)
+        if (!string.IsNullOrWhiteSpace(_options.ConnectionString))
+        {
+            return await ObtenerNumeroInspeccionesDirectoAsync(sqlFinal, fechaInicio, fechaFin, cancellationToken);
+        }
+
+        // 3. Fallback de contingencia SOAP
+        if (!string.IsNullOrWhiteSpace(_options.SoapUrl))
+        {
+            _logger.LogWarning("Cadena de conexión directa Oracle no detectada. Usando pasarela de contingencia SOAP para Número de Inspecciones...");
+            var sqlSoap = sqlFinal
+                .Replace(":FechaInicio", $"TO_DATE('{fechaInicio:yyyy-MM-dd HH:mm:ss}', 'YYYY-MM-DD HH24:MI:SS')")
+                .Replace(":FechaFin", $"TO_DATE('{fechaFin:yyyy-MM-dd HH:mm:ss}', 'YYYY-MM-DD HH24:MI:SS')");
+
+            return await ObtenerNumeroInspeccionesPorSoapAsync(sqlSoap, cancellationToken);
+        }
+
+        throw new InvalidOperationException("No se ha configurado la cadena de conexión Oracle en ConnectionStrings:CentralItv.");
+    }
+
+    private async Task<IReadOnlyList<EstacionNumeroInspeccionesDato>> ObtenerNumeroInspeccionesDirectoAsync(
+        string sql,
+        DateTime fechaInicio,
+        DateTime fechaFin,
+        CancellationToken cancellationToken)
+    {
+        await using var conn = new OracleConnection(_options.ConnectionString);
+        await conn.OpenAsync(cancellationToken);
+
+        await using var cmd = conn.CreateCommand();
+        cmd.BindByName = true;
+        cmd.CommandText = sql;
+        cmd.CommandTimeout = 120;
+
+        cmd.Parameters.Add("FechaInicio", OracleDbType.Date).Value = fechaInicio;
+        cmd.Parameters.Add("FechaFin", OracleDbType.Date).Value = fechaFin;
+
+        var lista = new List<EstacionNumeroInspeccionesDato>();
+        await using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            lista.Add(new EstacionNumeroInspeccionesDato
+            {
+                CodEstacion = reader.IsDBNull(0) ? string.Empty : reader.GetString(0).Trim(),
+                DesEstacion = reader.IsDBNull(1) ? string.Empty : reader.GetString(1).Trim(),
+                CodEmpresa = reader.IsDBNull(2) ? string.Empty : reader.GetString(2).Trim(),
+                Favorables1 = reader.IsDBNull(3) ? 0 : Convert.ToInt32(reader.GetValue(3)),
+                Rechazadas1 = reader.IsDBNull(4) ? 0 : Convert.ToInt32(reader.GetValue(4)),
+                Favorables2 = reader.IsDBNull(5) ? 0 : Convert.ToInt32(reader.GetValue(5)),
+                Rechazadas2 = reader.IsDBNull(6) ? 0 : Convert.ToInt32(reader.GetValue(6)),
+                TotalInspecciones = reader.IsDBNull(7) ? 0 : Convert.ToInt32(reader.GetValue(7))
+            });
+        }
+        return lista;
+    }
+
+    private async Task<IReadOnlyList<EstacionNumeroInspeccionesDato>> ObtenerNumeroInspeccionesPorSoapAsync(string sql, CancellationToken cancellationToken)
+    {
+        var sqlLimpia = System.Text.RegularExpressions.Regex.Replace(sql, @"[^A-Za-z0-9]", "");
+        var clave = ComputeMd5(sqlLimpia);
+        var passport = ComputeMd5(clave + _options.SoapSecret);
+
+        var soapEnvelope = $@"<?xml version=""1.0"" encoding=""utf-8""?>
+<soap:Envelope xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" 
+               xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" 
+               xmlns:soap=""http://schemas.xmlsoap.org/soap/envelope/"">
+  <soap:Body>
+    <GetDatos_Paginados_3 xmlns=""http://tempuri.org/"">
+      <strSQL>{System.Security.SecurityElement.Escape(sql)}</strSQL>
+      <intLimite_Inferior>-1</intLimite_Inferior>
+      <intLimite_Superior>-1</intLimite_Superior>
+      <Clave>{clave}</Clave>
+      <Passport>{passport}</Passport>
+    </GetDatos_Paginados_3>
+  </soap:Body>
+</soap:Envelope>";
+
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+        };
+        using var client = new HttpClient(handler);
+        client.Timeout = TimeSpan.FromSeconds(_options.TimeoutSeconds > 0 ? _options.TimeoutSeconds : 60);
+
+        var request = new HttpRequestMessage(HttpMethod.Post, _options.SoapUrl)
+        {
+            Content = new StringContent(soapEnvelope, Encoding.UTF8, "text/xml")
+        };
+        request.Headers.Add("SOAPAction", "\"http://tempuri.org/GetDatos_Paginados_3\"");
+
+        var response = await client.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        var xmlBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+        return ParsearRespuestaSoapNumeroInspecciones(xmlBytes);
+    }
+
+    private static IReadOnlyList<EstacionNumeroInspeccionesDato> ParsearRespuestaSoapNumeroInspecciones(byte[] xmlBytes)
+    {
+        var responseXml = Encoding.UTF8.GetString(xmlBytes);
+        var xdoc = XDocument.Parse(responseXml);
+
+        var rows = xdoc.Descendants().Where(e => e.Name.LocalName.Equals("Datos", StringComparison.OrdinalIgnoreCase) ||
+                                                 e.Name.LocalName.Equals("Table", StringComparison.OrdinalIgnoreCase));
+
+        int GetInt(XElement parent, string colName)
+        {
+            var val = parent.Elements().FirstOrDefault(e => e.Name.LocalName.Equals(colName, StringComparison.OrdinalIgnoreCase))?.Value;
+            return int.TryParse(val, out var res) ? res : 0;
+        }
+
+        var lista = new List<EstacionNumeroInspeccionesDato>();
+        foreach (var row in rows)
+        {
+            var codEstacion = row.Elements().FirstOrDefault(e => e.Name.LocalName.Equals("CODESTACION", StringComparison.OrdinalIgnoreCase))?.Value?.Trim() ?? string.Empty;
+            var desEstacion = row.Elements().FirstOrDefault(e => e.Name.LocalName.Equals("DESESTACION", StringComparison.OrdinalIgnoreCase))?.Value?.Trim() ?? string.Empty;
+            var codEmpresa = row.Elements().FirstOrDefault(e => e.Name.LocalName.Equals("CODEMPRESA", StringComparison.OrdinalIgnoreCase) || e.Name.LocalName.Equals("COD_EMPRESA", StringComparison.OrdinalIgnoreCase))?.Value?.Trim() ?? "01";
+
+            lista.Add(new EstacionNumeroInspeccionesDato
+            {
+                CodEstacion = codEstacion,
+                DesEstacion = desEstacion,
+                CodEmpresa = codEmpresa,
+                Favorables1 = GetInt(row, "FAVORABLES1"),
+                Rechazadas1 = GetInt(row, "RECHAZADAS1"),
+                Favorables2 = GetInt(row, "FAVORABLES2"),
+                Rechazadas2 = GetInt(row, "RECHAZADAS2"),
+                TotalInspecciones = GetInt(row, "TOTALINSPECCIONES")
+            });
+        }
+
+        return lista;
+    }
+
     private async Task<IReadOnlyList<EstacionFacturacionDato>> ObtenerPorOracleDirectoAsync(
         string sql,
         DateTime fechaInicio,

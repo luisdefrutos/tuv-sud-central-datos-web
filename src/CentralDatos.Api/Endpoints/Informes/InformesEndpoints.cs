@@ -55,6 +55,49 @@ public static class InformesEndpoints
         .WithName("ExportarFacturacionExcel")
         .WithSummary("Genera y descarga el fichero estructurado de facturación con BOM UTF-8 y separador para Excel");
 
+        // 3. Consulta analítica de número de inspecciones (Favorables y Rechazadas por Fase)
+        group.MapPost("/numero-inspecciones/consultar", async (
+            [FromBody] FiltrosNumeroInspeccionesRequestDto filtros,
+            [FromServices] IInformesNumeroInspeccionesService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var resultado = await service.GenerarInformeNumeroInspeccionesAsync(filtros, ct);
+                return Results.Ok(resultado);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .WithName("ConsultarNumeroInspecciones")
+        .WithSummary("Consulta el número de inspecciones favorables y rechazadas desglosadas por Fase 1 y Fase 2 con KPIs");
+
+        // 4. Exportación de número de inspecciones a Excel / CSV
+        group.MapPost("/numero-inspecciones/exportar-excel", async (
+            [FromBody] FiltrosNumeroInspeccionesRequestDto filtros,
+            [FromServices] IInformesNumeroInspeccionesService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var archivoBytes = await service.GenerarExportacionNumeroInspeccionesCsvAsync(filtros, ct);
+                var nombreFichero = $"numero-inspecciones-{DateTime.Now:yyyyMMdd-HHmm}.csv";
+
+                return Results.File(
+                    archivoBytes,
+                    contentType: "text/csv; charset=utf-8",
+                    fileDownloadName: nombreFichero);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .WithName("ExportarNumeroInspeccionesExcel")
+        .WithSummary("Genera y descarga el fichero estructurado de número de inspecciones con BOM UTF-8 y separador para Excel");
+
         return app;
     }
 }

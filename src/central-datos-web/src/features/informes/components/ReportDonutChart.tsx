@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TsCard, TsBadge } from '@tuvsud/design-system/react';
 import type { ReportBarChartPoint } from '../types/informes.types';
 
@@ -39,6 +39,11 @@ export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
   maxSlices = 7,
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  // Reiniciar el hover interactivo cada vez que cambien los datos del gráfico
+  useEffect(() => {
+    setHoveredIndex(null);
+  }, [data]);
 
   if (loading) {
     return (
@@ -87,7 +92,7 @@ export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
     label: item.label,
     valor: item.valor,
     pct: (item.valor / total) * 100,
-    color: PALETTE[idx % PALETTE.length],
+    color: item.color || PALETTE[idx % PALETTE.length],
   }));
 
   if (others.length > 0) {
@@ -109,7 +114,7 @@ export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
 
   let accumulatedLength = 0;
 
-  const activeSlice = hoveredIndex !== null ? slices[hoveredIndex] : null;
+  const activeSlice = hoveredIndex !== null && hoveredIndex < slices.length ? slices[hoveredIndex] : null;
 
   return (
     <TsCard

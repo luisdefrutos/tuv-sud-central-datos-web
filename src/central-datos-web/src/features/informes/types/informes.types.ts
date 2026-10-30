@@ -84,4 +84,72 @@ export interface InformeFacturacionResponse {
   totalEstaciones: number;
 }
 
+export interface FilaNumeroInspecciones {
+  codEstacion: string;
+  desEstacion: string;
+  codEmpresa: string;
+  nombreEmpresa: string;
+  claveSociedad: string;
+  favorables1: number;
+  favorables1Formatted: string;
+  rechazadas1: number;
+  rechazadas1Formatted: string;
+  totalFase1: number;
+  totalFase1Formatted: string;
+  porcentajeRechazoFase1: number;
+  porcentajeRechazoFase1Formatted: string;
+  favorables2: number;
+  favorables2Formatted: string;
+  rechazadas2: number;
+  rechazadas2Formatted: string;
+  totalFase2: number;
+  totalFase2Formatted: string;
+  porcentajeRechazoFase2: number;
+  porcentajeRechazoFase2Formatted: string;
+  totalFavorables: number;
+  totalFavorablesFormatted: string;
+  totalRechazadas: number;
+  totalRechazadasFormatted: string;
+  totalInspecciones: number;
+  totalInspeccionesFormatted: string;
+  porcentajeRechazoGlobal: number;
+  porcentajeRechazoGlobalFormatted: string;
+}
+
+export interface InformeNumeroInspeccionesResponse {
+  kpis: ReportKpiData[];
+  graficoBarras: ReportBarChartPoint[];
+  graficoCuota: ReportBarChartPoint[];
+  filas: FilaNumeroInspecciones[];
+  totalInspeccionesGlobal: number;
+  totalInspeccionesGlobalFormatted: string;
+  totalFavorablesGlobal: number;
+  totalFavorablesGlobalFormatted: string;
+  totalRechazadasGlobal: number;
+  totalRechazadasGlobalFormatted: string;
+  porcentajeRechazoGlobal: number;
+  porcentajeRechazoGlobalFormatted: string;
+  totalFase1Global: number;
+  totalFase2Global: number;
+  totalEstaciones: number;
+}
+
+export type SortableNumeroInspeccionesColumn =
+  | 'codEstacion'
+  | 'desEstacion'
+  | 'claveSociedad'
+  | 'favorables1'
+  | 'rechazadas1'
+  | 'totalFase1'
+  | 'porcentajeRechazoFase1'
+  | 'favorables2'
+  | 'rechazadas2'
+  | 'totalFase2'
+  | 'porcentajeRechazoFase2'
+  | 'totalFavorables'
+  | 'totalRechazadas'
+  | 'totalInspecciones'
+  | 'porcentajeRechazoGlobal';
+
+
 

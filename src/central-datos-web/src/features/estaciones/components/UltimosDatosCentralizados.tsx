@@ -76,6 +76,7 @@ export function UltimosDatosCentralizados({ onNavigateHome }: UltimosDatosCentra
   // Lógica, estados y exportación autónoma desacoplados limpiamente en el Custom Hook
   const {
     data,
+    resumenMetricas,
     loading,
     error,
     searchTerm,
@@ -247,7 +248,7 @@ export function UltimosDatosCentralizados({ onNavigateHome }: UltimosDatosCentra
             {UI.CARD_TOTAL_ESTACIONES}
           </div>
           <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.3rem', color: 'var(--ts-semantic-color-surface-inverted-default, #0b253b)' }}>
-            {data?.totalEstaciones ?? (loading ? '...' : 0)}
+            {resumenMetricas.totalEstaciones}
           </div>
         </TsCard>
 
@@ -256,7 +257,7 @@ export function UltimosDatosCentralizados({ onNavigateHome }: UltimosDatosCentra
             {SOCIEDADES.ATISAE.nombreCompleto}
           </div>
           <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.3rem', color: SOCIEDADES.ATISAE.colorBorde }}>
-            {data?.totalTsa ?? (loading ? '...' : 0)}
+            {resumenMetricas.totalTsa}
           </div>
         </TsCard>
 
@@ -265,7 +266,7 @@ export function UltimosDatosCentralizados({ onNavigateHome }: UltimosDatosCentra
             {SOCIEDADES.CAL.nombreCompleto}
           </div>
           <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.3rem', color: SOCIEDADES.CAL.colorBorde }}>
-            {data?.totalCal ?? (loading ? '...' : 0)}
+            {resumenMetricas.totalCal}
           </div>
         </TsCard>
 
@@ -274,7 +275,7 @@ export function UltimosDatosCentralizados({ onNavigateHome }: UltimosDatosCentra
             {UI.CARD_ULTIMA_FECHA}
           </div>
           <div style={{ fontSize: '1.15rem', fontWeight: 700, marginTop: '0.5rem', color: 'var(--ts-semantic-color-surface-inverted-default, #0b253b)', fontFamily: 'monospace' }}>
-            {data?.ultimaFechaGlobal ?? (loading ? '...' : 'N/D')}
+            {resumenMetricas.ultimaFechaGlobal}
           </div>
         </TsCard>
       </div>
@@ -326,7 +327,7 @@ export function UltimosDatosCentralizados({ onNavigateHome }: UltimosDatosCentra
                   transition: 'all 0.15s ease',
                 }}
               >
-                Todas ({data?.totalEstaciones ?? 0})
+                Todas ({resumenMetricas.totalEstaciones})
               </button>
               <button
                 type="button"
@@ -343,7 +344,7 @@ export function UltimosDatosCentralizados({ onNavigateHome }: UltimosDatosCentra
                   transition: 'all 0.15s ease',
                 }}
               >
-                TSA ({data?.totalTsa ?? 0})
+                TSA ({resumenMetricas.totalTsa})
               </button>
               <button
                 type="button"
@@ -360,7 +361,7 @@ export function UltimosDatosCentralizados({ onNavigateHome }: UltimosDatosCentra
                   transition: 'all 0.15s ease',
                 }}
               >
-                CAL ({data?.totalCal ?? 0})
+                CAL ({resumenMetricas.totalCal})
               </button>
             </div>
 
@@ -560,7 +561,7 @@ export function UltimosDatosCentralizados({ onNavigateHome }: UltimosDatosCentra
           }}
         >
           <span>
-            Mostrando <strong>{estacionesFiltradas.length}</strong> de <strong>{data?.totalEstaciones ?? 0}</strong> {UI.TABLA.FOOTER_LABEL}
+            Mostrando <strong>{estacionesFiltradas.length}</strong> de <strong>{resumenMetricas.totalEstaciones}</strong> {UI.TABLA.FOOTER_LABEL}
           </span>
         </div>
       </TsCard>

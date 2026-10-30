@@ -104,6 +104,13 @@ public sealed class OracleAuthRepository : IAuthRepository
 
             var stations = await GetAllowedStationsInternalAsync(conn, emp.IdEmpleado, isSupervisor, cancellationToken);
 
+            // Si no es supervisor y no tiene estaciones con permiso CENTRAL_GENERAL, denegar acceso al módulo
+            if (!isSupervisor && stations.Count == 0)
+            {
+                _logger.LogWarning("Acceso denegado: El empleado '{Username}' (Id: {IdEmpleado}) no tiene estaciones asignadas con permiso 'CENTRAL_GENERAL' en Central Datos.", emp.Username, emp.IdEmpleado);
+                return null;
+            }
+
             return new AuthenticatedUser
             {
                 IdEmpleado = emp.IdEmpleado,
@@ -204,7 +211,7 @@ public sealed class OracleAuthRepository : IAuthRepository
         if (isSupervisor || idEmpleado == 0)
         {
             const string sqlAll = """
-                SELECT CodEstacion 
+                SELECT LPAD(TRIM(TO_CHAR(CodEstacion)), 4, '0') AS CodEstacion 
                 FROM CENTRALITV.ESTACIONES 
                 WHERE Central_Datos = -1 
                   AND Cod_Empresa IN ('01', '03')
@@ -215,18 +222,24 @@ public sealed class OracleAuthRepository : IAuthRepository
             return all.ToList();
         }
 
+        // Replica de clsGeneral.vb: Cargar_Centros_Permitidos("CENTRAL_GENERAL")
+        // Estaciones donde el usuario tiene permiso CENTRAL_GENERAL activo con valor SI
         const string sqlUser = """
-            SELECT DISTINCT CodEstacion 
-            FROM CENTRALITV.EMPLEADO_CENTRO 
-            WHERE Id_Empleado = :idEmpleado 
-              AND De_Baja = 0
+            SELECT DISTINCT LPAD(TRIM(TO_CHAR(e.CodEstacion)), 4, '0') AS CodEstacion
+            FROM CENTRALITV.ESTACIONES e
+            JOIN CENTRALITV.EMPLEADO_PERMISOS ep 
+              ON (ep.CodEstacion = LPAD(TRIM(TO_CHAR(e.CodEstacion)), 4, '0') OR ep.CodEstacion = TO_CHAR(e.CodEstacion))
+            WHERE ep.Id_Empleado = :idEmpleado
+              AND e.Central_Datos = -1
+              AND ep.Activo = -1
+              AND ep.CodPermiso = 'CENTRAL_GENERAL'
+              AND ep.VALOR = 'SI'
             ORDER BY CodEstacion
             """;
 
         var userStations = await conn.QueryAsync<string>(new CommandDefinition(sqlUser, new { idEmpleado }, cancellationToken: cancellationToken));
         var list = userStations.ToList();
 
-        // Si no tiene centros específicos pero es operador válido, retornar lista de sus centros (o vacía si no tiene asignados)
         return list;
     }
 

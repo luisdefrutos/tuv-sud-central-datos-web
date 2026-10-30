@@ -33,6 +33,7 @@ export const FacturacionReportPage: React.FC<FacturacionReportPageProps> = ({
     fechaFin,
     sociedad,
     estacionesSeleccionadas,
+    estacionesPermitidas,
     handleFechaInicioChange,
     handleFechaFinChange,
     setSociedad,
@@ -262,6 +263,7 @@ export const FacturacionReportPage: React.FC<FacturacionReportPageProps> = ({
         fechaFin={fechaFin}
         sociedad={sociedad}
         estacionesSeleccionadas={estacionesSeleccionadas}
+        estacionesPermitidas={estacionesPermitidas}
         onFechaInicioChange={handleFechaInicioChange}
         onFechaFinChange={handleFechaFinChange}
         onSociedadChange={setSociedad}

@@ -99,6 +99,15 @@ export const InformesHubPage: React.FC<InformesHubPageProps> = ({
       >
         {items.map((item) => {
           const isFacturacion = item.id === 'facturacion';
+          const isNumInspecciones = item.id === 'num-inspecciones';
+          const isAvailable = isFacturacion || isNumInspecciones;
+
+          let descripcion = 'Módulo de análisis estadístico oficial de la aplicación de escritorio Central Datos.';
+          if (isFacturacion) {
+            descripcion = 'Dashboard interactivo con KPIs de liquidación neta, ranking por estación, gráfico circular y exportación a Excel.';
+          } else if (isNumInspecciones) {
+            descripcion = 'Desglose oficial de inspecciones favorables y rechazadas en Fase 1 y Fase 2, tasas de rechazo e impresión de Crystal Report.';
+          }
 
           return (
             <TsCard
@@ -106,19 +115,19 @@ export const InformesHubPage: React.FC<InformesHubPageProps> = ({
               style={{
                 padding: '1.25rem',
                 backgroundColor: '#ffffff',
-                borderLeft: isFacturacion ? '4px solid #00875a' : '4px solid #cbd5e1',
+                borderLeft: isAvailable ? '4px solid #00875a' : '4px solid #cbd5e1',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 gap: '1rem',
-                boxShadow: isFacturacion ? '0 4px 12px rgba(0, 135, 90, 0.08)' : '0 1px 3px rgba(0,0,0,0.05)',
+                boxShadow: isAvailable ? '0 4px 12px rgba(0, 135, 90, 0.08)' : '0 1px 3px rgba(0,0,0,0.05)',
                 transition: 'transform 0.15s ease, box-shadow 0.15s ease',
               }}
             >
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
                   <span style={{ fontSize: '1.6rem' }}>{item.icon ?? '📊'}</span>
-                  {isFacturacion ? (
+                  {isAvailable ? (
                     <TsBadge variant="success">Disponible</TsBadge>
                   ) : (
                     <TsBadge variant="neutral">En migración</TsBadge>
@@ -129,7 +138,7 @@ export const InformesHubPage: React.FC<InformesHubPageProps> = ({
                     margin: '0 0 0.4rem 0',
                     fontSize: '1rem',
                     fontWeight: 700,
-                    color: isFacturacion ? '#0046ad' : '#1e293b',
+                    color: isAvailable ? '#0046ad' : '#1e293b',
                     lineHeight: 1.3,
                   }}
                 >
@@ -143,15 +152,13 @@ export const InformesHubPage: React.FC<InformesHubPageProps> = ({
                     lineHeight: 1.4,
                   }}
                 >
-                  {isFacturacion
-                    ? 'Dashboard interactivo con KPIs de liquidación neta, ranking por estación, gráfico circular y exportación a Excel.'
-                    : 'Módulo de análisis estadístico oficial de la aplicación de escritorio Central Datos.'}
+                  {descripcion}
                 </p>
               </div>
 
               <div>
                 <TsButton
-                  variant={isFacturacion ? 'primary' : 'secondary'}
+                  variant={isAvailable ? 'primary' : 'secondary'}
                   size="small"
                   onClick={() => onSelectReport(item.id)}
                   style={{
@@ -160,7 +167,7 @@ export const InformesHubPage: React.FC<InformesHubPageProps> = ({
                     fontSize: '0.82rem',
                   }}
                 >
-                  {isFacturacion ? 'Abrir Informe' : 'Ver Módulo'}
+                  {isAvailable ? 'Abrir Informe' : 'Ver Módulo'}
                 </TsButton>
               </div>
             </TsCard>

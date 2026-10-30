@@ -8,6 +8,7 @@ export interface ReportFiltersBarProps {
   fechaFin: string;
   sociedad: FiltroSociedad;
   estacionesSeleccionadas: string[];
+  estacionesPermitidas?: string[];
   onFechaInicioChange: (val: string) => void;
   onFechaFinChange: (val: string) => void;
   onSociedadChange: (sociedad: FiltroSociedad) => void;
@@ -26,6 +27,7 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
   fechaFin,
   sociedad,
   estacionesSeleccionadas,
+  estacionesPermitidas,
   onFechaInicioChange,
   onFechaFinChange,
   onSociedadChange,
@@ -48,13 +50,22 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Estaciones base autorizadas para el usuario activo (o toda la red si es supervisor)
+  const estacionesBase = useMemo(() => {
+    if (!estacionesPermitidas || estacionesPermitidas.length === 0) {
+      return ESTACIONES_OFICIALES;
+    }
+    const permitidasSet = new Set(estacionesPermitidas);
+    return ESTACIONES_OFICIALES.filter((est) => permitidasSet.has(est.codigo));
+  }, [estacionesPermitidas]);
+
   // Estaciones filtradas según la sociedad seleccionada (TODAS / TSA / CAL)
   const estacionesDisponibles = useMemo(() => {
-    return ESTACIONES_OFICIALES.filter((est) => {
+    return estacionesBase.filter((est) => {
       if (sociedad === 'TODAS') return true;
       return est.sociedad === sociedad;
     });
-  }, [sociedad]);
+  }, [estacionesBase, sociedad]);
 
   // Lista de estaciones filtradas por el buscador del dropdown
   const estacionesBusqueda = useMemo(() => {
@@ -204,7 +215,7 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
                   disabled={loading}
                   onClick={() => {
                     onSociedadChange(soc);
-                    const estSoc = ESTACIONES_OFICIALES.filter(
+                    const estSoc = estacionesBase.filter(
                       (e) => soc === 'TODAS' || e.sociedad === soc
                     ).map((e) => e.codigo);
                     onEstacionesChange(estSoc);

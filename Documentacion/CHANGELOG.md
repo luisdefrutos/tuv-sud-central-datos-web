@@ -4,6 +4,62 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.10.0] - 30/10/2026 — *Restricción Integral de Estaciones por Permisos de Usuario (`CENTRAL_GENERAL`) y Optimización Reactiva del KPI Redondo*
+
+### 🔐 Seguridad y Permisos de Estaciones por Usuario (Active Directory / Oracle)
+* **Permisos Oficiales de Central Datos (`CENTRALITV.EMPLEADO_PERMISOS`)**:
+  * Se alinea la obtención de estaciones permitidas con la lógica histórica de la aplicación de escritorio (`clsGeneral.vb: Cargar_Centros_Permitidos("CENTRAL_GENERAL")`).
+  * Para operadores (como `defru-li`), se consultan las estaciones asignadas en `CENTRALITV.EMPLEADO_PERMISOS` con `CodPermiso = 'CENTRAL_GENERAL'`, `Activo = -1` y `VALOR = 'SI'`, devolviendo exactamente sus centros autorizados (`0902`, `2811`, `2812`, `4308`).
+  * Los supervisores mantienen acceso íntegro a todas las estaciones de la red (`Central_Datos = -1`).
+  * Bloqueo preventivo de acceso si un usuario no supervisor carece de estaciones autorizadas en el módulo de Central Datos.
+* **Aplicación Integral en Toda la Aplicación Web**:
+  * **Pantalla de Inicio / "Últimos datos centralizados" (`UltimosDatosCentralizados.tsx` & `useUltimosDatos.ts`)**:
+    * Se aplica el filtro de estaciones permitidas a la tabla principal, mostrando exclusivamente las 4 estaciones asignadas al usuario en lugar de toda la red.
+    * Las 4 tarjetas de resumen métrico (`Total Estaciones`, `TSA`, `CAL`, `Última Inspección Centralizada`) y los botones de filtro rápido de sociedad (`Todas`, `TSA`, `CAL`) recalculan sus cifras dinámicamente sobre las estaciones autorizadas del operador.
+  * **Módulos de Informes (`FacturacionReportPage.tsx` y `NumeroInspeccionesReportPage.tsx`)**:
+    * Los selectores desplegables `ReportFiltersBar` reciben `estacionesPermitidas` para limitar las estaciones elegibles y restringir los filtros de sociedad.
+
+### 🍩 Gráfico Circular Dinámico (KPI Redondo / Donut Cuota)
+* **Recálculo Reactivo Inmediato (`useNumeroInspeccionesReport.ts`)**:
+  * Se corrige el cálculo de `graficoCuotaDinamico`: ahora se computa directamente a partir de las filas visibles (`filasFiltradasYOrdenadas`), desglosando `Fase 1 Favorables`, `Fase 1 Rechazadas`, `Fase 2 Favorables` y `Fase 2 Rechazadas`.
+  * Se elimina la discrepancia que provocaba que el gráfico se quedara en blanco o sin datos al marcar y desmarcar estaciones en el filtro.
+  * Respeto de la paleta semántica en el componente `ReportDonutChart`: Fav. F1 (Azul corporativo `#0046ad`), Rech. F1 (Rojo `#dc2626`), Fav. F2 (Celeste `#0284c7`), Rech. F2 (Naranja `#ea580c`).
+  * Limpieza y reseteo defensivo del estado de hover al variar los datos representados.
+
+---
+
+## [2.09.0] - 30/10/2026 — *Módulo Oficial de Número de Inspecciones (Favorables y Rechazadas por Fase) y Réplica Crystal Reports 1:1*
+
+### 📊 Módulo de Número de Inspecciones (Fase 1 y Fase 2)
+* **Nuevos Endpoints Analíticos (.NET 10 Minimal APIs)**:
+  * `POST /api/v1/informes/numero-inspecciones/consultar`: Agregación de alto rendimiento en el servidor para el grid analítico, 4 tarjetas de KPI ejecutivas y gráficos comparativos de barras y tarta.
+  * `POST /api/v1/informes/numero-inspecciones/exportar-excel`: Exportación directa a formato CSV / Excel con delimitador español (`;`), codificación UTF-8 con BOM y cabeceras oficiales.
+* **Consulta SQL Optimizada (`ObtenerInformeNumeroInspecciones.sql`)**:
+  * Ejecución directa sobre Oracle mediante Dapper + ODP.NET Thin.
+  * Agregación precalculada en un solo paso (`Single-Pass CTE`) con hint de índices sobre `P17_INSPECCION` y `P31_INSPECCION`.
+  * Filtro estricto `ANULADA = 0` y segregación por fase y resultado exactamente igual a la aplicación de escritorio (`frmCriterios.vb`):
+    * `Favorables1`: `RESULTADO IN ('1', '2') AND INDICA12 = '1'`
+    * `Rechazadas1`: `RESULTADO IN ('3', '4') AND INDICA12 = '1'`
+    * `Favorables2`: `RESULTADO IN ('1', '2') AND INDICA12 = '2'`
+    * `Rechazadas2`: `RESULTADO IN ('3', '4') AND INDICA12 = '2'`
+* **Dashboard y Grid Analítico Web (Thin Client)**:
+  * 4 KPIs ejecutivos: Total Inspecciones, 1ª Inspección (Fase 1), 2ª Inspección (Fase 2) y % Rechazo Global.
+  * Gráfico comparativo dual: alternancia instantánea entre Ranking de Estaciones por volumen y Distribución de Cuota de la red.
+  * Tabla con ordenación multicriterio ascendente/descendente en todas las subcolumnas y fila resumen de totales de la red.
+  * Reutilización máxima y estricta de componentes existentes de Algorithm DS: `ReportFiltersBar`, `ReportKpiCard`, `ReportBarChart`, `ReportDonutChart`, `ReportTableContainer`, `SortIndicator` y `BlockingLoadingModal`.
+  * Validación en cliente y servidor con límite de rango a 365 días y alertas dinámicas en tiempo real.
+  * **Interactividad y Limpieza Reactiva**: Al desmarcar todas las estaciones en el filtro, el grid se vacía al instante mostrando aviso instructivo, los 4 KPIs se limpian a cero, los gráficos muestran su estado vacío y los botones de exportación a Excel e impresión Crystal Report se desactivan automáticamente al no haber datos que mostrar.
+
+### 🖨️ Réplica Oficial 1:1 de Crystal Reports (`rptInspFavorablesRechazadas`)
+* **Impresión Aislada y Sin Ruido en A4 Apaisado (`CrystalReportNumeroInspeccionesModal.tsx`)**:
+  * Réplica tipográfica y estructural exacta del formato clásico de Crystal Reports con cabecera enmarcada, parámetros de fechas/estaciones y desglose en 3 bloques de 4 columnas:
+    * Fase 1 (1ª Inspección): Favorables, Rechazadas, Total, % Rechazo.
+    * Fase 2 (2ª Inspección): Favorables, Rechazadas, Total, % Rechazo.
+    * Total Inspecciones: Total Fav., Total Rech., Total Insp., % Rechazo.
+  * Impresión mediante iframe oculto aislado: se eliminan botones, scrollbars y bordes del navegador, ajustando la red completa de estaciones en **1 sola página A4 horizontal**.
+
+---
+
 ## [2.08.0] - 30/10/2026 — *Módulo Oficial de Facturación de Inspecciones y Réplica Crystal Reports 1:1*
 
 ### 📊 Módulo de Facturación e Inspecciones Centralizadas

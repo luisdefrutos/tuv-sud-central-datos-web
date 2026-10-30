@@ -30,7 +30,7 @@ export interface MenuGroup {
 }
 
 /** Pantallas ya migradas a la web (resto muestran la ficha "en migración") */
-export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion'] as const;
+export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion', 'num-inspecciones'] as const;
 
 export const DESKTOP_MENUS: MenuGroup[] = [
   {

@@ -10,5 +10,12 @@ public interface IInformesRepository
         string? codEmpresa = null,
         IReadOnlyList<string>? codEstaciones = null,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<EstacionNumeroInspeccionesDato>> ObtenerNumeroInspeccionesAsync(
+        DateTime fechaInicio,
+        DateTime fechaFin,
+        string? codEmpresa = null,
+        IReadOnlyList<string>? codEstaciones = null,
+        CancellationToken cancellationToken = default);
 }
 
