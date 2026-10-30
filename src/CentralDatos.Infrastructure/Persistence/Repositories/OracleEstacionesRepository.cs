@@ -34,26 +34,20 @@ public class OracleEstacionesRepository : IEstacionesRepository
         // 1. Cargar consulta SQL externalizada y cacheada
         var sql = _sqlLoader.GetQuery("ObtenerUltimosDatosCentralizados");
 
-        // 2. Prioridad: Pasarela SOAP CentralITV_Svc (idéntico a la aplicación de escritorio WinForms)
-        if (!string.IsNullOrWhiteSpace(_options.SoapUrl))
-        {
-            try
-            {
-                return await ObtenerPorSoapAsync(sql, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Fallo en pasarela SOAP CentralITV_Svc ({SoapUrl}). Probando conexión directa Oracle...", _options.SoapUrl);
-            }
-        }
-
-        // 3. Fallback: Conexión directa ODP.NET Thin con Dapper
+        // 2. Ejecución DIRECTA sobre Oracle (ODP.NET Thin + Dapper :1521) - Arquitectura Oficial Web
         if (!string.IsNullOrWhiteSpace(_options.ConnectionString))
         {
             return await ObtenerPorDapperAsync(sql, cancellationToken);
         }
 
-        throw new InvalidOperationException("No se ha configurado ni pasarela SOAP ni cadena de conexión Oracle válida.");
+        // 3. Fallback de contingencia (únicamente si la cadena directa no estuviera configurada en appsettings)
+        if (!string.IsNullOrWhiteSpace(_options.SoapUrl))
+        {
+            _logger.LogWarning("Cadena de conexión directa Oracle no detectada. Usando pasarela de contingencia SOAP ({SoapUrl})...", _options.SoapUrl);
+            return await ObtenerPorSoapAsync(sql, cancellationToken);
+        }
+
+        throw new InvalidOperationException("No se ha configurado la cadena de conexión Oracle en ConnectionStrings:CentralItv.");
     }
 
     private async Task<IReadOnlyList<EstacionUltimoDato>> ObtenerPorDapperAsync(string sql, CancellationToken cancellationToken)

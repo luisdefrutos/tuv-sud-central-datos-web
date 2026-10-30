@@ -4,6 +4,39 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.08.0] - 30/10/2026 — *Módulo Oficial de Facturación de Inspecciones y Réplica Crystal Reports 1:1*
+
+### 📊 Módulo de Facturación e Inspecciones Centralizadas
+* **Nuevo Endpoint Analítico (.NET 10 Minimal APIs)**:
+  * `POST /api/v1/informes/facturacion/consultar`: Agregación de alto rendimiento en el servidor para el grid analítico, tarjetas de KPI ejecutivas y gráficos comparativos.
+  * `POST /api/v1/informes/facturacion/exportar-csv`: Exportación inmediata a formato CSV / Excel con delimitadores en español (`;`) y BOM UTF-8 para apertura directa en Microsoft Excel.
+* **Consulta SQL Optimizada (`ObtenerInformeFacturacion.sql`)**:
+  * Ejecución directa sobre Oracle mediante Dapper + ODP.NET Thin.
+  * Agregación en un solo paso (`Single-Pass CTE`) con hint de índices sobre `P17_INSPECCION` y `P31_INSPECCION`, reduciendo tiempos de consulta en base de datos de producción de 78 segundos a subsegundos.
+* **Dashboard y Grid Analítico Web**:
+  * 4 KPIs ejecutivos en cabecera: Facturación Neta Total, Total Inspecciones, Ticket Medio por Inspección y Estación con Mayor Facturación (con filtro de exclusión de facturación cero).
+  * Gráfico comparativo dual: alternancia instantánea entre Ranking de Barras y Cuota de Mercado (%) con tokens de color corporativos TÜV SÜD (Azul `#0046ad` para TSA y Verde `#00875a` para CAL).
+  * Selector multisección de estaciones con opciones de "Marcar todas" y "Desmarcar todas" sin interferencias de eventos.
+
+### 🖨️ Réplica Oficial 1:1 de Crystal Reports (`rptResumenInspecciones`)
+* **Desglose Completo por Formas de Pago (`CENTRALITV.FORMAPAGO`)**:
+  * Integración con la tabla de formas de pago replicando exactamente la lógica del escritorio (`frmCriterios.vb`):
+    * **Contados (`CODTIPOFORMAPAGO IN ('C', 'X')`)**: Nº Inspecciones, Base, IVA, Tasas y Total.
+    * **Terceros (`CODTIPOFORMAPAGO IN ('3', 'O')`)**: Nº Inspecciones, Base, IVA, Tasas y Total.
+    * **Tarjetas (`CODTIPOFORMAPAGO = 'T'`)**: Nº Inspecciones, Base, IVA, Tasas y Total.
+    * **Totales Oficiales**: Nº Inspecciones, Base, IVA (Sumado), Tasas, Tasas de Tráfico, Tasas de Industria, Total y Gratuitas.
+  * Concordancia matemática al céntimo contra las liquidaciones contables y los informes clásicos de escritorio.
+* **Impresión Aislada y Sin Ruido en A4 Apaisado (`CrystalReportPreviewModal.tsx`)**:
+  * Mecanismo de impresión desacoplado mediante *iframe* oculto: se suprimen al 100% los botones de la pantalla, la barra del visor, los fondos grises y los scrollbars.
+  * Configuración estricta `@page { size: A4 landscape; margin: 5mm 6mm; }` en orientación horizontal.
+  * La tabla de 23 columnas, junto con el enmarcado de título, criterios (`IVA SUMADO`, fechas, estaciones) y fila de totales finales, entra con exactitud en **1 sola hoja de papel (Página 1 de 1)** sin columnas cortadas ni saltos extraños de página.
+
+### 🧹 Usabilidad y Limpieza de Interfaz
+* **Menú "Aplicación"**: Eliminada la opción redundante *"Salir"*, manteniendo exclusivamente *"Últimos datos centralizados"*.
+* **Insignias y Tooltips**: Información técnica de base de datos (host/SID) visible únicamente en entornos de desarrollo mediante atributos `title` limpios.
+
+---
+
 ## [2.07.0] - 30/10/2026 — *Resiliencia de Auditoría, Cola Offline y Diagnóstico Técnico Local*
 
 ### 📡 Resiliencia y Auditoría Desconectada (Offline Buffer & Auto-Sync)

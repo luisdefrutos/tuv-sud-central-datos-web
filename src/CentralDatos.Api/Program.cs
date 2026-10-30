@@ -2,6 +2,7 @@ using System.Text;
 using CentralDatos.Api.Endpoints.Auth;
 using CentralDatos.Api.Endpoints.Estaciones;
 using CentralDatos.Api.Endpoints.Health;
+using CentralDatos.Api.Endpoints.Informes;
 using CentralDatos.Api.Extensions;
 using CentralDatos.Application;
 using CentralDatos.Infrastructure;
@@ -125,6 +126,7 @@ try
     app.MapHealthEndpoints();
     app.MapEstacionesEndpoints();
     app.MapAuthEndpoints();
+    app.MapInformesEndpoints();
 
     app.Run();
 }

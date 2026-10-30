@@ -149,3 +149,137 @@
 .cd-table-th.cd-table-th-active:hover {
   background-color: #172e6c;
 }
+
+/* ==========================================================================
+ * Barra de menús tipo escritorio (réplica de MainMenu de mdiMain.vb)
+ * IMPORTANTE: el contenedor NO debe tener overflow, o recortaría los desplegables.
+ * ========================================================================== */
+.cd-menubar {
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--ts-semantic-color-border-default, #d0dae5);
+  padding: 0 clamp(0.75rem, 2vw, 1.75rem);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  position: relative;
+  z-index: 50;
+}
+
+.cd-menubar-title {
+  border: none;
+  background: transparent;
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+  color: #1e293b;
+  font-weight: 600;
+  font-size: 0.88rem;
+  font-family: inherit;
+  border-bottom: 3px solid transparent;
+  border-radius: 4px 4px 0 0;
+  white-space: nowrap;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.cd-menubar-title:hover,
+.cd-menubar-title-open {
+  background-color: #e8f1fd;
+  color: #0046ad;
+}
+
+.cd-menubar-title-active {
+  color: #0046ad;
+  border-bottom-color: #0046ad;
+}
+
+.cd-menubar-burger {
+  border: 1px solid #d0dae5;
+  background: #ffffff;
+  color: #0046ad;
+  padding: 0.4rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.cd-menu-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 270px;
+  background-color: #ffffff;
+  border: 1px solid var(--ts-semantic-color-border-default, #d0dae5);
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 12px 28px rgba(11, 37, 59, 0.15), 0 4px 10px rgba(11, 37, 59, 0.08);
+  z-index: 1000;
+  padding: 4px 0;
+}
+
+.cd-menu-submenu-wrapper {
+  position: relative;
+}
+
+.cd-menu-flyout {
+  top: -5px;
+  left: 100%;
+  border-radius: 6px;
+  z-index: 1010;
+}
+
+.cd-menu-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  color: #1e293b;
+  font-weight: 500;
+  font-size: 0.86rem;
+  font-family: inherit;
+  padding: 7px 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  white-space: nowrap;
+}
+
+.cd-menu-item:hover,
+.cd-menu-item-active {
+  background-color: #e8f1fd;
+  color: #0046ad;
+}
+
+.cd-menu-item-active {
+  font-weight: 700;
+}
+
+.cd-menu-arrow {
+  font-size: 0.65rem;
+  color: #64748b;
+}
+
+.cd-menu-separator {
+  height: 1px;
+  background-color: #e2e8f0;
+  margin: 4px 0;
+}
+
+@media (max-width: 768px) {
+  .cd-menubar-title {
+    width: 100%;
+    text-align: left;
+  }
+
+  /* En móvil los submenús laterales se muestran indentados debajo */
+  .cd-menu-flyout {
+    position: static !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-left: 3px solid #93b4e6 !important;
+    margin-left: 0.75rem;
+    border-radius: 0 !important;
+  }
+
+  .cd-menu-item {
+    white-space: normal;
+  }
+}

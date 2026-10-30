@@ -1,5 +1,6 @@
 using CentralDatos.Application.Features.Auth.Interfaces;
 using CentralDatos.Application.Features.Estaciones.Interfaces;
+using CentralDatos.Application.Features.Informes.Interfaces;
 using CentralDatos.Infrastructure.Configuration;
 using CentralDatos.Infrastructure.Persistence.Repositories;
 using CentralDatos.Infrastructure.Persistence.Sql;
@@ -39,6 +40,7 @@ public static class DependencyInjection
         services.AddScoped<IEstacionesRepository, OracleEstacionesRepository>();
         services.AddScoped<IAuthRepository, OracleAuthRepository>();
         services.AddScoped<IAuditRepository, OracleAuditRepository>();
+        services.AddScoped<IInformesRepository, OracleInformesRepository>();
 
         return services;
     }

@@ -12,6 +12,7 @@ import { useUltimosDatos } from '../hooks/useUltimosDatos';
 import type { ColumnaOrden } from '../types/estaciones.types';
 import { SOCIEDADES } from '../../../constants/companies.constants';
 import { UI_CONSTANTS } from '../../../constants/ui.constants';
+import { BlockingLoadingModal } from '../../../components/common/BlockingLoadingModal';
 
 interface SortIndicatorProps {
   direction: 'asc' | 'desc' | null;
@@ -142,64 +143,12 @@ export function UltimosDatosCentralizados({ onNavigateHome }: UltimosDatosCentra
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', position: 'relative' }}>
-      {/* 1. SPINNER MODAL BLOQUEANTE DE PANTALLA */}
-      {loading && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(11, 37, 59, 0.45)',
-            backdropFilter: 'blur(3px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            pointerEvents: 'all',
-            cursor: 'wait',
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '8px',
-              padding: 'clamp(1.5rem, 4vw, 2.25rem) clamp(1.5rem, 5vw, 3rem)',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '1.25rem',
-              maxWidth: '420px',
-              width: '90%',
-              textAlign: 'center',
-              border: '1px solid var(--ts-semantic-color-border-default, #d0dae5)',
-            }}
-          >
-            <TsSpinner style={{ fontSize: '3rem', color: 'var(--ts-semantic-color-surface-brand-blue, #0046ad)' }} />
-            <div>
-              <div
-                style={{
-                  fontWeight: 700,
-                  fontSize: '1.15rem',
-                  color: 'var(--ts-semantic-color-surface-inverted-default, #0b253b)',
-                  fontFamily: 'var(--ts-font-family-sans, system-ui)',
-                }}
-              >
-                {UI.SPINNER_TITULO}
-              </div>
-              <div
-                style={{
-                  fontSize: '0.875rem',
-                  color: 'var(--ts-semantic-color-text-subtle, #5c768d)',
-                  marginTop: '0.4rem',
-                  lineHeight: 1.4,
-                }}
-              >
-                {UI.SPINNER_SUBTITULO}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 1. SPINNER MODAL BLOQUEANTE DE PANTALLA UNIFICADO */}
+      <BlockingLoadingModal
+        isOpen={loading}
+        title={UI.SPINNER_TITULO}
+        message={UI.SPINNER_SUBTITULO}
+      />
 
       {/* 2. Miga de Pan Interactiva (Breadcrumb Oficial Algorithm DS) */}
       <TsBreadcrumb>
@@ -419,7 +368,12 @@ export function UltimosDatosCentralizados({ onNavigateHome }: UltimosDatosCentra
             <TsButton
               variant="secondary"
               onClick={exportarExcelCsv}
-              title="Descarga directamente un fichero Excel (.CSV con codificación UTF-8 para España) con los datos visibles en pantalla"
+              disabled={estacionesFiltradas.length === 0}
+              title={
+                estacionesFiltradas.length === 0
+                  ? 'No hay registros en la tabla para exportar'
+                  : 'Descarga directamente un fichero Excel (.CSV con codificación UTF-8 para España) con los datos visibles en pantalla'
+              }
               style={{ whiteSpace: 'nowrap' }}
             >
               📥 Exportar a Excel

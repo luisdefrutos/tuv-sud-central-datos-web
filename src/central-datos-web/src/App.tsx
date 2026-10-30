@@ -4,7 +4,9 @@ import { LoginPage } from './features/auth/pages/LoginPage';
 import { Header } from './components/layout/Header';
 import { Navbar } from './components/layout/Navbar';
 import { UltimosDatosCentralizados } from './features/estaciones/components/UltimosDatosCentralizados';
-import { DESKTOP_MENUS } from './constants/navigation.constants';
+import { FacturacionReportPage } from './features/informes/pages/FacturacionReportPage';
+import { InformesHubPage } from './features/informes/pages/InformesHubPage';
+import { DESKTOP_MENUS, findMenuItem } from './constants/navigation.constants';
 import { UI_CONSTANTS } from './constants/ui.constants';
 import {
   TsBreadcrumb,
@@ -16,7 +18,7 @@ import {
 } from '@tuvsud/design-system/react';
 
 function AppContent() {
-  const { isAuthenticated, isLoading, logNavigation, isOnline, downloadDiagnosticsLog } = useAuth();
+  const { isAuthenticated, isLoading, logNavigation, isOnline, downloadDiagnosticsLog, logout } = useAuth();
   // Estado inicial: null (solo se muestran los menús superiores sin cargar pantallas ni realizar consultas)
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
@@ -66,7 +68,14 @@ function AppContent() {
   };
 
   const currentGroup = DESKTOP_MENUS.find((g) => g.id === activeGroupId);
-  const currentItem = currentGroup?.items.find((i) => i.id === activeItemId);
+  // Busca también dentro de los submenús (▶) para la miga de pan
+  const { parent: currentParent, item: currentItem } = findMenuItem(activeItemId);
+
+  const handleMenuAction = (actionId: string) => {
+    if (actionId === 'salir') {
+      void logout();
+    }
+  };
 
   return (
     <div
@@ -88,6 +97,7 @@ function AppContent() {
         activeItemId={activeItemId}
         onSelectItem={handleSelectItem}
         onGoHome={handleGoHome}
+        onAction={handleMenuAction}
       />
 
       {/* 2.1. Aviso de Modo Offline y Cola Local de Auditoría */}
@@ -234,20 +244,36 @@ function AppContent() {
                   </TsButton>
                 </TsCard>
 
-                {/* Tarjeta Fase 2: Informes */}
-                <TsCard style={{ padding: '1.5rem', backgroundColor: '#ffffff', opacity: 0.9 }}>
+                {/* Tarjeta Informes: Facturación de Inspecciones */}
+                <TsCard
+                  style={{
+                    padding: '1.5rem',
+                    backgroundColor: '#ffffff',
+                    borderLeft: '4px solid #00875a',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                  }}
+                >
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <span style={{ fontSize: '1.75rem' }}>📑</span>
-                      <TsBadge variant="neutral">Próximamente</TsBadge>
+                      <span style={{ fontSize: '1.75rem' }}>💶</span>
+                      <TsBadge variant="success">Disponible</TsBadge>
                     </div>
-                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0b253b', fontWeight: 700 }}>
-                      Informes y MINER Excel
+                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0046ad', fontWeight: 700 }}>
+                      Facturación de Inspecciones
                     </h3>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '0.88rem', lineHeight: 1.5 }}>
-                      Estadísticas oficiales MINER, informes de facturación, defectología y tiempos de inspección.
+                    <p style={{ margin: '0 0 1.25rem 0', color: '#64748b', fontSize: '0.88rem', lineHeight: 1.5 }}>
+                      Dashboard con KPIs consolidados, ranking gráfico por estación y tabla analítica con exportación directa a Excel.
                     </p>
                   </div>
+                  <TsButton
+                    variant="primary"
+                    onClick={() => handleSelectItem('facturacion', 'informes')}
+                    style={{ width: '100%' }}
+                  >
+                    Abrir Módulo
+                  </TsButton>
                 </TsCard>
 
                 {/* Tarjeta Fase 2: Inspecciones */}
@@ -291,8 +317,31 @@ function AppContent() {
           <UltimosDatosCentralizados onNavigateHome={handleGoHome} />
         )}
 
-        {/* CASO C: Resto de Módulos de la Aplicación de Escritorio con su correspondiente miga de pan */}
-        {activeItemId !== null && activeItemId !== 'ultima-fecha' && (
+        {/* CASO C: Módulo de Facturación de Inspecciones (Dashboard + Ranking + Grid + Excel) */}
+        {(activeItemId === 'facturacion' || activeItemId === 'facturacion-excel') && (
+          <FacturacionReportPage
+            onNavigateHome={handleGoHome}
+            onNavigateToInformes={() => {
+              setActiveGroupId('informes');
+              setActiveItemId('informes');
+            }}
+          />
+        )}
+
+        {/* CASO D: Catálogo / Hub de Informes */}
+        {activeGroupId === 'informes' && (activeItemId === null || activeItemId === 'informes') && (
+          <InformesHubPage
+            onSelectReport={(reportId) => handleSelectItem(reportId, 'informes')}
+            onNavigateHome={handleGoHome}
+          />
+        )}
+
+        {/* CASO E: Resto de Módulos de la Aplicación de Escritorio con su correspondiente miga de pan */}
+        {activeItemId !== null &&
+          activeItemId !== 'informes' &&
+          activeItemId !== 'ultima-fecha' &&
+          activeItemId !== 'facturacion' &&
+          activeItemId !== 'facturacion-excel' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {/* Miga de Pan Correspondiente Interactiva */}
             <TsBreadcrumb>
@@ -306,18 +355,19 @@ function AppContent() {
               {currentGroup && (
                 <TsBreadcrumbItem
                   onClick={() => {
-                    if (currentGroup.items.length === 1) {
-                      handleSelectItem(currentGroup.items[0].id, currentGroup.id);
+                    if (currentGroup.id === 'informes') {
+                      handleSelectItem('informes', 'informes');
                     }
                   }}
                   style={{
-                    cursor: currentGroup.items.length === 1 ? 'pointer' : 'default',
-                    color: currentGroup.items.length === 1 ? '#0046ad' : undefined,
+                    cursor: currentGroup.id === 'informes' ? 'pointer' : 'default',
+                    color: currentGroup.id === 'informes' ? '#0046ad' : undefined,
                   }}
                 >
                   {currentGroup.label}
                 </TsBreadcrumbItem>
               )}
+              {currentParent && <TsBreadcrumbItem>{currentParent.label}</TsBreadcrumbItem>}
               {currentItem && (
                 <TsBreadcrumbItem style={{ fontWeight: 700, color: 'var(--ts-semantic-color-surface-inverted-default, #0b253b)' }}>
                   {currentItem.label}
@@ -327,7 +377,7 @@ function AppContent() {
 
             <TsCard style={{ padding: '3.5rem 2rem', textAlign: 'center', backgroundColor: '#ffffff' }}>
               <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
-                {currentItem?.icon ?? '📑'}
+                📑
               </div>
               <h2
                 style={{
@@ -358,7 +408,7 @@ function AppContent() {
                   variant="primary"
                   onClick={() => handleSelectItem('ultima-fecha', 'aplicacion')}
                 >
-                  📊 Ir a Última fecha inspección
+                  📊 Ir a Últimos datos centralizados
                 </TsButton>
               </div>
             </TsCard>

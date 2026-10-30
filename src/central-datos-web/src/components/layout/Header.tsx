@@ -1,11 +1,33 @@
+import { useEffect, useState } from 'react';
 import { TsBadge } from '@tuvsud/design-system/react';
 import { UI_CONSTANTS } from '../../constants/ui.constants';
 import { TuvSudLogo } from '../common/TuvSudLogo';
 import { useAuth } from '../../features/auth/context/AuthContext';
+import { fetchHealthStatus, type HealthStatusResponse } from '../../api/healthApi';
 
 export function Header() {
   const { BRAND } = UI_CONSTANTS;
   const { user, logout } = useAuth();
+  const [health, setHealth] = useState<HealthStatusResponse | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchHealthStatus()
+      .then((data) => {
+        if (isMounted) setHealth(data);
+      })
+      .catch((_err) => {
+        // En caso de fallo de red o modo offline, mantener comportamiento seguro
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Solo se define title si es entorno de desarrollo. En producción no se muestra nada.
+  const devTooltip = health?.esDesarrollo
+    ? (health.infoTitle ?? 'Entorno de Desarrollo (10.108.206.7 / ORCLDV)')
+    : undefined;
 
   return (
     <header
@@ -23,7 +45,10 @@ export function Header() {
       }}
     >
       {/* 1. Logotipo Oficial Vectorial y Título de la Aplicación */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(0.75rem, 2vw, 1.25rem)' }}>
+      <div
+        style={{ display: 'flex', alignItems: 'center', gap: 'clamp(0.75rem, 2vw, 1.25rem)' }}
+        title={devTooltip}
+      >
         <TuvSudLogo size={42} />
 
         <div>
@@ -33,12 +58,18 @@ export function Header() {
                 fontWeight: 800,
                 fontSize: 'clamp(1rem, 2.5vw, 1.15rem)',
                 letterSpacing: '-0.2px',
+                cursor: 'default',
               }}
+              title={devTooltip}
             >
               {BRAND.TITULO_APLICACION}
             </span>
-            {import.meta.env.DEV && (
-              <TsBadge variant="warning" style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.5px' }}>
+            {health?.esDesarrollo && (
+              <TsBadge
+                variant="warning"
+                title={devTooltip}
+                style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.5px', cursor: 'help' }}
+              >
                 DESARROLLO
               </TsBadge>
             )}
