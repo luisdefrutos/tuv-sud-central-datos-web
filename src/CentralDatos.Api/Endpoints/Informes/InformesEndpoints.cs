@@ -98,6 +98,49 @@ public static class InformesEndpoints
         .WithName("ExportarNumeroInspeccionesExcel")
         .WithSummary("Genera y descarga el fichero estructurado de número de inspecciones con BOM UTF-8 y separador para Excel");
 
+        // 5. Consulta analítica de duración promedio de inspecciones periódicas 001
+        group.MapPost("/duracion-promedio/consultar", async (
+            [FromBody] FiltrosDuracionPromedioRequestDto filtros,
+            [FromServices] IInformesDuracionPromedioService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var resultado = await service.GenerarInformeDuracionPromedioAsync(filtros, ct);
+                return Results.Ok(resultado);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .WithName("ConsultarDuracionPromedio")
+        .WithSummary("Consulta la duración promedio de inspecciones periódicas (001) desglosadas por tipo de vehículo y estación");
+
+        // 6. Exportación de duración promedio a Excel / CSV
+        group.MapPost("/duracion-promedio/exportar-excel", async (
+            [FromBody] FiltrosDuracionPromedioRequestDto filtros,
+            [FromServices] IInformesDuracionPromedioService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var archivoBytes = await service.GenerarExportacionDuracionPromedioCsvAsync(filtros, ct);
+                var nombreFichero = $"duracion-promedio-{DateTime.Now:yyyyMMdd-HHmm}.csv";
+
+                return Results.File(
+                    archivoBytes,
+                    contentType: "text/csv; charset=utf-8",
+                    fileDownloadName: nombreFichero);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .WithName("ExportarDuracionPromedioExcel")
+        .WithSummary("Genera y descarga el fichero estructurado de duración promedio con BOM UTF-8 y separador para Excel");
+
         return app;
     }
 }

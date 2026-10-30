@@ -12,6 +12,7 @@ export interface ReportBarChartProps {
   emptyMessage?: string;
   defaultTopCount?: number;
   height?: number | string;
+  sortOrder?: 'desc' | 'asc' | 'none';
 }
 
 /**
@@ -26,6 +27,7 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
   valueFormatter = (val) => val.toLocaleString('es-ES'),
   emptyMessage = 'No hay datos disponibles para representar en el gráfico con los filtros seleccionados.',
   defaultTopCount = 10,
+  sortOrder = 'desc',
 }) => {
   const [mostrarTodos, setMostrarTodos] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -56,8 +58,10 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
     );
   }
 
-  // Ordenar de mayor a menor valor
-  const sorted = [...data].sort((a, b) => b.valor - a.valor);
+  // Ordenación configurable (por defecto desc: mayor a menor, o asc: menor a mayor como en rankings de celeridad/tiempo)
+  const sorted = sortOrder === 'none'
+    ? [...data]
+    : [...data].sort((a, b) => (sortOrder === 'asc' ? a.valor - b.valor : b.valor - a.valor));
   const visibleData = mostrarTodos ? sorted : sorted.slice(0, defaultTopCount);
   const maxVal = Math.max(...visibleData.map((d) => d.valor), 1);
 

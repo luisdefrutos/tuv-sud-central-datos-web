@@ -151,5 +151,71 @@ export type SortableNumeroInspeccionesColumn =
   | 'totalInspecciones'
   | 'porcentajeRechazoGlobal';
 
+// ==============================================================================
+// Tipos para Informe de Duración Promedio de Inspecciones (rptDuracionPromedio)
+// ==============================================================================
+
+export interface FiltrosDuracionPromedio extends FiltrosReporteBasico {
+  fase?: 'TODAS' | '1' | '2';
+}
+
+export interface FilaDuracionPromedio {
+  codEstacion: string;
+  desEstacion: string;
+  codEmpresa: string;
+  nombreEmpresa: string;
+  claveSociedad: string;
+  tipoVehiculo: string;
+  ordenTipo: number;
+  totalInspecciones: number;
+  duracionPromedioMinutos: number;
+  duracionFormateada: string;
+}
+
+export interface ResumenEstacionDuracion {
+  codEstacion: string;
+  desEstacion: string;
+  codEmpresa: string;
+  nombreEmpresa: string;
+  claveSociedad: string;
+  totalInspecciones: number;
+  duracionPromedioMinutos: number;
+  duracionFormateada: string;
+}
+
+export interface ResumenTipoVehiculoDuracion {
+  tipoVehiculo: string;
+  ordenTipo: number;
+  totalInspecciones: number;
+  duracionPromedioMinutos: number;
+  duracionFormateada: string;
+}
+
+export interface InformeDuracionPromedioResponse {
+  fechaInicio: string;
+  fechaFin: string;
+  fase: string;
+  totalInspeccionesGlobal: number;
+  duracionPromedioGlobalMinutos: number;
+  duracionPromedioGlobalFormateada: string;
+  estacionMasRapida: string;
+  duracionEstacionMasRapida: string;
+  tipoVehiculoMasRapido: string;
+  duracionTipoVehiculoMasRapido: string;
+  filas: FilaDuracionPromedio[];
+  resumenEstaciones: ResumenEstacionDuracion[];
+  resumenTiposVehiculo: ResumenTipoVehiculoDuracion[];
+  graficoRankingEstaciones: ReportBarChartPoint[];
+  graficoTiposVehiculo: ReportBarChartPoint[];
+}
+
+export type SortableDuracionPromedioColumn =
+  | 'codEstacion'
+  | 'desEstacion'
+  | 'claveSociedad'
+  | 'totalInspecciones'
+  | 'duracionPromedioMinutos';
+
+
 
 

@@ -100,13 +100,16 @@ export const InformesHubPage: React.FC<InformesHubPageProps> = ({
         {items.map((item) => {
           const isFacturacion = item.id === 'facturacion';
           const isNumInspecciones = item.id === 'num-inspecciones';
-          const isAvailable = isFacturacion || isNumInspecciones;
+          const isDuracionPromedio = item.id === 'duracion-promedio';
+          const isAvailable = isFacturacion || isNumInspecciones || isDuracionPromedio;
 
           let descripcion = 'Módulo de análisis estadístico oficial de la aplicación de escritorio Central Datos.';
           if (isFacturacion) {
             descripcion = 'Dashboard interactivo con KPIs de liquidación neta, ranking por estación, gráfico circular y exportación a Excel.';
           } else if (isNumInspecciones) {
             descripcion = 'Desglose oficial de inspecciones favorables y rechazadas en Fase 1 y Fase 2, tasas de rechazo e impresión de Crystal Report.';
+          } else if (isDuracionPromedio) {
+            descripcion = 'Cálculo de tiempos medios de inspección periódica (001) por tipo de vehículo y estación, ranking de agilidad e impresión Crystal Report.';
           }
 
           return (

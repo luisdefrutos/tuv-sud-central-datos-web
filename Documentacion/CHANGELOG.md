@@ -4,6 +4,40 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.11.0] - 30/10/2026 — *Módulo Oficial de Duración Promedio de Inspecciones Periódicas (001), Fidelidad 1:1 Crystal Reports y Gráficos Visuales*
+
+### ⏱️ Módulo de Duración Promedio de Inspecciones (001)
+* **Nuevos Endpoints Analíticos (.NET 10 Minimal APIs)**:
+  * `POST /api/v1/informes/duracion-promedio/consultar`: Agregación de alto rendimiento en el servidor para el grid analítico, 4 tarjetas de KPI ejecutivas, ranking de agilidad de estaciones y distribución por tipología de vehículo según clasificación oficial MINER.
+  * `POST /api/v1/informes/duracion-promedio/exportar-excel`: Exportación directa a formato CSV / Excel con delimitador español (`;`), codificación UTF-8 con BOM y cabeceras oficiales.
+* **Consulta SQL Exacta 1:1 con la App de Escritorio (`ObtenerInformeDuracionPromedio.sql`)**:
+  * Ejecución directa sobre Oracle mediante Dapper + ODP.NET Thin.
+  * Agregación precalculada con hint de índices `P17_INSPECCION` y `P31_INSPECCION`.
+  * Filtro estricto `ANULADA = 0`, `CodSepiva IN ('001')` (inspecciones periódicas), `HoraFinal IS NOT NULL`, `HoraCobro IS NOT NULL` y `HoraFinal >= HoraCobro`. Se elimina el corte artificial de 180 min para replicar fielmente el cálculo de `frmCriterios.vb:2856-2857` (`ROUND(Avg((HoraFinal - HoraCobro)*24*60), 1)`).
+  * Integración con la función oficial `CENTRALITV.CLASIFICACION_MINER(CodConstruccion, CodUtilizacion)` y ordenación por `CENTRALITV.TIPOS_CLASIFICACION_MINER.ORDEN`.
+* **Filtro de Fase Integrado y Responsivo en `ReportFiltersBar`**:
+  * El filtro de fase (`Todas`, `1ª Fase`, `2ª Fase`) se traslada a la barra horizontal de filtros `ReportFiltersBar`, situado inmediatamente al lado del selector de fechas para un flujo natural e intuitivo.
+  * Se mantiene la barra totalmente responsiva (`flexWrap: 'wrap'`).
+  * En la cabecera de la página se eliminan duplicidades, dejando en la zona derecha exclusivamente los dos botones de acción: `🖨️ Imprimir (Crystal Report)` y `🔄 Actualizar Datos`.
+* **Consistencia Corporativa en la Columna Sociedad**:
+  * La columna "Sociedad" del grid analítico adopta el mismo estándar de texto y badge que `FacturacionReportPage` y `NumeroInspeccionesReportPage`, mostrando `TÜV SÜD ATISAE (TSA)` o `TÜV SÜD CAL (CAL)` con su correspondiente badge semántico.
+* **Corrección de Ordenación en Ranking de Agilidad (`ReportBarChart`)**:
+  * Se añade la propiedad `sortOrder?: 'desc' | 'asc' | 'none'` a `ReportBarChart` (por defecto `'desc'`).
+  * En el ranking de agilidad se configura `sortOrder="asc"`, mostrando en primer lugar (#1) la estación con menor duración promedio (más ágil) y en último lugar la más lenta, solventando la inversión reportada en la interfaz gráfica.
+* **Métricas Visuales Enriquecidas con Gráficos Donut (`ReportDonutChart`)**:
+  * Se incorpora un selector de visualizaciones con 4 alternativas sin sobreingeniería:
+    1. `📊 Ranking Agilidad (Menor a Mayor)`: Barras horizontales ordenadas de mayor a menor celeridad.
+    2. `🚗 Por Tipo de Vehículo`: Barras con duración media por categoría MINER.
+    3. `🍩 Cuota por Tipo (Donut)`: Gráfico circular con la distribución porcentual de inspecciones por tipología de vehículo.
+    4. `🏢 Cuota Sociedades (Donut)`: Gráfico circular con la distribución de volumen entre TSA y CAL.
+* **Réplica Oficial 1:1 de Crystal Reports (`rptDuracionPromedio`) en `CrystalReportDuracionPromedioModal.tsx`**:
+  * Adaptado fielmente al informe clásico de escritorio en A4 vertical (Portrait):
+    * Marco enmarcado con título oficial: `DURACIÓN PROMEDIO DE INSPECCIONES (EN MINUTOS) / INSPECCIONES PERIÓDICAS 001`.
+    * Desglose por tipo de vehículo (`TIPO DE VEHÍCULO: MOTOCICLETAS`, etc.) con exactamente 2 columnas: `ESTACIÓN ITV` y `DURACIÓN (MIN.)` redondeada a entero, junto con el pie `Promedio: [valor]`.
+    * Bloque final de `FILTRO APLICADO AL INFORME` con fecha inicial, fecha final, fase y listado de estaciones analizadas, idéntico a la página 10 del informe clásico de Crystal Reports.
+
+---
+
 ## [2.10.0] - 30/10/2026 — *Restricción Integral de Estaciones por Permisos de Usuario (`CENTRAL_GENERAL`) y Optimización Reactiva del KPI Redondo*
 
 ### 🔐 Seguridad y Permisos de Estaciones por Usuario (Active Directory / Oracle)

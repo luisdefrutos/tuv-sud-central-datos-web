@@ -17,5 +17,13 @@ public interface IInformesRepository
         string? codEmpresa = null,
         IReadOnlyList<string>? codEstaciones = null,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<EstacionDuracionPromedioDato>> ObtenerDuracionPromedioAsync(
+        DateTime fechaInicio,
+        DateTime fechaFin,
+        string? codEmpresa = null,
+        IReadOnlyList<string>? codEstaciones = null,
+        string? fase = null,
+        CancellationToken cancellationToken = default);
 }
 

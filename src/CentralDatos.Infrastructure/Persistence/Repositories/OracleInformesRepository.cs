@@ -445,5 +445,193 @@ public sealed class OracleInformesRepository : IInformesRepository
 
         return lista;
     }
+
+    public async Task<IReadOnlyList<EstacionDuracionPromedioDato>> ObtenerDuracionPromedioAsync(
+        DateTime fechaInicio,
+        DateTime fechaFin,
+        string? codEmpresa = null,
+        IReadOnlyList<string>? codEstaciones = null,
+        string? fase = null,
+        CancellationToken cancellationToken = default)
+    {
+        var sqlBase = _sqlLoader.GetQuery("ObtenerInformeDuracionPromedio");
+
+        var sqlFinal = sqlBase;
+        var whereExtraOuter = new StringBuilder();
+        var whereExtraCte = new StringBuilder();
+
+        if (!string.IsNullOrWhiteSpace(codEmpresa))
+        {
+            whereExtraOuter.Append($" AND e.Cod_Empresa = '{codEmpresa.Trim()}'");
+        }
+
+        if (codEstaciones != null && codEstaciones.Count > 0)
+        {
+            var codsIn = string.Join(", ", codEstaciones.Select(c => $"'{c.Trim()}'"));
+            whereExtraOuter.Append($" AND LPAD(TRIM(TO_CHAR(e.CodEstacion)), 4, '0') IN ({codsIn})");
+            whereExtraCte.Append($" AND i.CODESTACION IN ({codsIn})");
+        }
+
+        if (!string.IsNullOrWhiteSpace(fase) && (fase == "1" || fase == "2"))
+        {
+            whereExtraCte.Append($" AND i.INDICA12 = '{fase.Trim()}'");
+        }
+
+        if (whereExtraCte.Length > 0)
+        {
+            var idxGroupCte = sqlFinal.IndexOf("GROUP BY i.CODESTACION", StringComparison.OrdinalIgnoreCase);
+            if (idxGroupCte > 0)
+            {
+                sqlFinal = sqlFinal.Insert(idxGroupCte, whereExtraCte.ToString() + "\n   ");
+            }
+        }
+
+        if (whereExtraOuter.Length > 0)
+        {
+            var idxOrder = sqlFinal.IndexOf("ORDER BY", StringComparison.OrdinalIgnoreCase);
+            if (idxOrder > 0)
+            {
+                sqlFinal = sqlFinal.Insert(idxOrder, whereExtraOuter.ToString() + "\n ");
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(_options.ConnectionString))
+        {
+            return await ObtenerDuracionPromedioDirectoAsync(sqlFinal, fechaInicio, fechaFin, cancellationToken);
+        }
+
+        if (!string.IsNullOrWhiteSpace(_options.SoapUrl))
+        {
+            _logger.LogWarning("Cadena de conexión directa Oracle no detectada. Usando pasarela SOAP para Duración Promedio...");
+            var sqlSoap = sqlFinal
+                .Replace(":FechaInicio", $"TO_DATE('{fechaInicio:yyyy-MM-dd HH:mm:ss}', 'YYYY-MM-DD HH24:MI:SS')")
+                .Replace(":FechaFin", $"TO_DATE('{fechaFin:yyyy-MM-dd HH:mm:ss}', 'YYYY-MM-DD HH24:MI:SS')");
+
+            return await ObtenerDuracionPromedioPorSoapAsync(sqlSoap, cancellationToken);
+        }
+
+        throw new InvalidOperationException("No se ha configurado la cadena de conexión Oracle en ConnectionStrings:CentralItv.");
+    }
+
+    private async Task<IReadOnlyList<EstacionDuracionPromedioDato>> ObtenerDuracionPromedioDirectoAsync(
+        string sql,
+        DateTime fechaInicio,
+        DateTime fechaFin,
+        CancellationToken cancellationToken)
+    {
+        await using var conn = new OracleConnection(_options.ConnectionString);
+        await conn.OpenAsync(cancellationToken);
+
+        await using var cmd = conn.CreateCommand();
+        cmd.BindByName = true;
+        cmd.CommandText = sql;
+        cmd.CommandTimeout = 120;
+
+        cmd.Parameters.Add("FechaInicio", OracleDbType.Date).Value = fechaInicio;
+        cmd.Parameters.Add("FechaFin", OracleDbType.Date).Value = fechaFin;
+
+        var lista = new List<EstacionDuracionPromedioDato>();
+        await using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            lista.Add(new EstacionDuracionPromedioDato
+            {
+                CodEstacion = reader.IsDBNull(0) ? string.Empty : reader.GetString(0).Trim(),
+                DesEstacion = reader.IsDBNull(1) ? string.Empty : reader.GetString(1).Trim(),
+                CodEmpresa = reader.IsDBNull(2) ? string.Empty : reader.GetString(2).Trim(),
+                TipoVehiculo = reader.IsDBNull(3) ? "OTROS" : reader.GetString(3).Trim(),
+                OrdenTipo = reader.IsDBNull(4) ? 99 : Convert.ToInt32(reader.GetValue(4)),
+                TotalInspecciones = reader.IsDBNull(5) ? 0 : Convert.ToInt32(reader.GetValue(5)),
+                DuracionPromedioMinutos = reader.IsDBNull(6) ? 0m : Convert.ToDecimal(reader.GetValue(6))
+            });
+        }
+        return lista;
+    }
+
+    private async Task<IReadOnlyList<EstacionDuracionPromedioDato>> ObtenerDuracionPromedioPorSoapAsync(string sql, CancellationToken cancellationToken)
+    {
+        var sqlLimpia = System.Text.RegularExpressions.Regex.Replace(sql, @"[^A-Za-z0-9]", "");
+        var clave = ComputeMd5(sqlLimpia);
+        var passport = ComputeMd5(clave + _options.SoapSecret);
+
+        var soapEnvelope = $@"<?xml version=""1.0"" encoding=""utf-8""?>
+<soap:Envelope xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" 
+               xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" 
+               xmlns:soap=""http://schemas.xmlsoap.org/soap/envelope/"">
+  <soap:Body>
+    <GetDatos_Paginados_3 xmlns=""http://tempuri.org/"">
+      <strSQL>{System.Security.SecurityElement.Escape(sql)}</strSQL>
+      <intLimite_Inferior>-1</intLimite_Inferior>
+      <intLimite_Superior>-1</intLimite_Superior>
+      <Clave>{clave}</Clave>
+      <Passport>{passport}</Passport>
+    </GetDatos_Paginados_3>
+  </soap:Body>
+</soap:Envelope>";
+
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+        };
+        using var client = new HttpClient(handler);
+        client.Timeout = TimeSpan.FromSeconds(_options.TimeoutSeconds > 0 ? _options.TimeoutSeconds : 60);
+
+        var request = new HttpRequestMessage(HttpMethod.Post, _options.SoapUrl)
+        {
+            Content = new StringContent(soapEnvelope, Encoding.UTF8, "text/xml")
+        };
+        request.Headers.Add("SOAPAction", "\"http://tempuri.org/GetDatos_Paginados_3\"");
+
+        var response = await client.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        var xmlBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+        return ParsearRespuestaSoapDuracionPromedio(xmlBytes);
+    }
+
+    private static IReadOnlyList<EstacionDuracionPromedioDato> ParsearRespuestaSoapDuracionPromedio(byte[] xmlBytes)
+    {
+        var responseXml = Encoding.UTF8.GetString(xmlBytes);
+        var xdoc = XDocument.Parse(responseXml);
+
+        var rows = xdoc.Descendants().Where(e => e.Name.LocalName.Equals("Datos", StringComparison.OrdinalIgnoreCase) ||
+                                                 e.Name.LocalName.Equals("Table", StringComparison.OrdinalIgnoreCase));
+
+        int GetInt(XElement parent, string colName)
+        {
+            var val = parent.Elements().FirstOrDefault(e => e.Name.LocalName.Equals(colName, StringComparison.OrdinalIgnoreCase))?.Value;
+            return int.TryParse(val, out var res) ? res : 0;
+        }
+
+        decimal GetDecimal(XElement parent, string colName)
+        {
+            var val = parent.Elements().FirstOrDefault(e => e.Name.LocalName.Equals(colName, StringComparison.OrdinalIgnoreCase))?.Value;
+            if (string.IsNullOrWhiteSpace(val)) return 0m;
+            val = val.Replace(",", ".");
+            return decimal.TryParse(val, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var res) ? res : 0m;
+        }
+
+        var lista = new List<EstacionDuracionPromedioDato>();
+        foreach (var row in rows)
+        {
+            var codEstacion = row.Elements().FirstOrDefault(e => e.Name.LocalName.Equals("CODESTACION", StringComparison.OrdinalIgnoreCase))?.Value?.Trim() ?? string.Empty;
+            var desEstacion = row.Elements().FirstOrDefault(e => e.Name.LocalName.Equals("DESESTACION", StringComparison.OrdinalIgnoreCase))?.Value?.Trim() ?? string.Empty;
+            var codEmpresa = row.Elements().FirstOrDefault(e => e.Name.LocalName.Equals("CODEMPRESA", StringComparison.OrdinalIgnoreCase) || e.Name.LocalName.Equals("COD_EMPRESA", StringComparison.OrdinalIgnoreCase))?.Value?.Trim() ?? "01";
+            var tipoVehiculo = row.Elements().FirstOrDefault(e => e.Name.LocalName.Equals("TIPOVEHICULO", StringComparison.OrdinalIgnoreCase))?.Value?.Trim() ?? "OTROS";
+
+            lista.Add(new EstacionDuracionPromedioDato
+            {
+                CodEstacion = codEstacion,
+                DesEstacion = desEstacion,
+                CodEmpresa = codEmpresa,
+                TipoVehiculo = tipoVehiculo,
+                OrdenTipo = GetInt(row, "ORDENTIPO"),
+                TotalInspecciones = GetInt(row, "TOTALINSPECCIONES"),
+                DuracionPromedioMinutos = GetDecimal(row, "DURACIONPROMEDIOMINUTOS")
+            });
+        }
+
+        return lista;
+    }
 }
 

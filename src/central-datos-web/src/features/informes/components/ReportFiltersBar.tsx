@@ -9,6 +9,8 @@ export interface ReportFiltersBarProps {
   sociedad: FiltroSociedad;
   estacionesSeleccionadas: string[];
   estacionesPermitidas?: string[];
+  fase?: 'TODAS' | '1' | '2';
+  onFaseChange?: (fase: 'TODAS' | '1' | '2') => void;
   onFechaInicioChange: (val: string) => void;
   onFechaFinChange: (val: string) => void;
   onSociedadChange: (sociedad: FiltroSociedad) => void;
@@ -28,6 +30,8 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
   sociedad,
   estacionesSeleccionadas,
   estacionesPermitidas,
+  fase,
+  onFaseChange,
   onFechaInicioChange,
   onFechaFinChange,
   onSociedadChange,
@@ -198,6 +202,46 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
               Máx. 1 año
             </span>
           </div>
+
+          {/* 1.1 Selector de Fase (si aplica al informe, ej. Duración Promedio 001) */}
+          {onFaseChange && (
+            <>
+              <div style={{ width: '1px', height: '26px', backgroundColor: '#e2e8f0' }} className="cd-hide-mobile" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', marginRight: '4px' }}>
+                  Fase:
+                </span>
+                {([
+                  { id: 'TODAS', label: 'Todas' },
+                  { id: '1', label: '1ª Fase' },
+                  { id: '2', label: '2ª Fase' },
+                ] as const).map((item) => {
+                  const activa = (fase ?? 'TODAS') === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      disabled={loading}
+                      onClick={() => onFaseChange(item.id)}
+                      style={{
+                        padding: '4px 8px',
+                        fontSize: '0.78rem',
+                        fontWeight: activa ? 700 : 500,
+                        borderRadius: '5px',
+                        border: activa ? '1px solid #0046ad' : '1px solid #cbd5e1',
+                        backgroundColor: activa ? '#0046ad' : '#ffffff',
+                        color: activa ? '#ffffff' : '#334155',
+                        cursor: loading ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
 
           <div style={{ width: '1px', height: '26px', backgroundColor: '#e2e8f0' }} className="cd-hide-mobile" />
 

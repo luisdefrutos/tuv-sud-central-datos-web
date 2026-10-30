@@ -6,6 +6,7 @@ import { Navbar } from './components/layout/Navbar';
 import { UltimosDatosCentralizados } from './features/estaciones/components/UltimosDatosCentralizados';
 import { FacturacionReportPage } from './features/informes/pages/FacturacionReportPage';
 import { NumeroInspeccionesReportPage } from './features/informes/pages/NumeroInspeccionesReportPage';
+import { DuracionPromedioReportPage } from './features/informes/pages/DuracionPromedioReportPage';
 import { InformesHubPage } from './features/informes/pages/InformesHubPage';
 import { DESKTOP_MENUS, findMenuItem } from './constants/navigation.constants';
 import { UI_CONSTANTS } from './constants/ui.constants';
@@ -309,6 +310,38 @@ function AppContent() {
                   </TsButton>
                 </TsCard>
 
+                {/* Tarjeta Informes: Duración Promedio */}
+                <TsCard
+                  style={{
+                    padding: '1.5rem',
+                    backgroundColor: '#ffffff',
+                    borderLeft: '4px solid #00875a',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                      <span style={{ fontSize: '1.75rem' }}>⏱️</span>
+                      <TsBadge variant="success">Disponible</TsBadge>
+                    </div>
+                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0046ad', fontWeight: 700 }}>
+                      Duración Promedio (001)
+                    </h3>
+                    <p style={{ margin: '0 0 1.25rem 0', color: '#64748b', fontSize: '0.88rem', lineHeight: 1.5 }}>
+                      Tiempos medios de proceso por estación y tipo de vehículo, ranking de agilidad y réplica Crystal Reports.
+                    </p>
+                  </div>
+                  <TsButton
+                    variant="primary"
+                    onClick={() => handleSelectItem('duracion-promedio', 'informes')}
+                    style={{ width: '100%' }}
+                  >
+                    Abrir Módulo
+                  </TsButton>
+                </TsCard>
+
                 {/* Tarjeta Fase 2: Inspecciones */}
                 <TsCard style={{ padding: '1.5rem', backgroundColor: '#ffffff', opacity: 0.9 }}>
                   <div>
@@ -372,6 +405,17 @@ function AppContent() {
           />
         )}
 
+        {/* CASO C.3: Módulo de Duración Promedio de Inspecciones (001) */}
+        {activeItemId === 'duracion-promedio' && (
+          <DuracionPromedioReportPage
+            onNavigateHome={handleGoHome}
+            onNavigateToInformes={() => {
+              setActiveGroupId('informes');
+              setActiveItemId('informes');
+            }}
+          />
+        )}
+
         {/* CASO D: Catálogo / Hub de Informes */}
         {activeGroupId === 'informes' && (activeItemId === null || activeItemId === 'informes') && (
           <InformesHubPage
@@ -387,7 +431,8 @@ function AppContent() {
           activeItemId !== 'facturacion' &&
           activeItemId !== 'facturacion-excel' &&
           activeItemId !== 'num-inspecciones' &&
-          activeItemId !== 'numero-inspecciones' && (
+          activeItemId !== 'numero-inspecciones' &&
+          activeItemId !== 'duracion-promedio' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {/* Miga de Pan Correspondiente Interactiva */}
             <TsBreadcrumb>
