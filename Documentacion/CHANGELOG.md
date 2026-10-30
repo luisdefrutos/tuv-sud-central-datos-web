@@ -4,6 +4,23 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.07.0] - 30/10/2026 — *Resiliencia de Auditoría, Cola Offline y Diagnóstico Técnico Local*
+
+### 📡 Resiliencia y Auditoría Desconectada (Offline Buffer & Auto-Sync)
+* **Arquitectura de Cola Local Offline (`auditQueue.ts`)**:
+  * Implementación de un buffer circular seguro en `localStorage` (límite de 100 eventos) que captura automáticamente los registros de auditoría y navegación en caso de corte de red o indisponibilidad temporal del servidor.
+  * Trazabilidad temporal de alta precisión: cada evento sincronizado en diferido se etiqueta con `[Offline HH:mm:ss]`, permitiendo auditar la hora real de la operativa en planta.
+* **Sincronización Automática en Lote (*Auto-Flush*)**:
+  * Escucha activa del evento nativo `window.addEventListener('online')` para reanudar y volcar en segundo plano los eventos retenidos sin intervención del usuario.
+  * Nuevo endpoint en .NET 10 Minimal APIs: `POST /api/v1/auth/audit/batch` con inserción transaccional en Oracle (`CENTRALITV.LOG_AUDITORIA_WEB`) y registro en Serilog.
+* **Diagnóstico Técnico Descargable para Soporte (CAU)**:
+  * Generación y descarga directa en el navegador de informes de diagnóstico técnico (`tuv-sud-central-datos-diagnostico-YYYYMMDD-HHmmss.log`) con metadatos de red, usuario, URL, navegador, resolución y traza de eventos en cola.
+  * Accesible desde el banner global de advertencia offline en `App.tsx` y desde la alerta de incidencia de comunicación en `LoginPage.tsx`.
+* **Documentación Técnica**:
+  * Actualización de `10_arquitectura_logging_auditoria_y_seguridad_pentest.md` incorporando la Sección 7 con diagrama de flujo Mermaid y especificación técnica exhaustiva.
+
+---
+
 ## [2.06.0] - 30/10/2026 — *Estabilidad de Login, Notificaciones Pentest-Safe y Ordenación Robusta de Red*
 
 ### 🔐 Autenticación y Experiencia de Usuario (Login)

@@ -1,5 +1,6 @@
 import { API_ENDPOINTS } from '../../../constants/api.constants';
 import type { LoginRequest, LoginResponse, CurrentUser, AuditLogRequest } from '../types/auth.types';
+import { auditQueue } from '../services/auditQueue';
 
 export const authApi = {
   async login(request: LoginRequest): Promise<LoginResponse> {
@@ -44,6 +45,12 @@ export const authApi = {
   },
 
   async logAudit(request: AuditLogRequest, token?: string): Promise<void> {
+    // Si el navegador reporta explícitamente estar sin conexión, encolar directamente en cliente
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      auditQueue.enqueue(request);
+      return;
+    }
+
     try {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -52,14 +59,33 @@ export const authApi = {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      await fetch(API_ENDPOINTS.AUTH.AUDIT, {
+      const res = await fetch(API_ENDPOINTS.AUTH.AUDIT, {
         method: 'POST',
         headers,
         body: JSON.stringify(request),
       });
+
+      if (!res.ok) {
+        // Servidor inaccesible o error: encolar en local para reintento
+        auditQueue.enqueue(request);
+      } else {
+        // Petición exitosa: si había eventos pendientes en la cola offline, intentar sincronizarlos en segundo plano
+        if (auditQueue.getQueue().length > 0) {
+          auditQueue.flush(token);
+        }
+      }
     } catch {
-      // No interrumpir la navegación del usuario si falla la auditoría
+      // Corte repentino de conexión o timeout: encolar para no perder el evento
+      auditQueue.enqueue(request);
     }
+  },
+
+  downloadDiagnosticsLog(currentUser?: string | null): void {
+    auditQueue.downloadDiagnostics(currentUser);
+  },
+
+  flushAuditQueue(token?: string): Promise<boolean> {
+    return auditQueue.flush(token);
   },
 };
 

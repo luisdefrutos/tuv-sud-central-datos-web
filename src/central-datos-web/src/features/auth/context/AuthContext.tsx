@@ -8,9 +8,11 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isOnline: boolean;
   login: (request: LoginRequest) => Promise<{ success: boolean; errorMessage?: string }>;
   logout: () => Promise<void>;
   logNavigation: (route: string, details?: string) => Promise<void>;
+  downloadDiagnosticsLog: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,6 +34,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return cached ? JSON.parse(cached) : null;
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isOnline, setIsOnline] = useState<boolean>(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
+
+  // Escuchar reconexión para sincronizar logs offline acumulados
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      authApi.flushAuditQueue(token ?? undefined);
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Intento de sincronización al arrancar si hay logs pendientes
+    authApi.flushAuditQueue(token ?? undefined);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [token]);
+
+  const downloadDiagnosticsLog = useCallback(() => {
+    authApi.downloadDiagnosticsLog(user?.username);
+  }, [user]);
 
   // Validar el token guardado en la sesión activa al arrancar
   useEffect(() => {
@@ -145,9 +172,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         token,
         isAuthenticated: !!token && !!user,
         isLoading,
+        isOnline,
         login,
         logout,
         logNavigation,
+        downloadDiagnosticsLog,
       }}
     >
       {children}

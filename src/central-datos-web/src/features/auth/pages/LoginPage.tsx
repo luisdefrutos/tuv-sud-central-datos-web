@@ -15,7 +15,7 @@ interface AlertState {
 }
 
 export const LoginPage: React.FC = () => {
-  const { login } = useAuth();
+  const { login, downloadDiagnosticsLog } = useAuth();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -267,6 +267,29 @@ export const LoginPage: React.FC = () => {
                 >
                   <div style={{ fontWeight: 700, marginBottom: '2px' }}>{alert.heading}</div>
                   <div>{alert.message}</div>
+                  {alert.heading === 'Incidencia de comunicación' && (
+                    <div style={{ marginTop: '8px', paddingTop: '6px', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          downloadDiagnosticsLog();
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          color: 'inherit',
+                          textDecoration: 'underline',
+                          fontWeight: 600,
+                          fontSize: '0.78rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        📥 Descargar informe de diagnóstico (.log) para soporte técnico
+                      </button>
+                    </div>
+                  )}
                 </TsAlert>
               </div>
             )}

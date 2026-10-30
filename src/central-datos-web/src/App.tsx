@@ -16,7 +16,7 @@ import {
 } from '@tuvsud/design-system/react';
 
 function AppContent() {
-  const { isAuthenticated, isLoading, logNavigation } = useAuth();
+  const { isAuthenticated, isLoading, logNavigation, isOnline, downloadDiagnosticsLog } = useAuth();
   // Estado inicial: null (solo se muestran los menús superiores sin cargar pantallas ni realizar consultas)
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
@@ -89,6 +89,46 @@ function AppContent() {
         onSelectItem={handleSelectItem}
         onGoHome={handleGoHome}
       />
+
+      {/* 2.1. Aviso de Modo Offline y Cola Local de Auditoría */}
+      {!isOnline && (
+        <div
+          style={{
+            backgroundColor: '#fef3c7',
+            borderBottom: '1px solid #f59e0b',
+            padding: '8px clamp(1rem, 2vw, 2rem)',
+            fontSize: '0.84rem',
+            color: '#92400e',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>⚠️</span>
+            <strong>Sin conexión con el servidor (Modo local activo).</strong>
+            <span>La actividad de navegación se almacenará en su navegador y se sincronizará con Central Datos al recuperar la red.</span>
+          </div>
+          <button
+            type="button"
+            onClick={downloadDiagnosticsLog}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#b45309',
+              textDecoration: 'underline',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontSize: '0.82rem',
+              padding: 0,
+            }}
+          >
+            📥 Descargar diagnóstico técnico (.log)
+          </button>
+        </div>
+      )}
 
       {/* 3. Área de Contenido Principal Responsiva */}
       <main

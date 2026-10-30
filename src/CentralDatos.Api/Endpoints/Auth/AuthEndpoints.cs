@@ -99,6 +99,39 @@ public static class AuthEndpoints
         .WithName("LogAuditActivity")
         .WithSummary("Registra una acción o navegación de menú en la auditoría del sistema");
 
+        group.MapPost("/audit/batch", async (
+            [FromBody] IReadOnlyList<AuditLogRequestDto> requests,
+            [FromServices] IAuthService authService,
+            ClaimsPrincipal user,
+            HttpContext httpContext,
+            CancellationToken cancellationToken) =>
+        {
+            if (requests == null || requests.Count == 0)
+            {
+                return Results.Ok(new { processed = 0 });
+            }
+
+            int? idEmpleado = null;
+            if (int.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), out var parsedId))
+            {
+                idEmpleado = parsedId;
+            }
+
+            var username = user.FindFirstValue(ClaimTypes.Name) ?? "ANÓNIMO";
+            var role = user.FindFirstValue(ClaimTypes.Role) ?? "Público";
+            var ip = httpContext.Connection.RemoteIpAddress?.ToString();
+            var userAgent = httpContext.Request.Headers.UserAgent.ToString();
+
+            foreach (var req in requests)
+            {
+                await authService.LogAuditAsync(idEmpleado, username, role, req, ip, userAgent, cancellationToken);
+            }
+
+            return Results.Ok(new { processed = requests.Count });
+        })
+        .WithName("LogAuditBatch")
+        .WithSummary("Registra en lote múltiples acciones acumuladas en modo offline");
+
         return app;
     }
 }
