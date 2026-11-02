@@ -24,11 +24,6 @@ export function Header() {
     };
   }, []);
 
-  // Solo se define title si es entorno de desarrollo. En producción no se muestra nada.
-  const devTooltip = health?.esDesarrollo
-    ? (health.infoTitle ?? 'Entorno de Desarrollo (10.108.206.7 / ORCLDV)')
-    : undefined;
-
   return (
     <header
       style={{
@@ -47,7 +42,6 @@ export function Header() {
       {/* 1. Logotipo Oficial Vectorial y Título de la Aplicación */}
       <div
         style={{ display: 'flex', alignItems: 'center', gap: 'clamp(0.75rem, 2vw, 1.25rem)' }}
-        title={devTooltip}
       >
         <TuvSudLogo size={42} />
 
@@ -60,14 +54,12 @@ export function Header() {
                 letterSpacing: '-0.2px',
                 cursor: 'default',
               }}
-              title={devTooltip}
             >
               {BRAND.TITULO_APLICACION}
             </span>
             {health?.esDesarrollo && (
               <TsBadge
                 variant="warning"
-                title={devTooltip}
                 style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.5px', cursor: 'help' }}
               >
                 DESARROLLO
@@ -150,7 +142,6 @@ export function Header() {
             e.currentTarget.style.color = '#fca5a5';
             e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.5)';
           }}
-          title="Cerrar la sesión actual de forma segura"
         >
           Cerrar sesión
         </button>

@@ -31,6 +31,7 @@ const PALETTE = [
 /**
  * Gráfico Circular / Donut SVG nativo de cuotas porcentuales y distribución.
  * No requiere librerías externas pesadas y soporta interacción táctil/hover.
+ * Integrado al 100% con AppTooltip corporativo (sin tooltips nativos del navegador).
  */
 export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
   title,
@@ -42,10 +43,14 @@ export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
   maxSlices = 12,
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [hoveredSliceIndex, setHoveredSliceIndex] = useState<number | null>(null);
+  const [sliceTooltipPos, setSliceTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
   // Reiniciar el hover interactivo cada vez que cambien los datos del gráfico
   useEffect(() => {
     setHoveredIndex(null);
+    setHoveredSliceIndex(null);
+    setSliceTooltipPos(null);
   }, [data]);
 
   if (loading) {
@@ -123,6 +128,7 @@ export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
   let accumulatedLength = 0;
 
   const activeSlice = hoveredIndex !== null && hoveredIndex < slices.length ? slices[hoveredIndex] : null;
+  const activeTooltipSlice = hoveredSliceIndex !== null && hoveredSliceIndex < slices.length ? slices[hoveredSliceIndex] : null;
 
   return (
     <TsCard
@@ -177,7 +183,7 @@ export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
               strokeWidth={strokeWidth}
             />
 
-            {/* Segmentos de cuota */}
+            {/* Segmentos de cuota con Tooltip unificado */}
             {slices.map((slice, index) => {
               const sliceLength = (slice.pct / 100) * circumference;
               const strokeDashoffset = -accumulatedLength;
@@ -200,11 +206,20 @@ export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
                     transition: 'all 0.2s ease',
                     opacity: hoveredIndex !== null && !isHovered ? 0.6 : 1,
                   }}
-                  onMouseEnter={() => setHoveredIndex(index)}
-                  onMouseLeave={() => setHoveredIndex(null)}
-                >
-                  <title>{`${slice.label}: ${valueFormatter(slice.valor)} (${slice.pct.toFixed(1)}%)`}</title>
-                </circle>
+                  onMouseEnter={(e) => {
+                    setHoveredIndex(index);
+                    setHoveredSliceIndex(index);
+                    setSliceTooltipPos({ x: e.clientX, y: e.clientY });
+                  }}
+                  onMouseMove={(e) => {
+                    setSliceTooltipPos({ x: e.clientX, y: e.clientY });
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredIndex(null);
+                    setHoveredSliceIndex(null);
+                    setSliceTooltipPos(null);
+                  }}
+                />
               );
             })}
           </svg>
@@ -285,7 +300,7 @@ export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
           </div>
         </div>
 
-        {/* Leyenda interactiva al lado */}
+        {/* Leyenda interactiva al lado con AppTooltip corporativo */}
         <div
           style={{
             flex: '1 1 240px',
@@ -375,7 +390,24 @@ export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
           })}
         </div>
       </div>
+
+      {/* Tooltip Flotante Controlado para Sectores del SVG Donut */}
+      {activeTooltipSlice && sliceTooltipPos && (
+        <AppTooltip
+          isOpen={true}
+          targetCoords={sliceTooltipPos}
+          title={activeTooltipSlice.label}
+          badge={`${valueFormatter(activeTooltipSlice.valor)} (${activeTooltipSlice.pct.toFixed(1)}%)`}
+          badgeColor={activeTooltipSlice.color}
+          accentColor={activeTooltipSlice.color}
+          subtitle={activeTooltipSlice.tooltipSubtitle || `Estaciones comprendidas en ${activeTooltipSlice.label}`}
+          items={activeTooltipSlice.detallesTooltip}
+          onClose={() => {
+            setHoveredSliceIndex(null);
+            setSliceTooltipPos(null);
+          }}
+        />
+      )}
     </TsCard>
   );
 };
-

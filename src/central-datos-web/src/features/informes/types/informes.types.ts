@@ -16,6 +16,7 @@ export interface DetalleElementoTooltip {
   subtexto?: string;
   badge?: string;
   badgeColor?: string;
+  sociedad?: 'TSA' | 'CAL' | string;
 }
 
 export interface ReportBarChartPoint {

@@ -219,3 +219,29 @@ En `OracleEstacionesRepository.cs` y `OracleInformesRepository.cs`:
   }
   ```
 - Con esto, tanto en Visual Studio durante la depuración como en producción bajo IIS o Kestrel, las recargas F5 o cierres de pestaña se gestionan de forma totalmente silenciosa y limpia, garantizando además la auto-reconexión si algún socket en el pool de conexiones se corta por inactividad.
+
+
+---
+
+## 6. Optimización de Consultas Anuales y Unificación Visual de Tooltips
+
+### 6.1 Auditoría de Rendimiento en Consultas de 1 Año (~1.214.818 Inspecciones)
+Durante pruebas de estrés con un rango anual completo (2025-11-01 a 2026-11-01), se identificaron dos cuellos de botella críticos:
+
+1. **Cuello de Botella en Duración Promedio (34.13 s)**:
+   - **Causa**: Invocación de la función PL/SQL `CENTRALITV.CLASIFICACION_MINER` en el `GROUP BY` de la tabla `INSPECCION`. Cada inspección ejecutaba la función PL/SQL, la cual a su vez lanzaba hasta dos consultas SQL sobre la tabla `TIPOVEHICULO_IDENT` (49 filas). Esto causaba **1.214.818 transiciones de contexto SQL/PL/SQL**.
+   - **Optimización**: Se dividió la consulta en dos CTEs:
+     - `preagg`: agrupa puramente por columnas relacionales nativas `(CODESTACION, CodConstruccion, CodUtilizacion)` produciendo únicamente ~300 registros agregados.
+     - `agg`: evalúa `CLASIFICACION_MINER` exclusivamente sobre esos 300 registros.
+   - **Impacto**: El tiempo de ejecución se redujo de **34.13 s a 3.98 s (-88.3%)**.
+
+2. **Cuello de Botella en Facturación por Inspección (19.04 s)**:
+   - **Causa**: El `LEFT JOIN` a `FORMAPAGO` se evaluaba fila a fila en el volumen total de 1.2M registros, generando un plan con `VIEW PUSHED PREDICATE` repetido en bucle `NESTED LOOPS` para cada estación.
+   - **Optimización**: Preagregación por `(CODESTACION, CODFORMAPAGO)` antes de cruzar con `FORMAPAGO` (reduciendo el cruce de 1.2M a ~150 filas).
+   - **Impacto**: El tiempo cayó de **19.04 s a 4.80 s (-74.8%)**.
+
+### 6.2 Unificación de Tooltips en Gráficos Donut
+Se eliminaron todos los tags nativos `<title>` de los arcos SVG en `ReportDonutChart.tsx`. Se amplió el componente corporativo `AppTooltip` para soportar modo flotante controlado mediante coordenadas de cursor (`isOpen` + `targetCoords`), de modo que al posar el ratón sobre cualquier sector circular se despliega la misma tarjeta con fondo blanco, acento cromático, badge y desglose interactivo de estaciones con scrollbar.
+
+### 6.3 Ajuste de Textos
+Se renombró `📊 Distribución Mix Red` a `📊 Cuota por Estación` en el informe de Número de Inspecciones para ofrecer una descripción intuitiva y profesional.

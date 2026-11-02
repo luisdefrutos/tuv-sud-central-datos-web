@@ -1,51 +1,53 @@
 import React from 'react';
 import { TsCard, TsSpinner } from '@tuvsud/design-system/react';
+import { AppTooltip } from './AppTooltip';
 
 export interface ReportKpiCardProps {
+  id?: string;
   title: string;
   value: string | number;
   subtitle?: string;
-  variant?: 'primary' | 'success' | 'warning' | 'danger' | 'neutral';
-  borderColor?: string;
-  textColor?: string;
+  variant?: 'primary' | 'neutral' | 'success' | 'warning' | 'danger';
   icon?: string;
   loading?: boolean;
   style?: React.CSSProperties;
+  badge?: string;
+  textColor?: string;
 }
 
-const VARIANT_BORDER_COLORS: Record<string, string> = {
-  primary: '#0046ad', // Azul TÜV SÜD
-  success: '#00875a', // Verde CAL / Aprobado
-  warning: '#d97706', // Ámbar Alerta
-  danger: '#dc2626',  // Rojo Rechazo / Crítico
-  neutral: '#4a607a', // Gris corporativo
+const BORDER_COLORS: Record<string, string> = {
+  primary: 'var(--ts-semantic-color-primary-default, #0046ad)',
+  neutral: 'var(--ts-semantic-color-border-subtle, #cbd5e1)',
+  success: 'var(--ts-semantic-color-status-success, #059669)',
+  warning: 'var(--ts-semantic-color-status-warning, #d97706)',
+  danger: 'var(--ts-semantic-color-status-danger, #dc2626)',
 };
 
 /**
- * Tarjeta métrica KPI corporativa para cuadros de mando y resúmenes de informes.
- * Respeta tokens de Algorithm DS con borde semántico lateral y tipografía de alto contraste.
+ * Tarjeta KPI corporativa para los cuadros de mando de Central Datos Web.
+ * Integrada con AppTooltip unificado (sin tooltips nativos del navegador).
  */
 export const ReportKpiCard: React.FC<ReportKpiCardProps> = ({
   title,
   value,
   subtitle,
-  variant = 'primary',
-  borderColor,
-  textColor,
+  variant = 'neutral',
   icon,
   loading = false,
   style,
+  badge,
+  textColor,
 }) => {
-  const activeBorderColor = borderColor ?? VARIANT_BORDER_COLORS[variant] ?? '#0046ad';
+  const activeBorderColor = BORDER_COLORS[variant] || BORDER_COLORS.neutral;
 
   return (
     <TsCard
+      className="cd-kpi-card"
       style={{
-        borderLeft: `4px solid ${activeBorderColor}`,
         backgroundColor: '#ffffff',
-        padding: '1rem 1.25rem',
+        borderLeft: `4px solid ${activeBorderColor}`,
         borderRadius: '8px',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+        padding: '1.1rem 1.25rem',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -63,29 +65,36 @@ export const ReportKpiCard: React.FC<ReportKpiCardProps> = ({
             letterSpacing: '0.5px',
             lineHeight: 1.3,
           }}
-          title={`${title}: ${value}`}
         >
           {title}
         </span>
         {icon && (
-          <span
-            style={{
-              fontSize: '1.25rem',
-              lineHeight: 1,
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              backgroundColor: '#f1f5f9',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'help',
-            }}
-            title={`${title}: ${value}${subtitle ? ` (${subtitle})` : ''}`}
-            aria-hidden="true"
+          <AppTooltip
+            title={title}
+            badge={String(value)}
+            badgeColor={activeBorderColor}
+            accentColor={activeBorderColor}
+            subtitle={subtitle}
+            position="top"
           >
-            {icon}
-          </span>
+            <span
+              style={{
+                fontSize: '1.25rem',
+                lineHeight: 1,
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                backgroundColor: '#f1f5f9',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'help',
+              }}
+              aria-hidden="true"
+            >
+              {icon}
+            </span>
+          </AppTooltip>
         )}
       </div>
 
@@ -110,20 +119,35 @@ export const ReportKpiCard: React.FC<ReportKpiCardProps> = ({
           </div>
         )}
 
-        {subtitle && (
-          <div
-            style={{
-              fontSize: '0.78rem',
-              color: 'var(--ts-semantic-color-text-subtle, #64748b)',
-              marginTop: '0.3rem',
-              fontWeight: 500,
-            }}
-          >
-            {subtitle}
-          </div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+          {badge && (
+            <span
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                color: activeBorderColor,
+                backgroundColor: '#f8fafc',
+                padding: '1px 6px',
+                borderRadius: '4px',
+                border: `1px solid ${activeBorderColor}`,
+              }}
+            >
+              {badge}
+            </span>
+          )}
+          {subtitle && (
+            <div
+              style={{
+                fontSize: '0.78rem',
+                color: 'var(--ts-semantic-color-text-subtle, #64748b)',
+                lineHeight: 1.25,
+              }}
+            >
+              {subtitle}
+            </div>
+          )}
+        </div>
       </div>
     </TsCard>
   );
 };
-

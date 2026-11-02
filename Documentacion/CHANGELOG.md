@@ -6,6 +6,26 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ## [2.12.0] - 02/11/2026 — *Persistencia de Sesión F5, Gráfico Donut de Tramos de Agilidad, Ordenación Ascendente y Logging de Consultas SQL*
 
+### ⚡ Optimización Masiva de Consultas Oracle (1 Año), Tooltips Unificados y Cuota por Estación
+* **Optimización Extrema de Consultas Oracle para Rangos Anuales (1.2M Filas)**:
+  * **Informe de Duración Promedio (`ObtenerInformeDuracionPromedio.sql`)**:
+    * **Diagnóstico de Cuello de Botella**: La consulta invocaba la función PL/SQL `CENTRALITV.CLASIFICACION_MINER(i.CodConstruccion, i.CodUtilizacion)` directamente fila a fila en el `GROUP BY` y `SELECT`, provocando más de 1.200.000 context switches entre el motor SQL y PL/SQL y ejecutando 1.2M de subconsultas sobre `TIPOVEHICULO_IDENT` (tardaba **34.13 segundos**).
+    * **Solución**: Preagregación en un primer paso CTE puramente relacional agrupando por `(CODESTACION, CodConstruccion, CodUtilizacion)` reduciendo 1.2M filas a ~300 combinaciones. La clasificación MINER se evalúa únicamente sobre esas 300 filas.
+    * **Resultado**: Tiempo reducido de **34.13 s a 3.98 s (-88.3% de latencia)** con idéntico resultado contable.
+  * **Informe de Facturación por Inspección (`ObtenerInformeFacturacion.sql`)**:
+    * **Diagnóstico**: Realizaba un `LEFT JOIN` fila a fila con `CENTRALITV.FORMAPAGO` sobre 1.2M de filas dentro de la agregación, forzando un `VIEW PUSHED PREDICATE` repetido por cada estación en `NESTED LOOPS` (tardaba 20s en frío).
+    * **Solución**: Preagregación en dos niveles (Single-pass CTE sobre `INSPECCION` agrupando por `CODESTACION` y `CODFORMAPAGO`), y posterior agregación relacional a `FORMAPAGO` sobre apenas ~150 filas.
+    * **Resultado**: Tiempo de consulta anual reducido de **19.04 s a 4.80 s (-74.8%)**.
+* **Unificación Total de Tooltips Corporativos (`AppTooltip`)**:
+  * Eliminación de todos los elementos `<title>` nativos de SVG en `ReportDonutChart.tsx`.
+  * Incorporación de modo flotante/controlado en `AppTooltip.tsx` mediante coordenadas de ratón (`isOpen` + `targetCoords`), mostrando el mismo diseño corporativo (fondo blanco, sombra tridimensional, lista de estaciones desglosadas y scroll táctil) al pasar el cursor sobre cualquier sector del gráfico circular.
+  * Reemplazo de los atributos nativos `title` en tarjetas `ReportKpiCard.tsx` y elementos de cabecera.
+* **Sustitución de Texto Confuso**:
+  * En `NumeroInspeccionesReportPage.tsx`: reemplazado el botón `📊 Distribución Mix Red` por `📊 Cuota por Estación`.
+* **Doble Validación Reforzada (Negocio en Backend + Cliente en React)**:
+  * Backend: validación de rango no negativo y soporte de hasta 366 días (año bisiesto) en `InformesFacturacionService`, `InformesNumeroInspeccionesService` y `InformesDuracionPromedioService`.
+  * Frontend: validación reactiva en tiempo real en los 3 hooks antes de emitir la llamada de red, con alerta corporativa inmediata si se supera el año.
+
 ### 🛡️ Blindaje de Sockets Oracle y Control de Excepciones en F5 / Depuración Visual Studio
 * **Resolución de `System.IO.IOException` al Recargar Página (F5)**:
   * **Causa Raíz Diagnosticada**: Al pulsar F5 en el navegador mientras una consulta Oracle está en ejecución, la desconexión abrupta del socket HTTP por parte del navegador (`ERR_ABORTED`) dispara la señal del `CancellationToken` de ASP.NET Core (`HttpContext.RequestAborted`). Al cancelar la escritura/lectura sobre el socket TCP de ODP.NET Thin (puerto 1521), el driver de red lanza una excepción `System.IO.IOException` ("*Unable to write data to the transport connection: Se ha forzado la interrupción de una conexión existente por el host remoto..*"). Al no estar capturada en la capa de persistencia, Visual Studio detenía la ejecución mostrando el diálogo de excepción no controlada por el usuario.

@@ -88,7 +88,7 @@ export function useDuracionPromedioReport() {
     }
     const diffTime = dFin.getTime() - dIni.getTime();
     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays > 365) {
+    if (diffDays > 366) {
       return `El rango seleccionado (${diffDays} días) supera el límite máximo permitido de 1 año (365 días) para optimizar el rendimiento de la consulta.`;
     }
     return null;

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import type { DetalleElementoTooltip } from '../../features/informes/types/informes.types';
 
 export interface AppTooltipProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   /** Texto simple o nodo para tooltips convencionales */
   content?: React.ReactNode;
   /** Título principal enriquecido (ej: "Ágiles (< 25 min)") */
@@ -31,12 +31,19 @@ export interface AppTooltipProps {
   /** Estilos en línea para el contenedor activador */
   className?: string;
   style?: React.CSSProperties;
+  /** Modo controlado: visibilidad explícita */
+  isOpen?: boolean;
+  /** Coordenadas explícitas del cursor en modo controlado */
+  targetCoords?: { x: number; y: number } | null;
+  /** Callback al cerrar en modo controlado */
+  onClose?: () => void;
 }
 
 /**
  * Componente de Tooltip / Title unificado de alto diseño visual para la suite TÜV SÜD.
  * Con fondo blanco corporativo, posicionamiento ágil en el cursor y soporte
  * de scroll interactivo para consultar desgloses de estaciones cómodamente.
+ * Admite modo envoltorio convencional con `children` y modo controlado flotante (`isOpen` + `targetCoords`).
  */
 export const AppTooltip: React.FC<AppTooltipProps> = ({
   children,
@@ -54,8 +61,11 @@ export const AppTooltip: React.FC<AppTooltipProps> = ({
   delay = 80,
   className,
   style,
+  isOpen,
+  targetCoords,
+  onClose,
 }) => {
-  const [isVisible, setIsVisible] = useState(false);
+  const [internalVisible, setInternalVisible] = useState(false);
   const [coords, setCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
   const triggerRef = useRef<HTMLDivElement>(null);
@@ -64,6 +74,9 @@ export const AppTooltip: React.FC<AppTooltipProps> = ({
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isHoveringTooltipRef = useRef(false);
   const mousePosRef = useRef<{ x: number; y: number } | null>(null);
+
+  const isControlled = isOpen !== undefined;
+  const isVisible = isControlled ? (isOpen && Boolean(targetCoords)) : internalVisible;
 
   const hasInfo = Boolean(content || title || (items && items.length > 0));
 
@@ -75,8 +88,10 @@ export const AppTooltip: React.FC<AppTooltipProps> = ({
     let targetX = 0;
     let targetY = 0;
 
-    // Si tenemos coordenadas reales de ratón, anclar exactamente al cursor
-    if (mousePosRef.current) {
+    if (isControlled && targetCoords) {
+      targetX = targetCoords.x;
+      targetY = targetCoords.y;
+    } else if (mousePosRef.current) {
       targetX = mousePosRef.current.x;
       targetY = mousePosRef.current.y;
     } else if (triggerRef.current) {
@@ -105,35 +120,35 @@ export const AppTooltip: React.FC<AppTooltipProps> = ({
     if (top < 14) top = 14;
 
     setCoords({ top, left });
-  }, [maxWidth]);
+  }, [maxWidth, isControlled, targetCoords]);
 
   const handleTriggerMouseMove = (e: React.MouseEvent) => {
-    // Guardar posición del cursor mientras esté sobre el elemento activador
+    if (isControlled) return;
     mousePosRef.current = { x: e.clientX, y: e.clientY };
     if (!isVisible) {
       if (openTimerRef.current) clearTimeout(openTimerRef.current);
       openTimerRef.current = setTimeout(() => {
-        setIsVisible(true);
+        setInternalVisible(true);
       }, delay);
     }
   };
 
   const handleTriggerMouseEnter = (e: React.MouseEvent) => {
-    if (disabled || !hasInfo) return;
+    if (isControlled || disabled || !hasInfo) return;
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     mousePosRef.current = { x: e.clientX, y: e.clientY };
     if (openTimerRef.current) clearTimeout(openTimerRef.current);
     openTimerRef.current = setTimeout(() => {
-      setIsVisible(true);
+      setInternalVisible(true);
     }, delay);
   };
 
   const handleTriggerMouseLeave = () => {
+    if (isControlled) return;
     if (openTimerRef.current) clearTimeout(openTimerRef.current);
-    // Margen de 220ms para permitir al usuario mover el cursor dentro del tooltip para hacer scroll
     closeTimerRef.current = setTimeout(() => {
       if (!isHoveringTooltipRef.current) {
-        setIsVisible(false);
+        setInternalVisible(false);
       }
     }, 220);
   };
@@ -146,7 +161,11 @@ export const AppTooltip: React.FC<AppTooltipProps> = ({
   const handleTooltipMouseLeave = () => {
     isHoveringTooltipRef.current = false;
     closeTimerRef.current = setTimeout(() => {
-      setIsVisible(false);
+      if (isControlled) {
+        onClose?.();
+      } else {
+        setInternalVisible(false);
+      }
     }, 150);
   };
 
@@ -174,21 +193,23 @@ export const AppTooltip: React.FC<AppTooltipProps> = ({
 
   return (
     <>
-      <div
-        ref={triggerRef}
-        onMouseEnter={handleTriggerMouseEnter}
-        onMouseMove={handleTriggerMouseMove}
-        onMouseLeave={handleTriggerMouseLeave}
-        className={className}
-        style={{
-          display: 'inline-flex',
-          width: 'auto',
-          maxWidth: '100%',
-          ...style,
-        }}
-      >
-        {children}
-      </div>
+      {children && (
+        <div
+          ref={triggerRef}
+          onMouseEnter={handleTriggerMouseEnter}
+          onMouseMove={handleTriggerMouseMove}
+          onMouseLeave={handleTriggerMouseLeave}
+          className={className}
+          style={{
+            display: 'inline-flex',
+            width: 'auto',
+            maxWidth: '100%',
+            ...style,
+          }}
+        >
+          {children}
+        </div>
+      )}
 
       {isVisible &&
         hasInfo &&
@@ -208,7 +229,6 @@ export const AppTooltip: React.FC<AppTooltipProps> = ({
               color: '#1e293b', // Texto Oscuro de Alta Legibilidad
               borderRadius: '8px',
               padding: title || items ? '12px 14px' : '8px 12px',
-              // Sombra premium tridimensional con borde nítido
               boxShadow: '0 10px 25px -4px rgba(0, 70, 173, 0.16), 0 8px 16px -4px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(0, 70, 173, 0.1)',
               border: '1px solid #cbd5e1',
               borderTop: `3px solid ${effectiveAccent}`,
@@ -315,14 +335,31 @@ export const AppTooltip: React.FC<AppTooltipProps> = ({
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '4px',
-                    // Scrollbar estética para fondo blanco
                     scrollbarWidth: 'thin',
                     scrollbarColor: '#cbd5e1 #f8fafc',
                   }}
                 >
+                  <div
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      color: '#94a3b8',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.4px',
+                      marginBottom: '2px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <span>
+                      {items.length === 1 ? '1 estación' : `${items.length} estaciones`}
+                    </span>
+                    <span>Duración / Cifra</span>
+                  </div>
+
                   {items.map((item, idx) => (
                     <div
-                      key={item.codigo ? `${item.codigo}-${idx}` : idx}
+                      key={item.codigo || idx}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -330,37 +367,22 @@ export const AppTooltip: React.FC<AppTooltipProps> = ({
                         gap: '8px',
                         padding: '4px 6px',
                         borderRadius: '4px',
-                        backgroundColor: '#f8fafc',
-                        border: '1px solid #f1f5f9',
-                        fontSize: '0.78rem',
-                        transition: 'background-color 0.1s ease',
+                        backgroundColor: idx % 2 === 0 ? '#f8fafc' : '#ffffff',
+                        fontSize: '0.8rem',
                       }}
                     >
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          minWidth: 0,
-                          flex: 1,
-                        }}
-                      >
-                        {item.codigo && (
-                          <span
-                            style={{
-                              fontFamily: 'monospace',
-                              fontWeight: 700,
-                              fontSize: '0.7rem',
-                              backgroundColor: '#e2e8f0',
-                              color: '#334155',
-                              padding: '1px 5px',
-                              borderRadius: '3px',
-                              flexShrink: 0,
-                            }}
-                          >
-                            {item.codigo}
-                          </span>
-                        )}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                        <span
+                          style={{
+                            fontFamily: 'monospace',
+                            fontWeight: 700,
+                            color: '#0046ad',
+                            fontSize: '0.75rem',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {item.codigo}
+                        </span>
                         <span
                           style={{
                             color: '#1e293b',
@@ -369,51 +391,35 @@ export const AppTooltip: React.FC<AppTooltipProps> = ({
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                           }}
-                          title={item.nombre}
                         >
-                          {item.nombre}
+                          {item.nombre.replace('I.T.V. - ', '')}
                         </span>
                       </div>
 
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {item.subtexto && (
-                          <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
-                            {item.subtexto}
-                          </span>
-                        )}
-                        {item.valor !== undefined && (
-                          <span
-                            style={{
-                              fontWeight: 700,
-                              color: effectiveAccent,
-                              fontSize: '0.8rem',
-                            }}
-                          >
-                            {item.valor}
-                          </span>
-                        )}
-                        {item.badge && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                        {item.sociedad && (
                           <span
                             style={{
                               fontSize: '0.65rem',
                               fontWeight: 700,
                               padding: '1px 5px',
-                              borderRadius: '3px',
-                              backgroundColor: item.badgeColor === '#00875a' ? '#f0fdf4' : '#eff6ff',
-                              color: item.badgeColor === '#00875a' ? '#00875a' : '#0046ad',
-                              border: `1px solid ${item.badgeColor === '#00875a' ? '#bbf7d0' : '#bfdbfe'}`,
+                              borderRadius: '4px',
+                              backgroundColor: item.sociedad === 'CAL' ? '#dcfce7' : '#e0e7ff',
+                              color: item.sociedad === 'CAL' ? '#166534' : '#3730a3',
                             }}
                           >
-                            {item.badge}
+                            {item.sociedad}
                           </span>
                         )}
+                        <span
+                          style={{
+                            fontWeight: 700,
+                            color: '#0b253b',
+                            fontSize: '0.78rem',
+                          }}
+                        >
+                          {item.valor}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -427,10 +433,9 @@ export const AppTooltip: React.FC<AppTooltipProps> = ({
                 style={{
                   marginTop: '8px',
                   paddingTop: '6px',
-                  borderTop: '1px solid #e2e8f0',
-                  fontSize: '0.7rem',
-                  color: '#64748b',
-                  textAlign: 'right',
+                  borderTop: '1px solid #f1f5f9',
+                  fontSize: '0.72rem',
+                  color: '#94a3b8',
                   fontStyle: 'italic',
                 }}
               >

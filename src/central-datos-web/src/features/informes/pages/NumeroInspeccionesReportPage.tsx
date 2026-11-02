@@ -337,7 +337,7 @@ export const NumeroInspeccionesReportPage: React.FC<NumeroInspeccionesReportPage
                 transition: 'all 0.15s ease',
               }}
             >
-              📊 Distribución Mix Red
+              📊 Cuota por Estación
             </button>
           </div>
         </div>
