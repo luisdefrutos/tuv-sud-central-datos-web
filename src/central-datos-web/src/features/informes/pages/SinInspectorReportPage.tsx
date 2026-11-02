@@ -370,7 +370,7 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
                         <AppTooltip content={f.desEstacion} position="top">
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
                             <TsBadge
-                              size="sm"
+                              size="small"
                               variant={f.claveSociedad === 'CAL' ? 'success' : 'primary'}
                             >
                               {f.claveSociedad}
@@ -592,7 +592,7 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
               <div>
                 <span style={{ color: '#64748b', fontWeight: 600 }}>Sociedad:</span>
                 <div>
-                  <TsBadge size="sm" variant={filaSeleccionada.claveSociedad === 'CAL' ? 'success' : 'primary'}>
+                  <TsBadge size="small" variant={filaSeleccionada.claveSociedad === 'CAL' ? 'success' : 'primary'}>
                     {filaSeleccionada.nombreEmpresa}
                   </TsBadge>
                 </div>

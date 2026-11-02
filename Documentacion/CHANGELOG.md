@@ -4,6 +4,20 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.15.0] - 03/11/2026 — *Blindaje de la Aplicación con ErrorBoundary y Corrección de Props de Componentes*
+
+### 🛡️ Estabilidad y Blindaje de UI contra Pantallas en Blanco (React 19)
+* **Componente Corporativo `ErrorBoundary` (`src/components/common/ErrorBoundary.tsx`)**:
+  * Implementación del patrón Error Boundary para capturar excepciones no controladas durante el ciclo de vida o renderizado de componentes hijos, impidiendo que React desmonte el árbol completo de la aplicación.
+  * Tarjeta de contingencia corporativa TÜV SÜD con detalle de error, traza técnica en desplegable para depuración y botones de acción rápida (*"🔄 Reintentar Carga"*, *"🔃 Recargar Aplicación"* y *"🏠 Ir al Inicio"*).
+* **Aislamiento por Módulo y a Nivel Raíz en `App.tsx`**:
+  * Envoltorio global en `App()` protegiendo la raíz de la aplicación.
+  * Envoltorio individual por módulo (`control-sin-inspector`, `defecto-obd`, `duracion-promedio`, `numero-inspecciones`, `facturacion`, `ultima-fecha`). Si un módulo sufre una anomalía aislada, la cabecera corporativa y la barra de navegación superior permanecen 100% operativas e interactivas.
+* **Corrección de Propiedades de Web Components (`TsBadge`)**:
+  * Unificación de la propiedad `size="small"` en lugar del valor no estándar `size="sm"` en `SinInspectorReportPage.tsx` y `DefectoObdReportPage.tsx`.
+
+---
+
 ## [2.14.0] - 02/11/2026 — *Base Común de Informes, Skill Local de Informes & Módulo de Inspecciones sin Inspector*
 
 ### 🤖 Skill Oficial del Proyecto: `tuv-sud-central-datos-informes`

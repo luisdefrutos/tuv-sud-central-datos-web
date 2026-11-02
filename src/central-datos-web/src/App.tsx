@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './features/auth/context/AuthContext';
 import { LoginPage } from './features/auth/pages/LoginPage';
 import { Header } from './components/layout/Header';
 import { Navbar } from './components/layout/Navbar';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { UltimosDatosCentralizados } from './features/estaciones/components/UltimosDatosCentralizados';
 import { FacturacionReportPage } from './features/informes/pages/FacturacionReportPage';
 import { NumeroInspeccionesReportPage } from './features/informes/pages/NumeroInspeccionesReportPage';
@@ -427,62 +428,74 @@ function AppContent() {
 
         {/* CASO B: Módulo de Última Fecha de Inspección (Se carga únicamente al pinchar) */}
         {activeItemId === 'ultima-fecha' && (
-          <UltimosDatosCentralizados onNavigateHome={handleGoHome} />
+          <ErrorBoundary fallbackTitle="Error en Últimos Datos Centralizados">
+            <UltimosDatosCentralizados onNavigateHome={handleGoHome} />
+          </ErrorBoundary>
         )}
 
         {/* CASO C: Módulo de Facturación de Inspecciones (Dashboard + Ranking + Grid + Excel) */}
         {(activeItemId === 'facturacion' || activeItemId === 'facturacion-excel') && (
-          <FacturacionReportPage
-            onNavigateHome={handleGoHome}
-            onNavigateToInformes={() => {
-              setActiveGroupId('informes');
-              setActiveItemId('informes');
-            }}
-          />
+          <ErrorBoundary fallbackTitle="Error en Informe de Facturación">
+            <FacturacionReportPage
+              onNavigateHome={handleGoHome}
+              onNavigateToInformes={() => {
+                setActiveGroupId('informes');
+                setActiveItemId('informes');
+              }}
+            />
+          </ErrorBoundary>
         )}
 
         {/* CASO C.2: Módulo de Número de Inspecciones (Favorables / Rechazadas por Fase) */}
         {(activeItemId === 'num-inspecciones' || activeItemId === 'numero-inspecciones') && (
-          <NumeroInspeccionesReportPage
-            onNavigateHome={handleGoHome}
-            onNavigateToInformes={() => {
-              setActiveGroupId('informes');
-              setActiveItemId('informes');
-            }}
-          />
+          <ErrorBoundary fallbackTitle="Error en Informe Número de Inspecciones">
+            <NumeroInspeccionesReportPage
+              onNavigateHome={handleGoHome}
+              onNavigateToInformes={() => {
+                setActiveGroupId('informes');
+                setActiveItemId('informes');
+              }}
+            />
+          </ErrorBoundary>
         )}
 
         {/* CASO C.3: Módulo de Duración Promedio de Inspecciones (001) */}
         {activeItemId === 'duracion-promedio' && (
-          <DuracionPromedioReportPage
-            onNavigateHome={handleGoHome}
-            onNavigateToInformes={() => {
-              setActiveGroupId('informes');
-              setActiveItemId('informes');
-            }}
-          />
+          <ErrorBoundary fallbackTitle="Error en Informe Duración Promedio">
+            <DuracionPromedioReportPage
+              onNavigateHome={handleGoHome}
+              onNavigateToInformes={() => {
+                setActiveGroupId('informes');
+                setActiveItemId('informes');
+              }}
+            />
+          </ErrorBoundary>
         )}
 
         {/* CASO C.4: Módulo de Inspecciones con Defecto OBD (Bloque 15) */}
         {activeItemId === 'defecto-obd' && (
-          <DefectoObdReportPage
-            onNavigateHome={handleGoHome}
-            onNavigateToInformes={() => {
-              setActiveGroupId('informes');
-              setActiveItemId('informes');
-            }}
-          />
+          <ErrorBoundary fallbackTitle="Error en Informe Defecto OBD">
+            <DefectoObdReportPage
+              onNavigateHome={handleGoHome}
+              onNavigateToInformes={() => {
+                setActiveGroupId('informes');
+                setActiveItemId('informes');
+              }}
+            />
+          </ErrorBoundary>
         )}
 
         {/* CASO C.5: Módulo de Inspecciones sin Inspector (Informes de Control) */}
         {(activeItemId === 'control-sin-inspector' || activeItemId === 'sin-inspector') && (
-          <SinInspectorReportPage
-            onNavigateHome={handleGoHome}
-            onNavigateToInformes={() => {
-              setActiveGroupId('informes');
-              setActiveItemId('informes');
-            }}
-          />
+          <ErrorBoundary fallbackTitle="Error en Informe Inspecciones Sin Inspector">
+            <SinInspectorReportPage
+              onNavigateHome={handleGoHome}
+              onNavigateToInformes={() => {
+                setActiveGroupId('informes');
+                setActiveItemId('informes');
+              }}
+            />
+          </ErrorBoundary>
         )}
 
         {/* CASO D: Catálogo / Hub de Informes */}
@@ -646,9 +659,11 @@ function AppContent() {
 
 export function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ErrorBoundary fallbackTitle="Incidencia General del Sistema - Central Datos ITV">
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

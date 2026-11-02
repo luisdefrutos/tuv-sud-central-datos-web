@@ -852,7 +852,7 @@ export const DefectoObdReportPage: React.FC<DefectoObdReportPageProps> = ({
                 <span style={{ fontWeight: 700, color: '#991b1b', fontSize: '0.85rem' }}>
                   Defecto Reglamentario Registrado: {filaSeleccionada.codigoDefectoCompleto}
                 </span>
-                <TsBadge size="sm" variant={filaSeleccionada.gravedadDefecto.includes('Grave') ? 'danger' : 'info'}>
+                <TsBadge size="small" variant={filaSeleccionada.gravedadDefecto.includes('Grave') ? 'danger' : 'info'}>
                   {filaSeleccionada.gravedadDefecto}
                 </TsBadge>
               </div>
