@@ -398,20 +398,7 @@ public sealed class InformesDefectoObdService : IInformesDefectoObdService
 
     private static (DateTime FechaInicio, DateTime FechaFin) ParsearYValidarFechas(DateTime inicio, DateTime fin)
     {
-        var fInicio = inicio.Date;
-        var fFin = fin.Date.AddHours(23).AddMinutes(59).AddSeconds(59);
-
-        if (fFin < fInicio)
-        {
-            throw new ArgumentException("La fecha de fin no puede ser anterior a la fecha de inicio.");
-        }
-
-        if ((fFin - fInicio).TotalDays > 366)
-        {
-            throw new ArgumentException("El rango de fechas consultado no puede superar 366 días (1 año).");
-        }
-
-        return (fInicio, fFin);
+        return Common.ReportDateRangeValidator.Validar(inicio, fin);
     }
 
     private static string CalcularPct(int parcial, int total)

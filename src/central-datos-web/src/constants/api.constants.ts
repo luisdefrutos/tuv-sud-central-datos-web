@@ -22,6 +22,8 @@ export const API_ENDPOINTS = {
     DURACION_PROMEDIO_EXPORTAR: '/api/v1/informes/duracion-promedio/exportar-excel',
     DEFECTO_OBD_CONSULTAR: '/api/v1/informes/defecto-obd/consultar',
     DEFECTO_OBD_EXPORTAR: '/api/v1/informes/defecto-obd/exportar-excel',
+    SIN_INSPECTOR_CONSULTAR: '/api/v1/informes/sin-inspector/consultar',
+    SIN_INSPECTOR_EXPORTAR: '/api/v1/informes/sin-inspector/exportar-excel',
   },
   DOCS: {
     SWAGGER: '/swagger',

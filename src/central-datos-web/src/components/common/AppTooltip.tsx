@@ -392,7 +392,7 @@ export const AppTooltip: React.FC<AppTooltipProps> = ({
                             textOverflow: 'ellipsis',
                           }}
                         >
-                          {item.nombre.replace('I.T.V. - ', '')}
+                          {(item.nombre || (item as any).label || '').replace('I.T.V. - ', '')}
                         </span>
                       </div>
 

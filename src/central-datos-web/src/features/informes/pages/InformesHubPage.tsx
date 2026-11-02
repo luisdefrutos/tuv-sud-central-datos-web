@@ -6,7 +6,7 @@ import {
   TsCard,
   TsBadge,
 } from '@tuvsud/design-system/react';
-import { DESKTOP_MENUS } from '../../../constants/navigation.constants';
+import { DESKTOP_MENUS, IMPLEMENTED_SCREENS } from '../../../constants/navigation.constants';
 
 export interface InformesHubPageProps {
   onSelectReport: (reportId: string) => void;
@@ -98,21 +98,19 @@ export const InformesHubPage: React.FC<InformesHubPageProps> = ({
         }}
       >
         {items.map((item) => {
-          const isFacturacion = item.id === 'facturacion';
-          const isNumInspecciones = item.id === 'num-inspecciones';
-          const isDuracionPromedio = item.id === 'duracion-promedio';
-          const isDefectoObd = item.id === 'defecto-obd';
-          const isAvailable = isFacturacion || isNumInspecciones || isDuracionPromedio || isDefectoObd;
+          const isAvailable = (IMPLEMENTED_SCREENS as readonly string[]).includes(item.id);
 
-          let descripcion = 'Módulo de análisis estadístico oficial de la aplicación de escritorio Central Datos.';
-          if (isFacturacion) {
+          let descripcion = item.descripcion || 'Módulo de análisis estadístico oficial de la aplicación de escritorio Central Datos.';
+          if (item.id === 'facturacion') {
             descripcion = 'Dashboard interactivo con KPIs de liquidación neta, ranking por estación, gráfico circular y exportación a Excel.';
-          } else if (isNumInspecciones) {
+          } else if (item.id === 'num-inspecciones') {
             descripcion = 'Desglose oficial de inspecciones favorables y rechazadas en Fase 1 y Fase 2, tasas de rechazo e impresión de Crystal Report.';
-          } else if (isDuracionPromedio) {
+          } else if (item.id === 'duracion-promedio') {
             descripcion = 'Cálculo de tiempos medios de inspección periódica (001) por tipo de vehículo y estación, ranking de agilidad e impresión Crystal Report.';
-          } else if (isDefectoObd) {
+          } else if (item.id === 'defecto-obd') {
             descripcion = 'Auditoría técnica y control de lecturas de emisiones OBD anómalas por estación ITV.';
+          } else if (item.id === 'control-sin-inspector') {
+            descripcion = 'Control y auditoría técnica de inspecciones que no tienen asignado ningún inspector responsable en la red ITV.';
           }
 
           return (
@@ -136,7 +134,7 @@ export const InformesHubPage: React.FC<InformesHubPageProps> = ({
                   {isAvailable ? (
                     <TsBadge variant="success">Disponible</TsBadge>
                   ) : (
-                    <TsBadge variant="neutral">En migración</TsBadge>
+                    <TsBadge variant="warning">Pendiente de implementar</TsBadge>
                   )}
                 </div>
                 <h3

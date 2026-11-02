@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 using System.Text;
 using CentralDatos.Api.Endpoints.Auth;
 using CentralDatos.Api.Endpoints.Estaciones;
@@ -64,6 +66,22 @@ try
 
     builder.Services.AddAuthorization();
 
+    // Limitador de concurrencia para exportaciones pesadas a Excel (Configurable ad-hoc desde appsettings.json)
+    var excelRateLimit = builder.Configuration.GetSection("RateLimiting:ExcelExport");
+    var permitLimit = excelRateLimit.GetValue<int?>("PermitLimit") ?? 20;
+    var queueLimit = excelRateLimit.GetValue<int?>("QueueLimit") ?? 50;
+
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+        options.AddConcurrencyLimiter("excel-export-policy", opt =>
+        {
+            opt.PermitLimit = permitLimit;
+            opt.QueueLimit = queueLimit;
+            opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        });
+    });
+
     // Inyección de dependencias Clean Architecture con IConfiguration
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
@@ -121,6 +139,7 @@ try
 
     app.UseAuthentication();
     app.UseAuthorization();
+    app.UseRateLimiter();
 
     // Redirección de la raíz del API: en desarrollo hacia la web (Vite :5173) y en producción hacia Swagger
     if (app.Environment.IsDevelopment())

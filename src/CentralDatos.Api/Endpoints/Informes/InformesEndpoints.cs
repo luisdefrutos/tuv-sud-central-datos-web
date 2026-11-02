@@ -52,6 +52,7 @@ public static class InformesEndpoints
                 return Results.BadRequest(new { errorMessage = ex.Message });
             }
         })
+        .RequireRateLimiting("excel-export-policy")
         .WithName("ExportarFacturacionExcel")
         .WithSummary("Genera y descarga el fichero estructurado de facturación con BOM UTF-8 y separador para Excel");
 
@@ -95,6 +96,7 @@ public static class InformesEndpoints
                 return Results.BadRequest(new { errorMessage = ex.Message });
             }
         })
+        .RequireRateLimiting("excel-export-policy")
         .WithName("ExportarNumeroInspeccionesExcel")
         .WithSummary("Genera y descarga el fichero estructurado de número de inspecciones con BOM UTF-8 y separador para Excel");
 
@@ -138,6 +140,7 @@ public static class InformesEndpoints
                 return Results.BadRequest(new { errorMessage = ex.Message });
             }
         })
+        .RequireRateLimiting("excel-export-policy")
         .WithName("ExportarDuracionPromedioExcel")
         .WithSummary("Genera y descarga el fichero estructurado de duración promedio con BOM UTF-8 y separador para Excel");
 
@@ -181,8 +184,53 @@ public static class InformesEndpoints
                 return Results.BadRequest(new { errorMessage = ex.Message });
             }
         })
+        .RequireRateLimiting("excel-export-policy")
         .WithName("ExportarDefectoObdExcel")
         .WithSummary("Genera y descarga el libro Excel oficial (.xlsx) con pestañas individuales por cada estación DEFECTOS_OBD_XXXX");
+
+                // 9. Consulta de inspecciones sin inspector
+        group.MapPost("/sin-inspector/consultar", async (
+            [FromBody] FiltrosSinInspectorRequestDto filtros,
+            [FromServices] IInformesSinInspectorService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var resultado = await service.GenerarInformeSinInspectorAsync(filtros, ct);
+                return Results.Ok(resultado);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .WithName("ConsultarSinInspector")
+        .WithSummary("Consulta el listado y métricas de inspecciones realizadas sin inspector asignado");
+
+        // 10. Exportación de inspecciones sin inspector a Excel (.xlsx multi-hoja por estación SIN_INSPECTOR_XXXX)
+        group.MapPost("/sin-inspector/exportar-excel", async (
+            [FromBody] FiltrosSinInspectorRequestDto filtros,
+            [FromServices] IInformesSinInspectorService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var archivoBytes = await service.GenerarExportacionSinInspectorExcelAsync(filtros, ct);
+                var nombreFichero = $"inspecciones-sin-inspector-{DateTime.Now:yyyyMMdd-HHmm}.xlsx";
+
+                return Results.File(
+                    archivoBytes,
+                    contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileDownloadName: nombreFichero);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .RequireRateLimiting("excel-export-policy")
+        .WithName("ExportarSinInspectorExcel")
+        .WithSummary("Genera y descarga el libro Excel oficial (.xlsx) de inspecciones sin inspector con pestañas individuales por estación");
 
         return app;
     }

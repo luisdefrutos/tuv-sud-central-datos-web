@@ -1,4 +1,4 @@
-/**
+﻿/**
 /// Textos corporativos y constantes visuales de la interfaz de usuario
 **/
 export const UI_CONSTANTS = {
@@ -15,8 +15,8 @@ export const UI_CONSTANTS = {
   MODULO_ULTIMOS_DATOS: {
     BREADCRUMB: ['Inicio', 'Aplicación', 'Última fecha de inspección centralizada'],
     TITULO: 'Última fecha de inspección centralizada',
-    DESCRIPCION: 'Consulta del último registro de inspección recibido por estación ITV en la base de datos central de TÜV SÜD.',
-    SPINNER_TITULO: 'Consultando Base de Datos Central',
+    DESCRIPCION: 'Consulta del último registro de inspección recibido por estación ITV en la red centralizada de TÜV SÜD.',
+    SPINNER_TITULO: 'Consultando Central Datos',
     SPINNER_SUBTITULO: 'Recuperando las últimas fechas y horas de inspección para las estaciones ITV. Por favor, espere...',
     BOTON_ACTUALIZAR: '🔄 Actualizar Datos',
     CARD_TOTAL_ESTACIONES: 'Total Estaciones ITV',

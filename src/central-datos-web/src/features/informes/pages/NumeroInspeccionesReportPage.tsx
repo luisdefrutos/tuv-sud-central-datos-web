@@ -118,7 +118,7 @@ export const NumeroInspeccionesReportPage: React.FC<NumeroInspeccionesReportPage
       <BlockingLoadingModal
         isOpen={isLoading}
         title="Consultando Inspecciones Centralizadas"
-        message="Por favor, espere mientras se agregan las inspecciones favorables y rechazadas en Oracle..."
+        message="Por favor, espere mientras se calculan las inspecciones favorables y rechazadas..."
       />
 
       <BlockingLoadingModal

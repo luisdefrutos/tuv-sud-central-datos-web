@@ -290,3 +290,64 @@ export type SortableDefectoObdColumn =
   | 'gravedadDefecto'
   | 'fase'
   | 'textoResultado';
+
+// ==========================================
+// TIPOS PARA INFORME DE INSPECCIONES SIN INSPECTOR
+// ==========================================
+
+export interface FilaSinInspector {
+  codInspeccion: string;
+  codEstacion: string;
+  desEstacion: string;
+  codEmpresa: string;
+  nombreEmpresa: string;
+  claveSociedad: string;
+  matricula: string;
+  fechaInspeccion: string;
+  fechaInspeccionFormatted: string;
+  marca: string;
+  modelo: string;
+  tipoMotor: string;
+  tipoVehiculo: string;
+  tipoInspeccion: string;
+  textoResultado: string;
+  resultado: string;
+  fase: string;
+  indica12: string;
+  cHomologacion: string | null;
+  clasificacion: string;
+  mma: number | null;
+  kilometraje: string | null;
+}
+
+export interface GraficoEstacionSinInspector {
+  codEstacion: string;
+  desEstacion: string;
+  claveSociedad: string;
+  totalInspecciones: number;
+  totalFase1: number;
+  totalFase2: number;
+  pctSobreTotal: string;
+}
+
+export interface InformeSinInspectorResponse {
+  filas: FilaSinInspector[];
+  totalInspecciones: number;
+  totalInspeccionesFormatted: string;
+  totalFase1: number;
+  totalFase2: number;
+  totalEstacionesAfectadas: number;
+  kpis: ReportKpiData[];
+  graficoEstaciones: ReportBarChartPoint[];
+}
+
+export type SortableSinInspectorColumn =
+  | 'fechaInspeccion'
+  | 'matricula'
+  | 'desEstacion'
+  | 'marca'
+  | 'tipoMotor'
+  | 'tipoVehiculo'
+  | 'tipoInspeccion'
+  | 'fase'
+  | 'textoResultado';

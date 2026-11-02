@@ -8,6 +8,7 @@ import { FacturacionReportPage } from './features/informes/pages/FacturacionRepo
 import { NumeroInspeccionesReportPage } from './features/informes/pages/NumeroInspeccionesReportPage';
 import { DuracionPromedioReportPage } from './features/informes/pages/DuracionPromedioReportPage';
 import { DefectoObdReportPage } from './features/informes/pages/DefectoObdReportPage';
+import { SinInspectorReportPage } from './features/informes/pages/SinInspectorReportPage';
 import { InformesHubPage } from './features/informes/pages/InformesHubPage';
 import { DESKTOP_MENUS, findMenuItem } from './constants/navigation.constants';
 import { UI_CONSTANTS } from './constants/ui.constants';
@@ -29,7 +30,7 @@ function AppContent() {
       const itemId = hash.replace('#/modulo/', '').trim();
       if (itemId) {
         const { group } = findMenuItem(itemId);
-        const autoGroup = group?.id || (['facturacion', 'facturacion-excel', 'num-inspecciones', 'numero-inspecciones', 'duracion-promedio', 'defecto-obd', 'informes'].includes(itemId) ? 'informes' : 'aplicacion');
+        const autoGroup = group?.id || (['facturacion', 'facturacion-excel', 'num-inspecciones', 'numero-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'sin-inspector', 'informes'].includes(itemId) ? 'informes' : 'aplicacion');
         return { itemId, groupId: autoGroup };
       }
     }
@@ -473,6 +474,17 @@ function AppContent() {
           />
         )}
 
+        {/* CASO C.5: Módulo de Inspecciones sin Inspector (Informes de Control) */}
+        {(activeItemId === 'control-sin-inspector' || activeItemId === 'sin-inspector') && (
+          <SinInspectorReportPage
+            onNavigateHome={handleGoHome}
+            onNavigateToInformes={() => {
+              setActiveGroupId('informes');
+              setActiveItemId('informes');
+            }}
+          />
+        )}
+
         {/* CASO D: Catálogo / Hub de Informes */}
         {activeGroupId === 'informes' && (activeItemId === null || activeItemId === 'informes') && (
           <InformesHubPage
@@ -490,7 +502,9 @@ function AppContent() {
           activeItemId !== 'num-inspecciones' &&
           activeItemId !== 'numero-inspecciones' &&
           activeItemId !== 'duracion-promedio' &&
-          activeItemId !== 'defecto-obd' && (
+          activeItemId !== 'defecto-obd' &&
+          activeItemId !== 'control-sin-inspector' &&
+          activeItemId !== 'sin-inspector' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {/* Miga de Pan Correspondiente Interactiva */}
             <TsBreadcrumb>
@@ -524,40 +538,81 @@ function AppContent() {
               )}
             </TsBreadcrumb>
 
-            <TsCard style={{ padding: '3.5rem 2rem', textAlign: 'center', backgroundColor: '#ffffff' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
-                📑
+            <TsCard
+              style={{
+                padding: '3.5rem 2rem',
+                textAlign: 'center',
+                backgroundColor: '#ffffff',
+                borderTop: '4px solid #f59e0b',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+                maxWidth: '720px',
+                margin: '1.5rem auto',
+              }}
+            >
+              <div
+                style={{
+                  width: '68px',
+                  height: '68px',
+                  borderRadius: '50%',
+                  backgroundColor: '#fffbeb',
+                  border: '2px solid #f59e0b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '2rem',
+                  margin: '0 auto 1.25rem auto',
+                }}
+              >
+                ⏳
               </div>
+
+              <div style={{ display: 'inline-block', marginBottom: '0.75rem' }}>
+                <TsBadge variant="warning">Pendiente de Implementar</TsBadge>
+              </div>
+
               <h2
                 style={{
-                  color: '#0046ad',
+                  color: '#0b253b',
                   margin: '0 0 0.75rem 0',
                   fontSize: '1.45rem',
                   fontWeight: 700,
                 }}
               >
-                Módulo: {currentItem?.label}
+                {currentItem?.label || 'Módulo en desarrollo'}
               </h2>
+
               <p
                 style={{
-                  color: '#5c768d',
-                  maxWidth: '560px',
-                  margin: '0 auto 1.5rem auto',
+                  color: '#64748b',
+                  maxWidth: '540px',
+                  margin: '0 auto 1.75rem auto',
                   fontSize: '0.95rem',
                   lineHeight: 1.6,
                 }}
               >
-                Esta funcionalidad forma parte de la aplicación de escritorio (<code>mdiMain.vb</code>) y está integrada en la hoja de ruta de modernización de Central Datos.
+                Este módulo forma parte de la aplicación de escritorio (<code>mdiMain.vb</code>) y actualmente se encuentra en la hoja de ruta de modernización a la plataforma Web.
               </p>
+
               <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                 <TsButton variant="secondary" onClick={handleGoHome}>
                   🏠 Volver al Inicio
                 </TsButton>
+                {currentGroup?.id === 'informes' && (
+                  <TsButton
+                    variant="secondary"
+                    onClick={() => {
+                      setActiveGroupId('informes');
+                      setActiveItemId('informes');
+                    }}
+                  >
+                    📊 Catálogo de Informes
+                  </TsButton>
+                )}
                 <TsButton
                   variant="primary"
                   onClick={() => handleSelectItem('ultima-fecha', 'aplicacion')}
                 >
-                  📊 Ir a Últimos datos centralizados
+                  📡 Ir a Últimos datos centralizados
                 </TsButton>
               </div>
             </TsCard>

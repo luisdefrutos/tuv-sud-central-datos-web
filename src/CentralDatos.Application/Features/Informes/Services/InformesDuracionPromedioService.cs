@@ -233,20 +233,7 @@ public sealed class InformesDuracionPromedioService : IInformesDuracionPromedioS
             }
         }
 
-        if (fin < inicio)
-        {
-            throw new ArgumentException("La fecha final no puede ser anterior a la fecha de inicio.");
-        }
-
-        if ((fin - inicio).TotalDays > 366)
-        {
-            throw new ArgumentException("El rango de fechas no puede ser superior a 1 año (365 días) para optimizar el rendimiento de la consulta en Central Datos.");
-        }
-
-        var inicioFull = inicio.Date;
-        var finFull = fin.Date.AddDays(1).AddTicks(-1);
-
-        return (inicioFull, finFull);
+        return Common.ReportDateRangeValidator.Validar(inicio, fin);
     }
 
     private static string FormatearMinutos(decimal minutos)

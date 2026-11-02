@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import {
   TsButton,
   TsAlert,
@@ -442,7 +442,7 @@ export const DuracionPromedioReportPage: React.FC<DuracionPromedioReportPageProp
             {isLoading ? (
               <tr>
                 <td colSpan={5} style={{ padding: '3.5rem', textAlign: 'center', color: '#64748b' }}>
-                  Consultando base de datos centralizada de tiempos de inspección...
+                  Cargando tiempos medios de inspección...
                 </td>
               </tr>
             ) : estacionesFiltradas.length === 0 ? (
@@ -577,8 +577,8 @@ export const DuracionPromedioReportPage: React.FC<DuracionPromedioReportPageProp
       />
       <BlockingLoadingModal
         isOpen={isLoading}
-        title="Consultando base de datos de producción de Central Datos..."
-        message="Calculando duraciones promedio por vehículo y estación con índices optimizados en Oracle."
+        title="Consultando Duración Promedio"
+        message="Calculando los tiempos medios de proceso por estación y tipología de vehículo..."
       />
     </div>
   );

@@ -4,6 +4,41 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.14.0] - 02/11/2026 — *Base Común de Informes, Skill Local de Informes & Módulo de Inspecciones sin Inspector*
+
+### 🤖 Skill Oficial del Proyecto: `tuv-sud-central-datos-informes`
+* **Creación y Registro de la Skill Local (`.agents/skills/tuv-sud-central-datos-informes/SKILL.md`)**:
+  * Estandarización oficial de arquitectura "Thick Server / Thin Client", doble validación de fechas (máximo 1 año natural / 366 días), fechas iniciales replicadas exactamente de la app de escritorio según cada formulario, hover `#edf5ff` en tablas, modal bloqueante y protección opcional de concurrencia.
+  * Añadida al control de versiones de Git para que esté disponible para todo el equipo y agentes en cualquier clon del repositorio.
+
+### 🧱 Base Común y Estandarización de Informes (Etapas A y B1 del Plan)
+* **Frontend (React 19 + TypeScript)**:
+  * `useReportFilters`: Hook desacoplado que centraliza las fechas por defecto (día 1 de mes a hoy), validación reactiva de rango (< 366 días), retardo debounce de 250 ms en filtros rápidos (sociedad, fase, estaciones), bloqueo de auto-búsqueda en fechas y vaciado de datos ante rangos inválidos.
+  * `useReportTable`: Hook para búsqueda en memoria, ordenación global previa a la paginación con reseteo a página 1 y navegación paginada reactiva.
+  * `ReportDateRangeAlert`: Componente oficial con `<TsAlert variant="warning" open>` y botón interactivo *"Ajustar a 1 año"*.
+  * `ReportPageHeader`: Cabecera unificada con miga de pan oficial, botón de vuelta a informes, títulos limpios y contenedor de acciones.
+* **Backend (.NET 10 Web API)**:
+  * `ReportDateRangeValidator`: Validador centralizado de fechas con ajuste a las 23:59:59 y control estricto de 366 días.
+  * **Limitador de Concurrencia de Exportaciones (`RateLimiter`)**: Política `excel-export-policy` con `ConcurrencyLimiter` (máximo 3 descargas concurrentes en memoria y 10 en cola) aplicada a todos los endpoints `/exportar-excel`, evitando saturaciones de CPU y RAM. Retorna HTTP 429 informativo ante congestión.
+
+### 🔍 Nuevo Módulo Vertical: Informe de Inspecciones sin Inspector (`control-sin-inspector`)
+* **Migración Oficial de `frmCriterios.vb` (`Inspecciones_Sin_Inspector`)**:
+  * Consulta SQL indexada de alto rendimiento sobre `CENTRALITV.INSPECCION` unida a `CENTRALITV.ESTACIONES`, localizando inspecciones no anuladas sin inspectores asignados (`CODINSPECTOR IS NULL AND ...`).
+  * Endpoint API: `POST /api/v1/informes/sin-inspector/consultar` y `POST /api/v1/informes/sin-inspector/exportar-excel`.
+  * Generación de libro Excel multi-pestaña por estación (`SIN_INSPECTOR_{CodEstacion}`) con `ClosedXML`.
+  * Pantalla `SinInspectorReportPage` con KPIs corporativos, ranking por estación en barras, grid de 9 columnas con hover `#edf5ff`, ordenación global y modal de ficha técnica.
+* **Resolución de Bucle Infinito, Pantallazo Blanco y Estabilidad de KPIs**:
+  * Diagnóstico 1: Invocación en cada render de `options.onClearData` como función anónima dentro de `useSinInspectorReport`, la cual provocaba la invalidación constante de la matriz de dependencias de `useEffect` en `useReportFilters`, abortando peticiones activas con `AbortController` (ORA-12570) y rearmando un timer de 250 ms en ciclo perpetuo.
+  * Diagnóstico 2 (Pantalla en blanco / Crash en render): En `sinInspectorApi.ts`, los puntos del gráfico mapeaban `detallesTooltip` con propiedad `label` en vez de `nombre`. Al renderizar el tooltip dentro de `ReportBarChart`, `AppTooltip.tsx` ejecutaba `item.nombre.replace(...)`, lanzando un `TypeError: Cannot read properties of undefined (reading 'replace')` no capturado que desmontaba todo el árbol React ("pantallazo blanco").
+  * Diagnóstico 3 (KPIs ausentes): En caso de rango de fechas sin inspecciones (o durante la carga inicial), el bloque de KPIs no se mostraba si `data` era nulo.
+  * Solución: Estabilización de referencias con `useRef` para todos los callbacks, mapeo estricto `{ nombre, valor }` en el API adapter, protección defensiva de cadenas en `AppTooltip` y en las columnas de la tabla con `(item.nombre || '').replace(...)`, blindaje ante nulos en el predicado de búsqueda/ordenación (`f.marca ?? ''`), y visualización permanente de las 4 tarjetas KPI con estado de carga o valor cero garantizado.
+* **Optimización SQL para Rangos Anuales y Limpieza de Fugas Técnicas en UI**:
+  * Cuello de botella en 1 año (de 20,2 s a 2,3 s): El hint `INDEX(i P17_INSPECCION)` forzaba un acceso individual por ROWID sobre 1,5 millones de filas anuales e ignoraba el índice compuesto `P31_INSPECCION (CODESTACION, FECHAINSPECCION)`. Se actualizó a `/*+ INDEX(i P17_INSPECCION P31_INSPECCION) */` y `LEFT JOIN`, reduciendo el tiempo de respuesta a 2,34 s (estación individual) y 2,78 s (red completa de 30 estaciones en 362 días, 7,2x más rápido).
+  * Limpieza estricta de datos técnicos en UI: Se eliminaron todas las menciones a tecnologías internas ("Oracle", "ClosedXML", "base de datos", "índices optimizados") en modales de carga, alertas y tooltips de `SinInspectorReportPage`, `DuracionPromedioReportPage`, `NumeroInspeccionesReportPage` y `ui.constants`, sustituyéndolas por mensajes 100 % corporativos orientados al usuario final.
+  * Selector dual de visualización gráfica (Barras y Donut): Integración del conmutador de vistas corporativo idéntico a `NumeroInspecciones` para alternar entre "📊 Barras (Ranking)" y "🍩 Cuota por Estación", reutilizando `ReportDonutChart` sin alterar ni sobrecargar la exportación oficial a Excel.
+
+---
+
 ## [2.13.0] - 02/11/2026 — *Módulo de Inspecciones con Defecto OBD (Bloque 15) & Reingeniería SQL de Alto Rendimiento*
 
 ### ⚡ Reingeniería y Optimización de la Consulta SQL de Defectos OBD (`ObtenerInformeDefectosObd.sql`)

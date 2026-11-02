@@ -30,7 +30,7 @@ export interface MenuGroup {
 }
 
 /** Pantallas ya migradas a la web (resto muestran la ficha "en migración") */
-export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion', 'num-inspecciones', 'duracion-promedio', 'defecto-obd'] as const;
+export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion', 'num-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector'] as const;
 
 export const DESKTOP_MENUS: MenuGroup[] = [
   {
@@ -82,7 +82,7 @@ export const DESKTOP_MENUS: MenuGroup[] = [
         id: 'informes-control',
         label: 'Informes de control',
         children: [
-          { id: 'control-sin-inspector', label: 'Inspecciones sin inspector' },
+          { id: 'control-sin-inspector', label: 'Inspecciones sin inspector', icon: '⚠️', descripcion: 'Control y auditoría técnica de inspecciones que no tienen asignado ningún inspector responsable.' },
           { id: 'control-obd-no-coincidentes', label: 'Informe bastidores OBD no coincidentes' },
         ],
       },

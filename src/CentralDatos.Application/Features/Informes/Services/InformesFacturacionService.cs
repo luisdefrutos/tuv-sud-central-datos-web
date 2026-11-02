@@ -19,19 +19,8 @@ public sealed class InformesFacturacionService : IInformesFacturacionService
         FiltrosFacturacionRequestDto filtros,
         CancellationToken cancellationToken = default)
     {
-        // 0. Validación de rango (Máximo 1 año para optimización de consultas masivas)
-        if (filtros.FechaFin < filtros.FechaInicio)
-        {
-            throw new ArgumentException("La fecha final no puede ser anterior a la fecha de inicio.");
-        }
-        if ((filtros.FechaFin.Date - filtros.FechaInicio.Date).TotalDays > 366)
-        {
-            throw new ArgumentException("El rango de fechas no puede ser superior a 1 año (365 días) para optimizar el rendimiento de la consulta en Central Datos.");
-        }
-
-        // 1. Normalización de fechas (rango completo desde 00:00:00 hasta 23:59:59)
-        var fInicio = filtros.FechaInicio.Date;
-        var fFin = filtros.FechaFin.Date.AddDays(1).AddTicks(-1);
+        // Validación centralizada de fechas (Estándar de Informes: máx 366 días, 00:00:00 a 23:59:59)
+        var (fInicio, fFin) = Common.ReportDateRangeValidator.Validar(filtros.FechaInicio, filtros.FechaFin);
 
         // 2. Mapeo de sociedad
         string? codEmpresa = filtros.Sociedad?.ToUpperInvariant() switch
