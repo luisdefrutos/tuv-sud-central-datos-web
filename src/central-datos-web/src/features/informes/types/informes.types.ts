@@ -9,6 +9,15 @@ export interface ReportKpiData {
   icon?: string;
 }
 
+export interface DetalleElementoTooltip {
+  codigo?: string;
+  nombre: string;
+  valor?: string | number;
+  subtexto?: string;
+  badge?: string;
+  badgeColor?: string;
+}
+
 export interface ReportBarChartPoint {
   id: string;
   label: string;
@@ -16,6 +25,8 @@ export interface ReportBarChartPoint {
   valorFormateado?: string;
   sociedad?: 'TSA' | 'CAL' | string;
   color?: string;
+  tooltipSubtitle?: string;
+  detallesTooltip?: DetalleElementoTooltip[];
 }
 
 export interface FiltrosReporteBasico {

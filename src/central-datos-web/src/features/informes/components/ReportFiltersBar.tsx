@@ -115,7 +115,7 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
   return (
     <div
       style={{
-        padding: '0.65rem 1rem',
+        padding: '0.45rem 0.85rem',
         backgroundColor: '#ffffff',
         borderRadius: '8px',
         border: '1px solid var(--ts-semantic-color-border-default, #d0dae5)',
@@ -131,7 +131,7 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '1rem',
+          gap: '0.55rem',
           flexWrap: 'wrap',
         }}
       >
@@ -140,7 +140,7 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.85rem',
+            gap: '0.55rem',
             flexWrap: 'wrap',
             flex: '1 1 auto',
           }}
@@ -157,17 +157,18 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
                 onChange={(e) => onFechaInicioChange(e.target.value)}
                 disabled={loading}
                 style={{
-                  padding: '6px 8px',
+                  padding: '4px 6px',
+                  width: '120px',
                   borderRadius: '6px',
                   border: '1px solid #cbd5e1',
-                  fontSize: '0.84rem',
+                  fontSize: '0.8rem',
                   fontFamily: 'inherit',
                   color: '#1e293b',
                   outline: 'none',
                 }}
               />
             </div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
               <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', marginLeft: '2px' }}>
                 Hasta:
               </span>
@@ -177,10 +178,11 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
                 onChange={(e) => onFechaFinChange(e.target.value)}
                 disabled={loading}
                 style={{
-                  padding: '6px 8px',
+                  padding: '4px 6px',
+                  width: '120px',
                   borderRadius: '6px',
                   border: '1px solid #cbd5e1',
-                  fontSize: '0.84rem',
+                  fontSize: '0.8rem',
                   fontFamily: 'inherit',
                   color: '#1e293b',
                   outline: 'none',
@@ -224,8 +226,8 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
                       disabled={loading}
                       onClick={() => onFaseChange(item.id)}
                       style={{
-                        padding: '4px 8px',
-                        fontSize: '0.78rem',
+                        padding: '3px 7px',
+                        fontSize: '0.75rem',
                         fontWeight: activa ? 700 : 500,
                         borderRadius: '5px',
                         border: activa ? '1px solid #0046ad' : '1px solid #cbd5e1',
@@ -265,7 +267,7 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
                     onEstacionesChange(estSoc);
                   }}
                   style={{
-                    padding: '5px 10px',
+                    padding: '3px 8px',
                     borderRadius: '4px',
                     border: activa ? '1px solid #0046ad' : '1px solid #cbd5e1',
                     backgroundColor: activa ? '#0046ad' : '#ffffff',
@@ -298,16 +300,16 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  padding: '5px 12px',
+                  padding: '4px 10px',
                   borderRadius: '6px',
                   border: '1px solid #cbd5e1',
                   backgroundColor: '#ffffff',
-                  fontSize: '0.82rem',
+                  fontSize: '0.8rem',
                   fontWeight: 600,
                   color: '#1e293b',
                   cursor: 'pointer',
-                  minWidth: '150px',
-                  maxWidth: '220px',
+                  minWidth: '130px',
+                  maxWidth: '185px',
                   justifyContent: 'space-between',
                 }}
               >
@@ -454,17 +456,17 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
         </div>
 
         {/* BOTÓN CONSULTAR / ACEPTAR */}
-        <div className="cd-fullwidth-mobile" style={{ flexShrink: 0 }}>
+        <div className="cd-fullwidth-mobile" style={{ flexShrink: 0, marginLeft: 'auto' }}>
           <TsButton
             variant="primary"
             onClick={onConsultar}
             disabled={loading}
             loading={loading}
             style={{
-              padding: '6px 18px',
+              padding: '4px 14px',
               fontWeight: 700,
-              fontSize: '0.86rem',
-              width: '100%',
+              fontSize: '0.82rem',
+              whiteSpace: 'nowrap',
             }}
           >
             {loading ? 'Consultando...' : '🔍 Consultar'}

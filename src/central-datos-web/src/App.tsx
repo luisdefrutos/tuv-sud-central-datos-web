@@ -21,9 +21,54 @@ import {
 
 function AppContent() {
   const { isAuthenticated, isLoading, logNavigation, isOnline, downloadDiagnosticsLog, logout } = useAuth();
-  // Estado inicial: null (solo se muestran los menús superiores sin cargar pantallas ni realizar consultas)
-  const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
-  const [activeItemId, setActiveItemId] = useState<string | null>(null);
+  // Helper para recuperar la pantalla activa desde URL (#/modulo/...) o sessionStorage tras recarga (F5)
+  const getInitialNavigation = () => {
+    const hash = typeof window !== 'undefined' ? window.location.hash : '';
+    if (hash && hash.startsWith('#/modulo/')) {
+      const itemId = hash.replace('#/modulo/', '').trim();
+      if (itemId) {
+        const { group } = findMenuItem(itemId);
+        const autoGroup = group?.id || (['facturacion', 'facturacion-excel', 'num-inspecciones', 'numero-inspecciones', 'duracion-promedio', 'informes'].includes(itemId) ? 'informes' : 'aplicacion');
+        return { itemId, groupId: autoGroup };
+      }
+    }
+    const savedItem = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('cd_active_item') : null;
+    const savedGroup = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('cd_active_group') : null;
+    if (savedItem) {
+      return { itemId: savedItem, groupId: savedGroup || 'informes' };
+    }
+    return { itemId: null, groupId: null };
+  };
+
+  const initialNav = getInitialNavigation();
+  const [activeGroupId, setActiveGroupId] = useState<string | null>(initialNav.groupId);
+  const [activeItemId, setActiveItemId] = useState<string | null>(initialNav.itemId);
+
+  // Sincronizar activeItemId bidireccionalmente con hash de URL y sessionStorage
+  useEffect(() => {
+    if (activeItemId) {
+      window.location.hash = `#/modulo/${activeItemId}`;
+      sessionStorage.setItem('cd_active_item', activeItemId);
+      if (activeGroupId) sessionStorage.setItem('cd_active_group', activeGroupId);
+    } else {
+      if (window.location.hash.startsWith('#/modulo/')) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+      sessionStorage.removeItem('cd_active_item');
+      sessionStorage.removeItem('cd_active_group');
+    }
+  }, [activeItemId, activeGroupId]);
+
+  // Escuchar cambios en la URL (F5, botones Atrás/Adelante del navegador)
+  useEffect(() => {
+    const onHashChange = () => {
+      const nav = getInitialNavigation();
+      setActiveItemId(nav.itemId);
+      setActiveGroupId(nav.groupId);
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
   const { BRAND } = UI_CONSTANTS;
 
   // Registrar auditoría de navegación al cambiar de módulo o volver al inicio

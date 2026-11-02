@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TsCard, TsBadge } from '@tuvsud/design-system/react';
-import type { ReportBarChartPoint } from '../types/informes.types';
+import type { ReportBarChartPoint, DetalleElementoTooltip } from '../types/informes.types';
+import { AppTooltip } from '../../../components/common/AppTooltip';
 
 export interface ReportDonutChartProps {
   title: string;
@@ -14,15 +15,17 @@ export interface ReportDonutChartProps {
 
 const PALETTE = [
   '#0046ad', // Azul TÜV SÜD primario
-  '#00875a', // Verde CAL
-  '#0091ff', // Cyan brillante
-  '#d97706', // Ámbar
+  '#059669', // Verde esmeralda
+  '#d97706', // Ámbar intenso
   '#7c3aed', // Púrpura
-  '#dc2626', // Rojo
-  '#0284c7', // Celeste
-  '#059669', // Esmeralda
+  '#dc2626', // Rojo coral
+  '#0284c7', // Cyan brillante
   '#ea580c', // Naranja
-  '#64748b', // Gris otros
+  '#c026d3', // Magenta / Fucsia
+  '#0d9488', // Verde azulado
+  '#475569', // Pizarra
+  '#b45309', // Bronce
+  '#4338ca', // Índigo
 ];
 
 /**
@@ -36,7 +39,7 @@ export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
   loading = false,
   valueFormatter = (val) => val.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }),
   emptyMessage = 'No hay datos disponibles para representar en el gráfico circular.',
-  maxSlices = 7,
+  maxSlices = 12,
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -85,21 +88,26 @@ export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
     valor: number;
     pct: number;
     color: string;
+    tooltipSubtitle?: string;
+    detallesTooltip?: DetalleElementoTooltip[];
   }
 
+  const allSameColor = topSlices.length > 1 && topSlices.every((s) => s.color === topSlices[0].color);
   const slices: SliceItem[] = topSlices.map((item, idx) => ({
     id: item.id,
     label: item.label,
     valor: item.valor,
     pct: (item.valor / total) * 100,
-    color: item.color || PALETTE[idx % PALETTE.length],
+    color: (!item.color || allSameColor) ? PALETTE[idx % PALETTE.length] : item.color,
+    tooltipSubtitle: item.tooltipSubtitle,
+    detallesTooltip: item.detallesTooltip,
   }));
 
   if (others.length > 0) {
     const othersVal = others.reduce((acc, curr) => acc + curr.valor, 0);
     slices.push({
       id: 'resto',
-      label: `Resto (${others.length} estaciones)`,
+      label: `Resto (${others.length} otros)`,
       valor: othersVal,
       pct: (othersVal / total) * 100,
       color: '#94a3b8',
@@ -211,33 +219,69 @@ export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
               textAlign: 'center',
               pointerEvents: 'auto',
               cursor: 'pointer',
-              width: '100px',
+              width: '110px',
             }}
-            title={activeSlice ? `${activeSlice.label}: ${valueFormatter(activeSlice.valor)} (${activeSlice.pct.toFixed(1)}%)` : `Cuota Global Red: ${valueFormatter(total)}`}
           >
-            <div
-              style={{
-                fontSize: activeSlice ? '1rem' : '1.15rem',
-                fontWeight: 800,
-                color: activeSlice ? activeSlice.color : '#0046ad',
-                lineHeight: 1.1,
-              }}
-            >
-              {activeSlice ? `${activeSlice.pct.toFixed(1)}%` : '100%'}
-            </div>
-            <div
-              style={{
-                fontSize: '0.7rem',
-                fontWeight: 600,
-                color: '#64748b',
-                marginTop: '2px',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {activeSlice ? activeSlice.label.replace('I.T.V. - ', '') : 'Cuota Global'}
-            </div>
+            {activeSlice ? (
+              <AppTooltip
+                title={activeSlice.label}
+                badge={`${valueFormatter(activeSlice.valor)} (${activeSlice.pct.toFixed(1)}%)`}
+                badgeColor={activeSlice.color}
+                accentColor={activeSlice.color}
+                subtitle={activeSlice.tooltipSubtitle}
+                items={activeSlice.detallesTooltip}
+                position="top"
+              >
+                <div style={{ cursor: 'pointer' }}>
+                  <div
+                    style={{
+                      fontSize: '1.05rem',
+                      fontWeight: 800,
+                      color: activeSlice.color,
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    {activeSlice.pct.toFixed(1)}%
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      color: '#64748b',
+                      marginTop: '2px',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {activeSlice.label.replace('I.T.V. - ', '')}
+                  </div>
+                </div>
+              </AppTooltip>
+            ) : (
+              <div>
+                <div
+                  style={{
+                    fontSize: '1.15rem',
+                    fontWeight: 800,
+                    color: '#0046ad',
+                    lineHeight: 1.1,
+                  }}
+                >
+                  100%
+                </div>
+                <div
+                  style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    color: '#64748b',
+                    marginTop: '2px',
+                  }}
+                >
+                  Cuota Global
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -254,65 +298,79 @@ export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
         >
           {slices.map((slice, index) => {
             const isHovered = hoveredIndex === index;
-            return (
-              <div
-                key={slice.id}
-                onMouseEnter={() => setHoveredIndex(index)}
-                onMouseLeave={() => setHoveredIndex(null)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '8px',
-                  padding: '5px 8px',
-                  borderRadius: '4px',
-                  backgroundColor: isHovered ? '#edf5ff' : 'transparent',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.15s ease',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                  <span
-                    style={{
-                      width: '10px',
-                      height: '10px',
-                      borderRadius: '50%',
-                      backgroundColor: slice.color,
-                      flexShrink: 0,
-                    }}
-                  />
-                  <span
-                    style={{
-                      fontSize: '0.82rem',
-                      fontWeight: isHovered ? 700 : 500,
-                      color: isHovered ? '#0046ad' : '#1e293b',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                    title={slice.label}
-                  >
-                    {slice.label.replace('I.T.V. - ', '')}
-                  </span>
-                </div>
+            const badgeVal = `${valueFormatter(slice.valor)} (${slice.pct.toFixed(1)}%)`;
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>
-                    {valueFormatter(slice.valor)}
-                  </span>
-                  <TsBadge
-                    variant="neutral"
-                    style={{
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      minWidth: '42px',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {slice.pct.toFixed(1)}%
-                  </TsBadge>
+            return (
+              <AppTooltip
+                key={slice.id}
+                title={slice.label}
+                badge={badgeVal}
+                badgeColor={slice.color}
+                accentColor={slice.color}
+                subtitle={slice.tooltipSubtitle || `Estaciones comprendidas en ${slice.label}`}
+                items={slice.detallesTooltip}
+                position="left"
+                style={{ width: '100%', display: 'block' }}
+              >
+                <div
+                  onMouseEnter={() => setHoveredIndex(index)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px',
+                    padding: '5px 8px',
+                    borderRadius: '4px',
+                    backgroundColor: isHovered ? '#edf5ff' : 'transparent',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.15s ease',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                    <span
+                      style={{
+                        width: '10px',
+                        height: '10px',
+                        borderRadius: '50%',
+                        backgroundColor: slice.color,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontSize: '0.82rem',
+                        fontWeight: isHovered ? 700 : 500,
+                        color: isHovered ? '#0046ad' : '#1e293b',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {slice.label.replace('I.T.V. - ', '')}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>
+                      {valueFormatter(slice.valor)}
+                    </span>
+                    <TsBadge
+                      variant="neutral"
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        minWidth: '42px',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {slice.pct.toFixed(1)}%
+                    </TsBadge>
+                  </div>
                 </div>
-              </div>
+              </AppTooltip>
             );
           })}
         </div>

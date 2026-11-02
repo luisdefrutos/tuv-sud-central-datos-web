@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TsCard, TsButton } from '@tuvsud/design-system/react';
 import type { ReportBarChartPoint } from '../types/informes.types';
+import { AppTooltip } from '../../../components/common/AppTooltip';
 import { SOCIEDADES } from '../../../constants/companies.constants';
 
 export interface ReportBarChartProps {
@@ -29,7 +30,7 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
   defaultTopCount = 10,
   sortOrder = 'desc',
 }) => {
-  const [mostrarTodos, setMostrarTodos] = useState(false);
+  // Muestra siempre todos los datos disponibles en la lista aprovechando el scroll vertical
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   if (loading) {
@@ -62,7 +63,7 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
   const sorted = sortOrder === 'none'
     ? [...data]
     : [...data].sort((a, b) => (sortOrder === 'asc' ? a.valor - b.valor : b.valor - a.valor));
-  const visibleData = mostrarTodos ? sorted : sorted.slice(0, defaultTopCount);
+  const visibleData = sorted;
   const maxVal = Math.max(...visibleData.map((d) => d.valor), 1);
 
   return (
@@ -79,16 +80,7 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
           )}
         </div>
 
-        {sorted.length > defaultTopCount && (
-          <TsButton
-            variant="text"
-            size="small"
-            onClick={() => setMostrarTodos(!mostrarTodos)}
-            style={{ fontSize: '0.78rem', padding: '4px 8px' }}
-          >
-            {mostrarTodos ? `Ver solo Top ${defaultTopCount}` : `Ver todas las ${sorted.length} estaciones`}
-          </TsButton>
-        )}
+
       </div>
 
       {/* Leyenda Oficial de Colores de Sociedad */}
@@ -152,21 +144,34 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
               : SOCIEDADES.ATISAE.colorBorde);
 
           return (
-            <div
+            <AppTooltip
               key={item.id}
-              onMouseEnter={() => setHoveredId(item.id)}
-              onMouseLeave={() => setHoveredId(null)}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'minmax(95px, 180px) 1fr minmax(65px, 105px)',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '4px 6px',
-                borderRadius: '4px',
-                backgroundColor: isHovered ? '#f1f5f9' : 'transparent',
-                transition: 'background-color 0.15s ease',
-              }}
+              title={item.label}
+              badge={item.valorFormateado || valueFormatter(item.valor)}
+              badgeColor={barColor}
+              accentColor={barColor}
+              subtitle={item.sociedad ? `Sociedad: ${item.sociedad === 'CAL' ? 'TÜV SÜD CAL' : 'TÜV SÜD ATISAE'}` : undefined}
+              items={item.detallesTooltip}
+              position="top"
+              style={{ width: '100%', display: 'block' }}
             >
+              <div
+                className="cd-barchart-row"
+                onMouseEnter={() => setHoveredId(item.id)}
+                onMouseLeave={() => setHoveredId(null)}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'minmax(95px, 180px) 1fr minmax(65px, 105px)',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '4px 6px',
+                  borderRadius: '4px',
+                  backgroundColor: isHovered ? '#f1f5f9' : 'transparent',
+                  transition: 'background-color 0.15s ease',
+                  width: '100%',
+                  boxSizing: 'border-box',
+                }}
+              >
               {/* Etiqueta / Nombre Estación */}
               <div
                 style={{
@@ -220,6 +225,7 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
                 {item.valorFormateado ?? valueFormatter(item.valor)}
               </div>
             </div>
+          </AppTooltip>
           );
         })}
       </div>

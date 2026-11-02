@@ -163,34 +163,78 @@ public sealed class OracleInformesRepository : IInformesRepository
         DateTime fechaFin,
         CancellationToken cancellationToken)
     {
-        await using var conn = new OracleConnection(_options.ConnectionString);
-        await conn.OpenAsync(cancellationToken);
+        LogSqlEjecutada("NUMERO_INSPECCIONES", sql, fechaInicio, fechaFin);
 
-        await using var cmd = conn.CreateCommand();
-        cmd.BindByName = true;
-        cmd.CommandText = sql;
-        cmd.CommandTimeout = 120;
-
-        cmd.Parameters.Add("FechaInicio", OracleDbType.Date).Value = fechaInicio;
-        cmd.Parameters.Add("FechaFin", OracleDbType.Date).Value = fechaFin;
-
-        var lista = new List<EstacionNumeroInspeccionesDato>();
-        await using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken);
-        while (await reader.ReadAsync(cancellationToken))
+        async Task<IReadOnlyList<EstacionNumeroInspeccionesDato>> EjecutarQueryAsync(bool esReintento = false)
         {
-            lista.Add(new EstacionNumeroInspeccionesDato
+            await using var conn = new OracleConnection(_options.ConnectionString);
+            if (esReintento)
             {
-                CodEstacion = reader.IsDBNull(0) ? string.Empty : reader.GetString(0).Trim(),
-                DesEstacion = reader.IsDBNull(1) ? string.Empty : reader.GetString(1).Trim(),
-                CodEmpresa = reader.IsDBNull(2) ? string.Empty : reader.GetString(2).Trim(),
-                Favorables1 = reader.IsDBNull(3) ? 0 : Convert.ToInt32(reader.GetValue(3)),
-                Rechazadas1 = reader.IsDBNull(4) ? 0 : Convert.ToInt32(reader.GetValue(4)),
-                Favorables2 = reader.IsDBNull(5) ? 0 : Convert.ToInt32(reader.GetValue(5)),
-                Rechazadas2 = reader.IsDBNull(6) ? 0 : Convert.ToInt32(reader.GetValue(6)),
-                TotalInspecciones = reader.IsDBNull(7) ? 0 : Convert.ToInt32(reader.GetValue(7))
-            });
+                OracleConnection.ClearPool(conn);
+            }
+            await conn.OpenAsync(cancellationToken);
+
+            await using var cmd = conn.CreateCommand();
+            cmd.BindByName = true;
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = 120;
+
+            cmd.Parameters.Add("FechaInicio", OracleDbType.Date).Value = fechaInicio;
+            cmd.Parameters.Add("FechaFin", OracleDbType.Date).Value = fechaFin;
+
+            var lista = new List<EstacionNumeroInspeccionesDato>();
+            await using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                lista.Add(new EstacionNumeroInspeccionesDato
+                {
+                    CodEstacion = reader.IsDBNull(0) ? string.Empty : reader.GetString(0).Trim(),
+                    DesEstacion = reader.IsDBNull(1) ? string.Empty : reader.GetString(1).Trim(),
+                    CodEmpresa = reader.IsDBNull(2) ? string.Empty : reader.GetString(2).Trim(),
+                    Favorables1 = reader.IsDBNull(3) ? 0 : Convert.ToInt32(reader.GetValue(3)),
+                    Rechazadas1 = reader.IsDBNull(4) ? 0 : Convert.ToInt32(reader.GetValue(4)),
+                    Favorables2 = reader.IsDBNull(5) ? 0 : Convert.ToInt32(reader.GetValue(5)),
+                    Rechazadas2 = reader.IsDBNull(6) ? 0 : Convert.ToInt32(reader.GetValue(6)),
+                    TotalInspecciones = reader.IsDBNull(7) ? 0 : Convert.ToInt32(reader.GetValue(7))
+                });
+            }
+            return lista;
         }
-        return lista;
+
+        try
+        {
+            return await EjecutarQueryAsync();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogInformation("Consulta de número de inspecciones cancelada por el cliente (F5 o navegación interrumpida).");
+            return Array.Empty<EstacionNumeroInspeccionesDato>();
+        }
+        catch (IOException ex) when (cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogInformation("Conexión interrumpida por el cliente al recargar la página (F5): {Message}", ex.Message);
+            return Array.Empty<EstacionNumeroInspeccionesDato>();
+        }
+        catch (Exception ex) when (ex is IOException || ex.InnerException is IOException || ex.Message.Contains("interrupción", StringComparison.OrdinalIgnoreCase) || ex.Message.Contains("transport connection", StringComparison.OrdinalIgnoreCase))
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return Array.Empty<EstacionNumeroInspeccionesDato>();
+            }
+            _logger.LogWarning(ex, "Socket Oracle interrumpido en informe de inspecciones. Limpiando pool y reintentando...");
+            try
+            {
+                return await EjecutarQueryAsync(esReintento: true);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                return Array.Empty<EstacionNumeroInspeccionesDato>();
+            }
+            catch (IOException) when (cancellationToken.IsCancellationRequested)
+            {
+                return Array.Empty<EstacionNumeroInspeccionesDato>();
+            }
+        }
     }
 
     private async Task<IReadOnlyList<EstacionNumeroInspeccionesDato>> ObtenerNumeroInspeccionesPorSoapAsync(string sql, CancellationToken cancellationToken)
@@ -271,64 +315,119 @@ public sealed class OracleInformesRepository : IInformesRepository
         return lista;
     }
 
+    private void LogSqlEjecutada(string nombreInforme, string sql, DateTime fechaInicio, DateTime fechaFin)
+    {
+        if (!_options.LogExecutedSql) return;
+
+        var sqlResuelta = sql
+            .Replace(":FechaInicio", $"TO_DATE('{fechaInicio:yyyy-MM-dd HH:mm:ss}', 'YYYY-MM-DD HH24:MI:SS')")
+            .Replace(":fechaInicio", $"TO_DATE('{fechaInicio:yyyy-MM-dd HH:mm:ss}', 'YYYY-MM-DD HH24:MI:SS')")
+            .Replace(":FechaFin", $"TO_DATE('{fechaFin:yyyy-MM-dd HH:mm:ss}', 'YYYY-MM-DD HH24:MI:SS')")
+            .Replace(":fechaFin", $"TO_DATE('{fechaFin:yyyy-MM-dd HH:mm:ss}', 'YYYY-MM-DD HH24:MI:SS')");
+
+        _logger.LogInformation("\n[SQL FINAL EJECUTADA EN ORACLE - {Informe}]\n--------------------------------------------------------------------------------\n{Sql}\n--------------------------------------------------------------------------------", nombreInforme, sqlResuelta);
+    }
+
     private async Task<IReadOnlyList<EstacionFacturacionDato>> ObtenerPorOracleDirectoAsync(
         string sql,
         DateTime fechaInicio,
         DateTime fechaFin,
         CancellationToken cancellationToken)
     {
-        await using var conn = new OracleConnection(_options.ConnectionString);
-        await conn.OpenAsync(cancellationToken);
-
-        await using var cmd = conn.CreateCommand();
-        cmd.BindByName = true;
-        cmd.CommandText = sql;
-        cmd.CommandTimeout = 120;
-
-        cmd.Parameters.Add("FechaInicio", OracleDbType.Date).Value = fechaInicio;
-        cmd.Parameters.Add("FechaFin", OracleDbType.Date).Value = fechaFin;
-
-        var lista = new List<EstacionFacturacionDato>();
-        await using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken);
-        while (await reader.ReadAsync(cancellationToken))
+        async Task<IReadOnlyList<EstacionFacturacionDato>> EjecutarQueryAsync(bool esReintento = false)
         {
-            lista.Add(new EstacionFacturacionDato
+            await using var conn = new OracleConnection(_options.ConnectionString);
+            if (esReintento)
             {
-                CodEstacion = reader.IsDBNull(0) ? string.Empty : reader.GetString(0).Trim(),
-                DesEstacion = reader.IsDBNull(1) ? string.Empty : reader.GetString(1).Trim(),
-                CodEmpresa = reader.IsDBNull(2) ? string.Empty : reader.GetString(2).Trim(),
-                TotalInspecciones = reader.IsDBNull(3) ? 0 : Convert.ToInt32(reader.GetValue(3)),
-                TotalIngresos = reader.IsDBNull(4) ? 0m : Convert.ToDecimal(reader.GetValue(4)),
+                OracleConnection.ClearPool(conn);
+            }
+            await conn.OpenAsync(cancellationToken);
 
-                ContadosNumInspecciones = reader.IsDBNull(5) ? 0 : Convert.ToInt32(reader.GetValue(5)),
-                ContadosBase = reader.IsDBNull(6) ? 0m : Convert.ToDecimal(reader.GetValue(6)),
-                ContadosIva = reader.IsDBNull(7) ? 0m : Convert.ToDecimal(reader.GetValue(7)),
-                ContadosTasas = reader.IsDBNull(8) ? 0m : Convert.ToDecimal(reader.GetValue(8)),
-                ContadosTotal = reader.IsDBNull(9) ? 0m : Convert.ToDecimal(reader.GetValue(9)),
+            await using var cmd = conn.CreateCommand();
+            cmd.BindByName = true;
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = 120;
 
-                TercerosNumInspecciones = reader.IsDBNull(10) ? 0 : Convert.ToInt32(reader.GetValue(10)),
-                TercerosBase = reader.IsDBNull(11) ? 0m : Convert.ToDecimal(reader.GetValue(11)),
-                TercerosIva = reader.IsDBNull(12) ? 0m : Convert.ToDecimal(reader.GetValue(12)),
-                TercerosTasas = reader.IsDBNull(13) ? 0m : Convert.ToDecimal(reader.GetValue(13)),
-                TercerosTotal = reader.IsDBNull(14) ? 0m : Convert.ToDecimal(reader.GetValue(14)),
+            cmd.Parameters.Add("FechaInicio", OracleDbType.Date).Value = fechaInicio;
+            cmd.Parameters.Add("FechaFin", OracleDbType.Date).Value = fechaFin;
 
-                TarjetasNumInspecciones = reader.IsDBNull(15) ? 0 : Convert.ToInt32(reader.GetValue(15)),
-                TarjetasBase = reader.IsDBNull(16) ? 0m : Convert.ToDecimal(reader.GetValue(16)),
-                TarjetasIva = reader.IsDBNull(17) ? 0m : Convert.ToDecimal(reader.GetValue(17)),
-                TarjetasTasas = reader.IsDBNull(18) ? 0m : Convert.ToDecimal(reader.GetValue(18)),
-                TarjetasTotal = reader.IsDBNull(19) ? 0m : Convert.ToDecimal(reader.GetValue(19)),
+            var lista = new List<EstacionFacturacionDato>();
+            await using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                lista.Add(new EstacionFacturacionDato
+                {
+                    CodEstacion = reader.IsDBNull(0) ? string.Empty : reader.GetString(0).Trim(),
+                    DesEstacion = reader.IsDBNull(1) ? string.Empty : reader.GetString(1).Trim(),
+                    CodEmpresa = reader.IsDBNull(2) ? string.Empty : reader.GetString(2).Trim(),
+                    TotalInspecciones = reader.IsDBNull(3) ? 0 : Convert.ToInt32(reader.GetValue(3)),
+                    TotalIngresos = reader.IsDBNull(4) ? 0m : Convert.ToDecimal(reader.GetValue(4)),
 
-                TotalesNumInspecciones = reader.IsDBNull(20) ? 0 : Convert.ToInt32(reader.GetValue(20)),
-                TotalesBase = reader.IsDBNull(21) ? 0m : Convert.ToDecimal(reader.GetValue(21)),
-                TotalesIva = reader.IsDBNull(22) ? 0m : Convert.ToDecimal(reader.GetValue(22)),
-                TotalesTasas = reader.IsDBNull(23) ? 0m : Convert.ToDecimal(reader.GetValue(23)),
-                TotalesTasasTrafico = reader.IsDBNull(24) ? 0m : Convert.ToDecimal(reader.GetValue(24)),
-                TotalesTasasIndustria = reader.IsDBNull(25) ? 0m : Convert.ToDecimal(reader.GetValue(25)),
-                TotalesTotal = reader.IsDBNull(26) ? 0m : Convert.ToDecimal(reader.GetValue(26)),
-                Gratuitas = reader.IsDBNull(27) ? 0 : Convert.ToInt32(reader.GetValue(27))
-            });
+                    ContadosNumInspecciones = reader.IsDBNull(5) ? 0 : Convert.ToInt32(reader.GetValue(5)),
+                    ContadosBase = reader.IsDBNull(6) ? 0m : Convert.ToDecimal(reader.GetValue(6)),
+                    ContadosIva = reader.IsDBNull(7) ? 0m : Convert.ToDecimal(reader.GetValue(7)),
+                    ContadosTasas = reader.IsDBNull(8) ? 0m : Convert.ToDecimal(reader.GetValue(8)),
+                    ContadosTotal = reader.IsDBNull(9) ? 0m : Convert.ToDecimal(reader.GetValue(9)),
+
+                    TercerosNumInspecciones = reader.IsDBNull(10) ? 0 : Convert.ToInt32(reader.GetValue(10)),
+                    TercerosBase = reader.IsDBNull(11) ? 0m : Convert.ToDecimal(reader.GetValue(11)),
+                    TercerosIva = reader.IsDBNull(12) ? 0m : Convert.ToDecimal(reader.GetValue(12)),
+                    TercerosTasas = reader.IsDBNull(13) ? 0m : Convert.ToDecimal(reader.GetValue(13)),
+                    TercerosTotal = reader.IsDBNull(14) ? 0m : Convert.ToDecimal(reader.GetValue(14)),
+
+                    TarjetasNumInspecciones = reader.IsDBNull(15) ? 0 : Convert.ToInt32(reader.GetValue(15)),
+                    TarjetasBase = reader.IsDBNull(16) ? 0m : Convert.ToDecimal(reader.GetValue(16)),
+                    TarjetasIva = reader.IsDBNull(17) ? 0m : Convert.ToDecimal(reader.GetValue(17)),
+                    TarjetasTasas = reader.IsDBNull(18) ? 0m : Convert.ToDecimal(reader.GetValue(18)),
+                    TarjetasTotal = reader.IsDBNull(19) ? 0m : Convert.ToDecimal(reader.GetValue(19)),
+
+                    TotalesNumInspecciones = reader.IsDBNull(20) ? 0 : Convert.ToInt32(reader.GetValue(20)),
+                    TotalesBase = reader.IsDBNull(21) ? 0m : Convert.ToDecimal(reader.GetValue(21)),
+                    TotalesIva = reader.IsDBNull(22) ? 0m : Convert.ToDecimal(reader.GetValue(22)),
+                    TotalesTasas = reader.IsDBNull(23) ? 0m : Convert.ToDecimal(reader.GetValue(23)),
+                    TotalesTasasTrafico = reader.IsDBNull(24) ? 0m : Convert.ToDecimal(reader.GetValue(24)),
+                    TotalesTasasIndustria = reader.IsDBNull(25) ? 0m : Convert.ToDecimal(reader.GetValue(25)),
+                    TotalesTotal = reader.IsDBNull(26) ? 0m : Convert.ToDecimal(reader.GetValue(26)),
+                    Gratuitas = reader.IsDBNull(27) ? 0 : Convert.ToInt32(reader.GetValue(27))
+                });
+            }
+            return lista;
         }
-        return lista;
+
+        try
+        {
+            return await EjecutarQueryAsync();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogInformation("Consulta de facturación cancelada por el cliente (F5 o navegación interrumpida).");
+            return Array.Empty<EstacionFacturacionDato>();
+        }
+        catch (IOException ex) when (cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogInformation("Conexión interrumpida por el cliente al recargar la página (F5): {Message}", ex.Message);
+            return Array.Empty<EstacionFacturacionDato>();
+        }
+        catch (Exception ex) when (ex is IOException || ex.InnerException is IOException || ex.Message.Contains("interrupción", StringComparison.OrdinalIgnoreCase) || ex.Message.Contains("transport connection", StringComparison.OrdinalIgnoreCase))
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return Array.Empty<EstacionFacturacionDato>();
+            }
+            _logger.LogWarning(ex, "Socket Oracle interrumpido en informe de facturación. Limpiando pool y reintentando...");
+            try
+            {
+                return await EjecutarQueryAsync(esReintento: true);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                return Array.Empty<EstacionFacturacionDato>();
+            }
+            catch (IOException) when (cancellationToken.IsCancellationRequested)
+            {
+                return Array.Empty<EstacionFacturacionDato>();
+            }
+        }
     }
 
     private async Task<IReadOnlyList<EstacionFacturacionDato>> ObtenerPorSoapAsync(string sql, CancellationToken cancellationToken)
@@ -519,33 +618,77 @@ public sealed class OracleInformesRepository : IInformesRepository
         DateTime fechaFin,
         CancellationToken cancellationToken)
     {
-        await using var conn = new OracleConnection(_options.ConnectionString);
-        await conn.OpenAsync(cancellationToken);
+        LogSqlEjecutada("DURACION_PROMEDIO", sql, fechaInicio, fechaFin);
 
-        await using var cmd = conn.CreateCommand();
-        cmd.BindByName = true;
-        cmd.CommandText = sql;
-        cmd.CommandTimeout = 120;
-
-        cmd.Parameters.Add("FechaInicio", OracleDbType.Date).Value = fechaInicio;
-        cmd.Parameters.Add("FechaFin", OracleDbType.Date).Value = fechaFin;
-
-        var lista = new List<EstacionDuracionPromedioDato>();
-        await using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken);
-        while (await reader.ReadAsync(cancellationToken))
+        async Task<IReadOnlyList<EstacionDuracionPromedioDato>> EjecutarQueryAsync(bool esReintento = false)
         {
-            lista.Add(new EstacionDuracionPromedioDato
+            await using var conn = new OracleConnection(_options.ConnectionString);
+            if (esReintento)
             {
-                CodEstacion = reader.IsDBNull(0) ? string.Empty : reader.GetString(0).Trim(),
-                DesEstacion = reader.IsDBNull(1) ? string.Empty : reader.GetString(1).Trim(),
-                CodEmpresa = reader.IsDBNull(2) ? string.Empty : reader.GetString(2).Trim(),
-                TipoVehiculo = reader.IsDBNull(3) ? "OTROS" : reader.GetString(3).Trim(),
-                OrdenTipo = reader.IsDBNull(4) ? 99 : Convert.ToInt32(reader.GetValue(4)),
-                TotalInspecciones = reader.IsDBNull(5) ? 0 : Convert.ToInt32(reader.GetValue(5)),
-                DuracionPromedioMinutos = reader.IsDBNull(6) ? 0m : Convert.ToDecimal(reader.GetValue(6))
-            });
+                OracleConnection.ClearPool(conn);
+            }
+            await conn.OpenAsync(cancellationToken);
+
+            await using var cmd = conn.CreateCommand();
+            cmd.BindByName = true;
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = 120;
+
+            cmd.Parameters.Add("FechaInicio", OracleDbType.Date).Value = fechaInicio;
+            cmd.Parameters.Add("FechaFin", OracleDbType.Date).Value = fechaFin;
+
+            var lista = new List<EstacionDuracionPromedioDato>();
+            await using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                lista.Add(new EstacionDuracionPromedioDato
+                {
+                    CodEstacion = reader.IsDBNull(0) ? string.Empty : reader.GetString(0).Trim(),
+                    DesEstacion = reader.IsDBNull(1) ? string.Empty : reader.GetString(1).Trim(),
+                    CodEmpresa = reader.IsDBNull(2) ? string.Empty : reader.GetString(2).Trim(),
+                    TipoVehiculo = reader.IsDBNull(3) ? "OTROS" : reader.GetString(3).Trim(),
+                    OrdenTipo = reader.IsDBNull(4) ? 99 : Convert.ToInt32(reader.GetValue(4)),
+                    TotalInspecciones = reader.IsDBNull(5) ? 0 : Convert.ToInt32(reader.GetValue(5)),
+                    DuracionPromedioMinutos = reader.IsDBNull(6) ? 0m : Convert.ToDecimal(reader.GetValue(6))
+                });
+            }
+            return lista;
         }
-        return lista;
+
+        try
+        {
+            return await EjecutarQueryAsync();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogInformation("Consulta de duración promedio cancelada por el cliente (F5 o navegación interrumpida).");
+            return Array.Empty<EstacionDuracionPromedioDato>();
+        }
+        catch (IOException ex) when (cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogInformation("Conexión interrumpida por el cliente al recargar la página (F5): {Message}", ex.Message);
+            return Array.Empty<EstacionDuracionPromedioDato>();
+        }
+        catch (Exception ex) when (ex is IOException || ex.InnerException is IOException || ex.Message.Contains("interrupción", StringComparison.OrdinalIgnoreCase) || ex.Message.Contains("transport connection", StringComparison.OrdinalIgnoreCase))
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return Array.Empty<EstacionDuracionPromedioDato>();
+            }
+            _logger.LogWarning(ex, "Socket Oracle interrumpido en informe de duración promedio. Limpiando pool y reintentando...");
+            try
+            {
+                return await EjecutarQueryAsync(esReintento: true);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                return Array.Empty<EstacionDuracionPromedioDato>();
+            }
+            catch (IOException) when (cancellationToken.IsCancellationRequested)
+            {
+                return Array.Empty<EstacionDuracionPromedioDato>();
+            }
+        }
     }
 
     private async Task<IReadOnlyList<EstacionDuracionPromedioDato>> ObtenerDuracionPromedioPorSoapAsync(string sql, CancellationToken cancellationToken)

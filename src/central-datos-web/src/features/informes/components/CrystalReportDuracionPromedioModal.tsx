@@ -66,22 +66,16 @@ export const CrystalReportDuracionPromedioModal: React.FC<CrystalReportDuracionP
   const handleImprimir = () => {
     if (!printAreaRef.current) return;
 
-    const printWindow = document.createElement('iframe');
-    printWindow.style.position = 'fixed';
-    printWindow.style.right = '0';
-    printWindow.style.bottom = '0';
-    printWindow.style.width = '0';
-    printWindow.style.height = '0';
-    printWindow.style.border = '0';
-    document.body.appendChild(printWindow);
-
-    const doc = printWindow.contentWindow?.document;
-    if (!doc) return;
-
     const contenidoHtml = printAreaRef.current.innerHTML;
+    // Abrir una ventana emergente independiente para que la app y el modal no pierdan el foco ni la referencia
+    const printWindow = window.open('', '_blank', 'width=950,height=850,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes');
+    if (!printWindow) {
+      alert('Por favor, permita las ventanas emergentes en su navegador para imprimir el informe oficial.');
+      return;
+    }
 
-    doc.open();
-    doc.write(`
+    printWindow.document.open();
+    printWindow.document.write(`
       <!DOCTYPE html>
       <html lang="es">
         <head>
@@ -102,7 +96,7 @@ export const CrystalReportDuracionPromedioModal: React.FC<CrystalReportDuracionP
               font-size: 8.5pt;
               color: #000;
               margin: 0;
-              padding: 0;
+              padding: 16px;
               background: #fff;
             }
             table {
@@ -149,18 +143,18 @@ export const CrystalReportDuracionPromedioModal: React.FC<CrystalReportDuracionP
         </head>
         <body>
           ${contenidoHtml}
+          <script>
+            window.onload = function() {
+              window.focus();
+              setTimeout(function() {
+                window.print();
+              }, 250);
+            };
+          </script>
         </body>
       </html>
     `);
-    doc.close();
-
-    setTimeout(() => {
-      printWindow.contentWindow?.focus();
-      printWindow.contentWindow?.print();
-      setTimeout(() => {
-        document.body.removeChild(printWindow);
-      }, 1000);
-    }, 400);
+    printWindow.document.close();
   };
 
   return (

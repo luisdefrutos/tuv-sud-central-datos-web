@@ -64,117 +64,62 @@ export const CrystalReportNumeroInspeccionesModal: React.FC<CrystalReportNumeroI
 
   const handlePrint = () => {
     const printContent = printAreaRef.current;
-    if (!printContent) {
-      window.print();
+    if (!printContent) return;
+
+    const printWindow = window.open('', '_blank', 'width=1050,height=850,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes');
+    if (!printWindow) {
+      alert('Por favor, permita las ventanas emergentes en su navegador para imprimir el informe.');
       return;
     }
 
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = '0';
-    document.body.appendChild(iframe);
-
-    const doc = iframe.contentWindow?.document;
-    if (!doc) {
-      window.print();
-      return;
-    }
-
-    doc.open();
-    doc.write(`
+    printWindow.document.open();
+    printWindow.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
-          <title>Inspecciones Favorables y Rechazadas</title>
+          <title>Resumen_Numero_Inspecciones</title>
           <style>
             @page {
               size: A4 landscape;
-              margin: 5mm 6mm 5mm 6mm;
+              margin: 6mm 8mm;
             }
             * {
               box-sizing: border-box;
-              margin: 0;
-              padding: 0;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
             }
             body {
-              font-family: Arial, Helvetica, sans-serif;
-              color: #000000;
-              background-color: #ffffff;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-            }
-            .header-title-box {
-              border: 1.5px solid #000000;
-              padding: 3px;
-              text-align: center;
-              font-weight: bold;
-              font-size: 13px;
-              letter-spacing: 0.5px;
-              text-transform: uppercase;
-              margin-bottom: 5px;
-            }
-            .criteria-box {
-              border: 1px solid #000000;
-              padding: 3px 5px;
-              font-size: 7.5px;
-              line-height: 1.35;
-              margin-bottom: 5px;
+              font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+              font-size: 7.2pt;
+              color: #000;
+              margin: 0;
+              padding: 10px;
+              background: #fff;
             }
             table {
-              width: 100%;
               border-collapse: collapse;
-              table-layout: fixed;
+              width: 100%;
             }
             th, td {
-              border: 1px solid #000000;
-              padding: 1.5px 3px;
-              text-align: right;
-              font-size: 7.5px;
-              line-height: 1.15;
-              overflow: hidden;
-              white-space: nowrap;
-            }
-            th {
-              font-weight: bold;
-              text-align: center;
-              background-color: #f3f4f6;
-            }
-            tfoot tr td {
-              font-weight: bold;
-              background-color: #f3f4f6;
-              border-top: 2px solid #000000;
-              border-bottom: 2px solid #000000;
-            }
-            .footer-info {
-              display: flex;
-              justify-content: space-between;
-              font-size: 8px;
-              margin-top: 4px;
-              padding: 0 2px;
+              padding: 2px 3px;
             }
           </style>
         </head>
         <body>
           ${printContent.innerHTML}
+          <script>
+            window.onload = function() {
+              window.focus();
+              setTimeout(function() {
+                window.print();
+              }, 250);
+            };
+          </script>
         </body>
       </html>
     `);
-    doc.close();
-
-    setTimeout(() => {
-      iframe.contentWindow?.focus();
-      iframe.contentWindow?.print();
-      setTimeout(() => {
-        if (document.body.contains(iframe)) {
-          document.body.removeChild(iframe);
-        }
-      }, 1500);
-    }, 250);
+    printWindow.document.close();
   };
 
   return (

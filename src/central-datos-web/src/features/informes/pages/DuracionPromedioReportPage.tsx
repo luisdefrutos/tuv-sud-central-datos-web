@@ -54,7 +54,7 @@ export const DuracionPromedioReportPage: React.FC<DuracionPromedioReportPageProp
     graficoRankingEstacionesDinamico,
     graficoTiposVehiculoDinamico,
     graficoCuotaTiposDinamico,
-    graficoCuotaSociedadDinamico,
+    graficoTramosAgilidadDinamico,
     handleFechaInicioChange,
     handleFechaFinChange,
     setSociedad,
@@ -201,7 +201,7 @@ export const DuracionPromedioReportPage: React.FC<DuracionPromedioReportPageProp
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
           gap: '1rem',
         }}
       >
@@ -219,75 +219,59 @@ export const DuracionPromedioReportPage: React.FC<DuracionPromedioReportPageProp
 
       {/* 6. Selector de Métricas Visuales (Barras Agilidad, Barras Tipos, Donut Cuota Tipos y Donut Sociedades) */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        <div className="cd-chart-views-bar">
           <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#64748b' }}>Vista del Gráfico:</span>
-          <div style={{ display: 'inline-flex', borderRadius: '6px', border: '1px solid #cbd5e1', overflow: 'hidden', flexWrap: 'wrap' }}>
+          <div className="cd-chart-mode-group">
             <button
               type="button"
+              className="cd-chart-mode-btn"
               onClick={() => setChartMode('estaciones')}
               style={{
-                border: 'none',
-                padding: '6px 12px',
-                fontSize: '0.82rem',
                 fontWeight: chartMode === 'estaciones' ? 700 : 500,
                 backgroundColor: chartMode === 'estaciones' ? '#0046ad' : '#ffffff',
                 color: chartMode === 'estaciones' ? '#ffffff' : '#334155',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
               }}
             >
               📊 Ranking Agilidad (Menor a Mayor)
             </button>
             <button
               type="button"
+              className="cd-chart-mode-btn"
               onClick={() => setChartMode('tipos')}
               style={{
-                border: 'none',
                 borderLeft: '1px solid #cbd5e1',
-                padding: '6px 12px',
-                fontSize: '0.82rem',
                 fontWeight: chartMode === 'tipos' ? 700 : 500,
                 backgroundColor: chartMode === 'tipos' ? '#0046ad' : '#ffffff',
                 color: chartMode === 'tipos' ? '#ffffff' : '#334155',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
               }}
             >
               🚗 Por Tipo de Vehículo
             </button>
             <button
               type="button"
+              className="cd-chart-mode-btn"
               onClick={() => setChartMode('donut-tipos')}
               style={{
-                border: 'none',
                 borderLeft: '1px solid #cbd5e1',
-                padding: '6px 12px',
-                fontSize: '0.82rem',
                 fontWeight: chartMode === 'donut-tipos' ? 700 : 500,
                 backgroundColor: chartMode === 'donut-tipos' ? '#0046ad' : '#ffffff',
                 color: chartMode === 'donut-tipos' ? '#ffffff' : '#334155',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
               }}
             >
-              🍩 Cuota por Tipo (Donut)
+              📊 Cuota por Tipo
             </button>
             <button
               type="button"
-              onClick={() => setChartMode('donut-sociedad')}
+              className="cd-chart-mode-btn"
+              onClick={() => setChartMode('donut-tramos')}
               style={{
-                border: 'none',
                 borderLeft: '1px solid #cbd5e1',
-                padding: '6px 12px',
-                fontSize: '0.82rem',
-                fontWeight: chartMode === 'donut-sociedad' ? 700 : 500,
-                backgroundColor: chartMode === 'donut-sociedad' ? '#0046ad' : '#ffffff',
-                color: chartMode === 'donut-sociedad' ? '#ffffff' : '#334155',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
+                fontWeight: chartMode === 'donut-tramos' ? 700 : 500,
+                backgroundColor: chartMode === 'donut-tramos' ? '#0046ad' : '#ffffff',
+                color: chartMode === 'donut-tramos' ? '#ffffff' : '#334155',
               }}
             >
-              🏢 Cuota Sociedades (Donut)
+              ⏱️ Tramos de Tiempo
             </button>
           </div>
         </div>
@@ -310,9 +294,10 @@ export const DuracionPromedioReportPage: React.FC<DuracionPromedioReportPageProp
         {chartMode === 'tipos' && (
           <ReportBarChart
             title="Duración Media por Tipo de Vehículo (Clasificación Oficial MINER)"
-            subtitle="Tiempos medios de proceso según categorías reglamentarias de vehículos"
+            subtitle="Tiempos medios de proceso según categorías reglamentarias de vehículos (de menor a mayor)"
             data={graficoTiposVehiculoDinamico}
             loading={isLoading}
+            sortOrder="asc"
             emptyMessage={
               estacionesSeleccionadas.length === 0
                 ? 'No hay datos para representar. Seleccione al menos una estación.'
@@ -332,14 +317,14 @@ export const DuracionPromedioReportPage: React.FC<DuracionPromedioReportPageProp
           />
         )}
 
-        {chartMode === 'donut-sociedad' && (
+        {chartMode === 'donut-tramos' && (
           <ReportDonutChart
-            title="Distribución de Volumen por Sociedad (TÜV SÜD ATISAE vs TÜV SÜD CAL)"
-            subtitle="Porcentaje de cuota de inspecciones periódicas analizadas entre ambas sociedades"
-            data={graficoCuotaSociedadDinamico}
+            title="Distribución de Estaciones por Tramo de Agilidad"
+            subtitle="Porcentaje de estaciones ITV según intervalo de duración media por inspección periódica 001 (pase el cursor sobre un tramo para ver las estaciones)"
+            data={graficoTramosAgilidadDinamico}
             loading={isLoading}
-            valueFormatter={(val) => `${val.toLocaleString('es-ES')} insp.`}
-            emptyMessage="No hay datos disponibles para mostrar la cuota de sociedades."
+            valueFormatter={(val) => (val === 1 ? '1 estación' : `${val} estaciones`)}
+            emptyMessage="No hay datos de estaciones seleccionadas para mostrar los tramos de tiempo."
           />
         )}
       </div>

@@ -19,6 +19,7 @@
 | **08** | [modulo_autenticacion_y_login.md](./modulo_autenticacion_y_login.md) | Especificación completa del sistema de autenticación y login: diagrama de flujo Mermaid de las 5 casuísticas, análisis de `frmLogin.vb` vs `frmLogin_Obsoleto.vb`, soporte de usuarios propios sin LPAD y arquitectura Clean .NET 10 + React 19. |
 | **09** | [guia_pruebas_login_y_casuisticas.md](./guia_pruebas_login_y_casuisticas.md) | Guía práctica de pruebas de autenticación para entornos locales y máquinas virtuales fuera de dominio AD, con credenciales verificadas y consultas de auditoría. |
 | **10** | [10_arquitectura_logging_auditoria_y_seguridad_pentest.md](./10_arquitectura_logging_auditoria_y_seguridad_pentest.md) | Arquitectura híbrida de logging (Oracle vs. Serilog en disco), diferenciación entre `LOG_ACCESOS_MODULOS` y `LOG_AUDITORIA_WEB`, rotación de ficheros `.log`, tratamiento exclusivo de errores Oracle y blindaje frente a Pentest (OWASP CWE-209 / CWE-203). |
+| **11** | [11_persistencia_f5_logging_sql_y_tramos_duracion.md](./11_persistencia_f5_logging_sql_y_tramos_duracion.md) | **Persistencia F5, Logging SQL y Tramos de Agilidad**: Diagnóstico de redirección 307 vs. token JWT, sincronización de vista en URL y `sessionStorage`, trazabilidad de SQL resuelta con parámetros en Serilog y especificación del gráfico Donut de agilidad operativa. |
 
 ---
 

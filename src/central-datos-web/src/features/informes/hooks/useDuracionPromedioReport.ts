@@ -66,7 +66,7 @@ export function useDuracionPromedioReport() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   // 5. Modo de visualización del Gráfico (Ranking Estaciones / Tipos de Vehículo / Donut Tipos / Donut Sociedad)
-  const [chartMode, setChartMode] = useState<'estaciones' | 'tipos' | 'donut-tipos' | 'donut-sociedad'>('estaciones');
+  const [chartMode, setChartMode] = useState<'estaciones' | 'tipos' | 'donut-tipos' | 'donut-tramos'>('estaciones');
 
   // 6. Modal de Crystal Report
   const [modalCrystalOpen, setModalCrystalOpen] = useState<boolean>(false);
@@ -300,52 +300,140 @@ export function useDuracionPromedioReport() {
     return data.graficoTiposVehiculo;
   }, [data?.graficoTiposVehiculo, estacionesFiltradas.length]);
 
-  // Gráfico Donut de Cuota de Inspecciones por Tipo de Vehículo
+  // Paleta cromática corporativa rica, intuitiva y diferenciada por tipo de vehículo
+  const PALETA_TIPOS: Record<string, string> = {
+    'TURISMOS PARTICULARES': '#0046ad', // Azul corporativo TÜV SÜD
+    'MERCANCIAS <= 3.500 KG.': '#059669', // Verde esmeralda
+    'RESTO DE TURISMOS': '#0284c7', // Cyan brillante
+    'MERCANCIAS > 3.500 KG.': '#d97706', // Ámbar / Naranja oscuro
+    'REMOLQUES Y SEMIRREMOLQUES': '#7c3aed', // Púrpura / Violeta
+    'MOTOCICLETAS': '#dc2626', // Rojo coral
+    'AGRICOLAS': '#ea580c', // Naranja
+    'AUTOBUSES': '#c026d3', // Magenta / Fucsia
+    'OTROS': '#475569', // Pizarra
+  };
+
+  const PALETA_FALLBACK = [
+    '#0046ad', '#059669', '#d97706', '#7c3aed', '#dc2626', '#0284c7', '#ea580c', '#c026d3', '#0d9488', '#64748b'
+  ];
+
+  // Gráfico de Distribución Circular de Inspecciones por Tipo de Vehículo
   const graficoCuotaTiposDinamico = useMemo(() => {
     if (!data?.resumenTiposVehiculo || estacionesFiltradas.length === 0) return [];
     return data.resumenTiposVehiculo
       .filter((t) => t.totalInspecciones > 0)
-      .map((t) => ({
-        id: `donut_${t.ordenTipo}`,
-        label: t.tipoVehiculo,
-        valor: t.totalInspecciones,
-        valorFormateado: `${t.totalInspecciones.toLocaleString('es-ES')} insp.`,
-        sociedad: 'TODAS' as const,
-        color: '#0046ad',
-      }));
+      .map((t, idx) => {
+        const color = PALETA_TIPOS[t.tipoVehiculo.toUpperCase().trim()] || PALETA_FALLBACK[idx % PALETA_FALLBACK.length];
+        return {
+          id: `tipo_${t.ordenTipo}`,
+          label: t.tipoVehiculo,
+          valor: t.totalInspecciones,
+          valorFormateado: `${t.totalInspecciones.toLocaleString('es-ES')} insp.`,
+          sociedad: 'TODAS' as const,
+          color: color,
+        };
+      });
   }, [data?.resumenTiposVehiculo, estacionesFiltradas.length]);
 
-  // Gráfico Donut de Distribución de Inspecciones por Sociedad (TÜV SÜD ATISAE vs TÜV SÜD CAL)
-  const graficoCuotaSociedadDinamico = useMemo(() => {
+  // Gráfico Donut de Distribución de Estaciones por Tramo de Agilidad Operativa
+  const graficoTramosAgilidadDinamico = useMemo(() => {
     if (estacionesFiltradas.length === 0) return [];
-    const tsaInsp = estacionesFiltradas
-      .filter((e) => e.claveSociedad === 'TSA')
-      .reduce((acc, e) => acc + e.totalInspecciones, 0);
-    const calInsp = estacionesFiltradas
-      .filter((e) => e.claveSociedad === 'CAL')
-      .reduce((acc, e) => acc + e.totalInspecciones, 0);
 
+    const agiles: typeof estacionesFiltradas = [];
+    const estandar: typeof estacionesFiltradas = [];
+    const elevado: typeof estacionesFiltradas = [];
+    const critico: typeof estacionesFiltradas = [];
+
+    for (const est of estacionesFiltradas) {
+      const dur = est.duracionPromedioMinutos;
+      if (dur < 25) {
+        agiles.push(est);
+      } else if (dur <= 35) {
+        estandar.push(est);
+      } else if (dur <= 45) {
+        elevado.push(est);
+      } else {
+        critico.push(est);
+      }
+    }
+
+    const sortFn = (a: (typeof estacionesFiltradas)[0], b: (typeof estacionesFiltradas)[0]) =>
+      a.duracionPromedioMinutos - b.duracionPromedioMinutos;
+
+    agiles.sort(sortFn);
+    estandar.sort(sortFn);
+    elevado.sort(sortFn);
+    critico.sort(sortFn);
+
+    const total = estacionesFiltradas.length;
     const puntos: ReportBarChartPoint[] = [];
-    if (tsaInsp > 0) {
+
+    const mapDetalles = (lista: typeof estacionesFiltradas) =>
+      lista.map((e) => ({
+        codigo: e.codEstacion,
+        nombre: e.desEstacion.replace('I.T.V. - ', ''),
+        valor: `${e.duracionPromedioMinutos.toFixed(1).replace('.', ',')} min`,
+        subtexto: `${e.totalInspecciones.toLocaleString('es-ES')} insp.`,
+        badge: e.claveSociedad,
+        badgeColor: e.claveSociedad === 'CAL' ? '#00875a' : '#0046ad',
+      }));
+
+    if (agiles.length > 0) {
+      const cant = agiles.length;
       puntos.push({
-        id: 'soc_tsa',
-        label: 'TÜV SÜD ATISAE (TSA)',
-        valor: tsaInsp,
-        valorFormateado: `${tsaInsp.toLocaleString('es-ES')} insp.`,
-        sociedad: 'TSA',
+        id: 'tramo_agil',
+        label: 'Ágiles (< 25 min)',
+        valor: cant,
+        valorFormateado: `${cant} ${cant === 1 ? 'estación' : 'estaciones'} (${((cant / total) * 100).toFixed(1)}%)`,
+        sociedad: 'TODAS',
+        color: '#059669',
+        tooltipSubtitle: 'Estaciones con duración media inferior a 25 min (alta agilidad)',
+        detallesTooltip: mapDetalles(agiles),
+      });
+    }
+
+    if (estandar.length > 0) {
+      const cant = estandar.length;
+      puntos.push({
+        id: 'tramo_estandar',
+        label: 'Estándar (25 - 35 min)',
+        valor: cant,
+        valorFormateado: `${cant} ${cant === 1 ? 'estación' : 'estaciones'} (${((cant / total) * 100).toFixed(1)}%)`,
+        sociedad: 'TODAS',
         color: '#0046ad',
+        tooltipSubtitle: 'Estaciones en intervalo nominal de proceso de inspección periódica',
+        detallesTooltip: mapDetalles(estandar),
       });
     }
-    if (calInsp > 0) {
+
+    if (elevado.length > 0) {
+      const cant = elevado.length;
       puntos.push({
-        id: 'soc_cal',
-        label: 'TÜV SÜD CAL (CAL)',
-        valor: calInsp,
-        valorFormateado: `${calInsp.toLocaleString('es-ES')} insp.`,
-        sociedad: 'CAL',
-        color: '#00875a',
+        id: 'tramo_elevado',
+        label: 'Tiempo Elevado (35 - 45 min)',
+        valor: cant,
+        valorFormateado: `${cant} ${cant === 1 ? 'estación' : 'estaciones'} (${((cant / total) * 100).toFixed(1)}%)`,
+        sociedad: 'TODAS',
+        color: '#d97706',
+        tooltipSubtitle: 'Estaciones con tiempos de proceso por encima de la media de red',
+        detallesTooltip: mapDetalles(elevado),
       });
     }
+
+    if (critico.length > 0) {
+      const cant = critico.length;
+      puntos.push({
+        id: 'tramo_critico',
+        label: 'Demora / Crítico (> 45 min)',
+        valor: cant,
+        valorFormateado: `${cant} ${cant === 1 ? 'estación' : 'estaciones'} (${((cant / total) * 100).toFixed(1)}%)`,
+        sociedad: 'TODAS',
+        color: '#dc2626',
+        tooltipSubtitle: 'Estaciones con demora sustancial que requieren auditoría de tiempos',
+        detallesTooltip: mapDetalles(critico),
+      });
+    }
+
     return puntos;
   }, [estacionesFiltradas]);
 
@@ -410,7 +498,7 @@ export function useDuracionPromedioReport() {
     graficoRankingEstacionesDinamico,
     graficoTiposVehiculoDinamico,
     graficoCuotaTiposDinamico,
-    graficoCuotaSociedadDinamico,
+    graficoTramosAgilidadDinamico,
     handleFechaInicioChange,
     handleFechaFinChange,
     setSociedad,

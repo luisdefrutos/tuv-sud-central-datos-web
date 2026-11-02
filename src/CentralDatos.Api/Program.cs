@@ -114,13 +114,23 @@ try
         app.UseCors(CorsExtensions.PolicyName);
     }
 
-    app.UseHttpsRedirection();
+    if (!app.Environment.IsDevelopment())
+    {
+        app.UseHttpsRedirection();
+    }
 
     app.UseAuthentication();
     app.UseAuthorization();
 
-    // Redirección de la raíz del API hacia Swagger UI
-    app.MapGet("/", () => Results.Redirect("/swagger"));
+    // Redirección de la raíz del API: en desarrollo hacia la web (Vite :5173) y en producción hacia Swagger
+    if (app.Environment.IsDevelopment())
+    {
+        app.MapGet("/", () => Results.Redirect("http://localhost:5173"));
+    }
+    else
+    {
+        app.MapGet("/", () => Results.Redirect("/swagger"));
+    }
 
     // Registro modular de Endpoints desacoplados por características
     app.MapHealthEndpoints();

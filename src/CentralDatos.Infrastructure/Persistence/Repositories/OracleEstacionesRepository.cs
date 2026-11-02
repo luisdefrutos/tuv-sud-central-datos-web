@@ -52,10 +52,54 @@ public class OracleEstacionesRepository : IEstacionesRepository
 
     private async Task<IReadOnlyList<EstacionUltimoDato>> ObtenerPorDapperAsync(string sql, CancellationToken cancellationToken)
     {
-        using var conn = new OracleConnection(_options.ConnectionString);
-        var command = new CommandDefinition(sql, cancellationToken: cancellationToken);
-        var resultado = await conn.QueryAsync<EstacionUltimoDato>(command);
-        return resultado.ToList();
+        if (_options.LogExecutedSql)
+        {
+            _logger.LogInformation("\n[SQL FINAL EJECUTADA EN ORACLE - ULTIMOS_DATOS_CENTRALIZADOS]\n--------------------------------------------------------------------------------\n{Sql}\n--------------------------------------------------------------------------------", sql);
+        }
+
+        try
+        {
+            using var conn = new OracleConnection(_options.ConnectionString);
+            await conn.OpenAsync(cancellationToken);
+            var command = new CommandDefinition(sql, cancellationToken: cancellationToken);
+            var resultado = await conn.QueryAsync<EstacionUltimoDato>(command);
+            return resultado.ToList();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogInformation("Consulta de últimos datos cancelada por el cliente (F5 o navegación interrumpida).");
+            return Array.Empty<EstacionUltimoDato>();
+        }
+        catch (IOException ex) when (cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogInformation("Conexión interrumpida por el cliente al recargar la página (F5): {Message}", ex.Message);
+            return Array.Empty<EstacionUltimoDato>();
+        }
+        catch (Exception ex) when (ex is IOException || ex.InnerException is IOException || ex.Message.Contains("interrupción", StringComparison.OrdinalIgnoreCase) || ex.Message.Contains("transport connection", StringComparison.OrdinalIgnoreCase))
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return Array.Empty<EstacionUltimoDato>();
+            }
+            _logger.LogWarning(ex, "Conexión de socket Oracle interrumpida o socket inactivo en pool. Purgando pool y reintentando...");
+            try
+            {
+                using var connRetry = new OracleConnection(_options.ConnectionString);
+                OracleConnection.ClearPool(connRetry);
+                await connRetry.OpenAsync(cancellationToken);
+                var command = new CommandDefinition(sql, cancellationToken: cancellationToken);
+                var resultado = await connRetry.QueryAsync<EstacionUltimoDato>(command);
+                return resultado.ToList();
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                return Array.Empty<EstacionUltimoDato>();
+            }
+            catch (IOException) when (cancellationToken.IsCancellationRequested)
+            {
+                return Array.Empty<EstacionUltimoDato>();
+            }
+        }
     }
 
     private async Task<IReadOnlyList<EstacionUltimoDato>> ObtenerPorSoapAsync(string sql, CancellationToken cancellationToken)

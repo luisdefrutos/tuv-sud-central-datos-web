@@ -4,6 +4,69 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.12.0] - 02/11/2026 — *Persistencia de Sesión F5, Gráfico Donut de Tramos de Agilidad, Ordenación Ascendente y Logging de Consultas SQL*
+
+### 🛡️ Blindaje de Sockets Oracle y Control de Excepciones en F5 / Depuración Visual Studio
+* **Resolución de `System.IO.IOException` al Recargar Página (F5)**:
+  * **Causa Raíz Diagnosticada**: Al pulsar F5 en el navegador mientras una consulta Oracle está en ejecución, la desconexión abrupta del socket HTTP por parte del navegador (`ERR_ABORTED`) dispara la señal del `CancellationToken` de ASP.NET Core (`HttpContext.RequestAborted`). Al cancelar la escritura/lectura sobre el socket TCP de ODP.NET Thin (puerto 1521), el driver de red lanza una excepción `System.IO.IOException` ("*Unable to write data to the transport connection: Se ha forzado la interrupción de una conexión existente por el host remoto..*"). Al no estar capturada en la capa de persistencia, Visual Studio detenía la ejecución mostrando el diálogo de excepción no controlada por el usuario.
+  * **Tratamiento en Repositorios (`OracleEstacionesRepository.cs` y `OracleInformesRepository.cs`)**:
+    * Captura explícita de `OperationCanceledException` e `IOException` cuando `cancellationToken.IsCancellationRequested` es `true`, registrándolo en log a nivel `Information` ("*Consulta cancelada por el cliente al recargar la página (F5)*") y devolviendo listas vacías de forma segura sin propagar el error.
+    * Mecanismo de **Auto-Recuperación de Pool de Conexiones (`OracleConnection.ClearPool`)**: Si la desconexión es motivada por un socket inactivo cerrado por el firewall remoto de Oracle, se purga el pool con `OracleConnection.ClearPool(conn)` y se reintenta la consulta limpiamente una vez.
+
+### 🔄 Persistencia de Sesión y Navegación al Recargar (F5)
+* **Solución de redirección no deseada al Login en recarga (F5)**:
+  * En `src/CentralDatos.Api/Program.cs`: se condicionó `app.UseHttpsRedirection()` a entornos que no sean de desarrollo (`if (!app.Environment.IsDevelopment())`). Esto evita la redirección HTTP 307 que los navegadores web aplican entre puertos HTTP (`5113`) y HTTPS (`7179`), la cual causaba que la cabecera `Authorization: Bearer <token>` fuera despojada al consultar `/api/v1/auth/me` a través del proxy de Vite.
+  * En `src/central-datos-web/src/App.tsx`: sincronización bidireccional de la pantalla activa mediante `window.location.hash` (`#/modulo/${itemId}`) y respaldo en `sessionStorage` (`cd_active_item`, `cd_active_group`), con escucha del evento `hashchange` para preservar la vista y estado tras recargar o usar el historial del navegador.
+  * En `src/central-datos-web/src/constants/navigation.constants.ts`: inclusión de `'duracion-promedio'` en `IMPLEMENTED_SCREENS`.
+
+### 💡 Componente Unificado de Tooltip / Title Especial (`AppTooltip`)
+* **Perfeccionamiento Visual, Impresión Aislada y Retención Exacta de Pantalla (F5)**:
+  * **Persistencia Integral de Pantalla Activa en F5**: Implementado `getInitialNavigation()` en `App.tsx` para leer prioritariamente el fragmento hash (`#/modulo/duracion-promedio`, etc.) y `sessionStorage` de forma que al recargar la página nunca se devuelva al usuario al listado general de informes ni al inicio, sino exactamente a la pantalla y filtros donde estaba trabajando.
+  * **Impresión de Crystal Reports en Ventana Independiente**: Sustitución del mecanismo de iframe interno por `window.open('', '_blank', ...)` en los 3 visores de Crystal Reports (`DuracionPromedio`, `NumeroInspecciones` y `PreviewModal`). El diálogo de impresión de Windows se abre sobre una ventana emergente limpia, manteniendo la aplicación y el modal de origen 100% intactos y con el foco preservado.
+  * **Ranking Completo con Scroll**: Eliminado el recorte artificial de Top 10 en `ReportBarChart.tsx`. Ahora se visualizan todas las estaciones o tipos analizados directamente en la lista scrollable sin requerir clicks adicionales.
+  * **Eliminación del Término "Donut" en toda la Interfaz**: Reemplazada la denominación "Donut" por términos corporativos y descriptivos (`📊 Cuota por Tipo`, `⏱️ Tramos de Tiempo`, `📊 Distribución Cuota`).
+  * **Paleta Cromática Intuitiva y Diferenciada para Tipos de Vehículo**: Cada categoría reglamentaria (Turismos, Mercancías, Motos, Agrícolas, etc.) dispone de un color corporativo único y de alto contraste, evitando tonalidades uniformes de azul y haciendo que el sector circular, la leyenda y el tooltip sean inmediatamente reconocibles.
+  * **Corrección de Apertura Automática del Navegador en Visual Studio (F5)**:
+  * **Configuración de `launchUrl` en `launchSettings.json`**: Se corrigió el valor erróneo absoluto (`http://localhost:5173`) que provocaba que Visual Studio no supiera cómo abrir el navegador o lo cancelara en silencio. Se estableció en blanco (`""`) con el perfil `http` como predeterminado.
+  * **Redirección Raíz Dinámica en `Program.cs`**: En modo desarrollo (`app.Environment.IsDevelopment()`), la ruta raíz `/` redirige automáticamente a `http://localhost:5173`, garantizando que cuando Visual Studio abre el navegador en `http://localhost:5113/`, este salte de inmediato a la aplicación web React/Vite.
+  * **Auditoría Integral de Responsividad (Mobile, Tablet y Desktop)**:
+  * **Botonera de Vistas de Gráficos Adaptativa (`.cd-chart-mode-group` / `.cd-chart-views-bar`)**: En pantallas de escritorio se mantiene inline alineada a la derecha; en tablets y móviles se transforma automáticamente en una botonera estructurada de 2x2 simétrica (o 1 columna en móviles ultraestrechos < 480px) para máxima comodidad táctil.
+  * **Grid de Tarjetas KPI a Prueba de Overflow**: Configuración de `gridTemplateColumns: repeat(auto-fit, minmax(min(100%, 220px), 1fr))` garantizando adaptación fluida sin rotura en anchos estrechos.
+  * **Barras de Ranking Ajustadas (`.cd-barchart-row`)**: Reducción proporcional de columnas en dispositivos móviles para preservar la visibilidad de etiquetas, barras y valores.
+  * **Ancho Seguro para Tooltip (`AppTooltip`)**: Limitación dinámica de ancho a `min(calc(100vw - 28px), 380px)` para evitar desbordamientos laterales en pantallas de smartphones.
+  * **Mejoras de Usabilidad en Tooltip y Barra de Filtros**:
+  * **Tooltip en Fondo Blanco**: Sustitución del fondo oscuro por blanco (`#ffffff`) corporativo con sombra tridimensional azul (`rgba(0, 70, 173, 0.16)`), borde superior de 3px con el color del tramo y tipografía oscura de alta legibilidad (`#0b253b` / `#1e293b`).
+  * **Posicionamiento directo en el Cursor**: El tooltip se ancla inmediatamente en las coordenadas del puntero (`clientX`, `clientY`).
+  * **Scroll interactivo sobre la tarjeta**: Habilitación de `pointerEvents: 'auto'` y persistencia con retardo de 220ms, permitiendo al usuario mover el cursor dentro del tooltip para desplazarse por el listado de estaciones.
+  * **Ajuste de la Barra de Filtros**: Compactación de inputs y selectores para que el botón `🔍 Consultar` permanezca en la misma línea sin saltar a una fila solitaria.
+  * **Sustitución del `title` nativo por componente corporativo enriquecido**:
+  * Implementación de `src/components/common/AppTooltip.tsx` con diseño alineado a **TÜV SÜD Algorithm Design System**: fondo azul marino (`#0b253b`), acentos semánticos por tramo/sociedad y tipografía `TUV SUD Pro`.
+  * Renderizado mediante `createPortal` en `document.body` con cálculo automático de coordenadas (`fixed`) para garantizar visibilidad sin cortes por `overflow` o SVG.
+  * Desglose estructurado de estaciones: al pasar el ratón por los tramos del Donut de Agilidad o las barras del ranking, muestra el listado completo de estaciones con código, nombre, duración promedio y badge de sociedad.
+  * Corrección gramatical en etiquetas singulares (`1 estación` vs `X estaciones`).
+
+### ⏱️ Tramos de Agilidad Operativa en Donut y Ordenación de Tipos de Vehículo
+* **Nuevo Gráfico Donut de Tramos de Agilidad Operativa**:
+  * Sustitución del gráfico Donut de Sociedades (que aportaba bajo valor analítico) por el nuevo modo `⏱️ Tramos de Tiempo (Donut)`.
+  * Agrupación automática de las estaciones seleccionadas en 4 intervalos operativos:
+    * **Ágiles (< 25 min)**: verde `#059669`
+    * **Estándar (25 - 35 min)**: azul corporativo `#0046ad`
+    * **Tiempo Elevado (35 - 45 min)**: ámbar de atención `#d97706`
+    * **Demora / Crítico (> 45 min)**: rojo de alerta `#dc2626`
+  * Muestra el porcentaje y número exacto de estaciones ITV por intervalo para un diagnóstico gerencial inmediato.
+* **Ordenación Ascendente en "Por Tipo de Vehículo"**:
+  * En `DuracionPromedioReportPage.tsx`, se configuró `sortOrder="asc"` en el gráfico de barras por tipo de vehículo, visualizando en primer lugar las tipologías con inspección más rápida (motocicletas, turismos) y en último lugar las de mayor duración (autobuses, pesados).
+* **Mantenimiento del Criterio Visual de 30 Minutos en el Grid Analítico**:
+  * Se conserva la colorimetría de alerta ejecutiva en la columna "Duración Promedio (min)", destacando en verde (`#047857`) tiempos <= 30 min y en rojo (`#b91c1c`) demoras > 30 min.
+
+### 📝 Trazabilidad y Logging de Sentencias SQL Ejecutadas
+* **Configuración de Logging de Consultas Finales Parametrizadas**:
+  * Nueva opción configurable `"LogExecutedSql": true` dentro de la sección `"CentralItv"` en `appsettings.json`.
+  * En `OracleInformesRepository.cs` y `OracleEstacionesRepository.cs`, se implementó el método `LogSqlEjecutada()` que sustituye los marcadores `:FechaInicio`, `:FechaFin` y colecciones de `:codigosEstacion` con sus valores literales formateados para Oracle (`TO_DATE('...', 'YYYY-MM-DD HH24:MI:SS')`).
+  * Registro estructurado en Serilog tanto en consola como en ficheros rotativos `logs/central-datos-YYYYMMDD.log` para facilitar la depuración, auditoría y análisis de planes de ejecución.
+
+---
+
 ## [2.11.0] - 30/10/2026 — *Módulo Oficial de Duración Promedio de Inspecciones Periódicas (001), Fidelidad 1:1 Crystal Reports y Gráficos Visuales*
 
 ### ⏱️ Módulo de Duración Promedio de Inspecciones (001)
