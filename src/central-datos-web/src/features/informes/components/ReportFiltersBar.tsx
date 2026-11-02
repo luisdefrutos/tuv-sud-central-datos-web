@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { TsButton, TsBadge } from '@tuvsud/design-system/react';
+import { AppTooltip } from '../../../components/common/AppTooltip';
 import type { FiltroSociedad } from '../../estaciones/types/estaciones.types';
 import { ESTACIONES_OFICIALES } from '../../../constants/estaciones.constants';
 
@@ -17,6 +18,7 @@ export interface ReportFiltersBarProps {
   onEstacionesChange: (codigos: string[]) => void;
   onConsultar: () => void;
   loading?: boolean;
+  showMaxRangeBadge?: boolean;
 }
 
 /**
@@ -38,6 +40,7 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
   onEstacionesChange,
   onConsultar,
   loading = false,
+  showMaxRangeBadge = true,
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [filtroTexto, setFiltroTexto] = useState('');
@@ -113,7 +116,17 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
   };
 
   return (
-    <div
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onConsultar();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          onConsultar();
+        }
+      }}
       style={{
         padding: '0.45rem 0.85rem',
         backgroundColor: '#ffffff',
@@ -189,20 +202,32 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
                 }}
               />
             </div>
-            <span
-              style={{
-                fontSize: '0.72rem',
-                color: '#64748b',
-                fontWeight: 600,
-                backgroundColor: '#f1f5f9',
-                padding: '2px 6px',
-                borderRadius: '4px',
-                marginLeft: '2px',
-              }}
-              title="Por motivos de optimización, el rango de consulta no puede superar 365 días"
-            >
-              Máx. 1 año
-            </span>
+
+            {showMaxRangeBadge && (
+              <AppTooltip
+                content="Puede seleccionar libremente cualquier periodo de fechas hasta un máximo de 1 año (365 días) por consulta para optimizar el rendimiento."
+                position="top"
+              >
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '0.72rem',
+                    color: '#475569',
+                    fontWeight: 600,
+                    backgroundColor: '#f8fafc',
+                    padding: '3px 7px',
+                    borderRadius: '5px',
+                    marginLeft: '4px',
+                    cursor: 'help',
+                    border: '1px solid #e2e8f0',
+                  }}
+                >
+                  <span style={{ fontSize: '0.75rem' }}>ℹ️</span> Rango máx. 1 año
+                </span>
+              </AppTooltip>
+            )}
           </div>
 
           {/* 1.1 Selector de Fase (si aplica al informe, ej. Duración Promedio 001) */}
@@ -458,6 +483,7 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
         {/* BOTÓN CONSULTAR / ACEPTAR */}
         <div className="cd-fullwidth-mobile" style={{ flexShrink: 0, marginLeft: 'auto' }}>
           <TsButton
+            type="submit"
             variant="primary"
             onClick={onConsultar}
             disabled={loading}
@@ -473,6 +499,6 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
           </TsButton>
         </div>
       </div>
-    </div>
+    </form>
   );
 };

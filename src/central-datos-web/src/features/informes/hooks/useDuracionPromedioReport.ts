@@ -140,9 +140,11 @@ export function useDuracionPromedioReport() {
     }
   }, [fechaInicio, fechaFin, fase, validarRango]);
 
+  // Carga inicial ÚNICA al abrir la pantalla (después solo al pulsar "Consultar" o pulsar Enter)
   useEffect(() => {
     consultar();
-  }, [consultar]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fase]);
 
   const handleSort = (column: SortableDuracionPromedioColumn) => {
     if (sortColumn === column) {

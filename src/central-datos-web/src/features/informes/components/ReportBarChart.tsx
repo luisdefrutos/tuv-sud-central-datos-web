@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TsCard, TsButton } from '@tuvsud/design-system/react';
+import { TsCard } from '@tuvsud/design-system/react';
 import type { ReportBarChartPoint } from '../types/informes.types';
 import { AppTooltip } from '../../../components/common/AppTooltip';
 import { SOCIEDADES } from '../../../constants/companies.constants';
@@ -19,6 +19,7 @@ export interface ReportBarChartProps {
 /**
  * Gráfico comparativo de barras horizontal de alto rendimiento y cero dependencias externas.
  * Renderiza en SVG/CSS nativo, adaptado a dispositivos móviles y con colores semánticos TÜV SÜD.
+ * Con scroll vertical para mostrar todas las estaciones disponibles sin cortes ni truncamiento de cifras.
  */
 export const ReportBarChart: React.FC<ReportBarChartProps> = ({
   title,
@@ -27,10 +28,8 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
   loading = false,
   valueFormatter = (val) => val.toLocaleString('es-ES'),
   emptyMessage = 'No hay datos disponibles para representar en el gráfico con los filtros seleccionados.',
-  defaultTopCount = 10,
   sortOrder = 'desc',
 }) => {
-  // Muestra siempre todos los datos disponibles en la lista aprovechando el scroll vertical
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   if (loading) {
@@ -79,8 +78,6 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
             </p>
           )}
         </div>
-
-
       </div>
 
       {/* Leyenda Oficial de Colores de Sociedad */}
@@ -133,7 +130,17 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '9px', maxHeight: '360px', overflowY: 'auto', paddingRight: '4px' }}>
+      {/* Contenedor con Scroll Vertical para albergar todas las estaciones */}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '9px',
+          maxHeight: '380px',
+          overflowY: 'auto',
+          paddingRight: '6px',
+        }}
+      >
         {visibleData.map((item, index) => {
           const pct = Math.max(2, Math.round((item.valor / maxVal) * 100));
           const isHovered = hoveredId === item.id;
@@ -161,10 +168,10 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
                 onMouseLeave={() => setHoveredId(null)}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'minmax(95px, 180px) 1fr minmax(65px, 105px)',
+                  gridTemplateColumns: 'minmax(110px, 220px) 1fr auto',
                   alignItems: 'center',
-                  gap: '8px',
-                  padding: '4px 6px',
+                  gap: '12px',
+                  padding: '5px 8px',
                   borderRadius: '4px',
                   backgroundColor: isHovered ? '#f1f5f9' : 'transparent',
                   transition: 'background-color 0.15s ease',
@@ -172,64 +179,64 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
                   boxSizing: 'border-box',
                 }}
               >
-              {/* Etiqueta / Nombre Estación */}
-              <div
-                style={{
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  color: isHovered ? '#0046ad' : '#1e293b',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-                title={item.label}
-              >
-                <span style={{ color: '#94a3b8', marginRight: '6px', fontSize: '0.75rem' }}>
-                  #{index + 1}
-                </span>
-                {item.label}
-              </div>
-
-              {/* Barra de Progreso / Valor */}
-              <div
-                style={{
-                  height: '14px',
-                  backgroundColor: '#e2e8f0',
-                  borderRadius: '3px',
-                  overflow: 'hidden',
-                  position: 'relative',
-                }}
-              >
+                {/* Etiqueta / Nombre Estación */}
                 <div
                   style={{
-                    height: '100%',
-                    width: `${pct}%`,
-                    backgroundColor: barColor,
-                    borderRadius: '3px',
-                    transition: 'width 0.4s ease-out',
-                    opacity: isHovered ? 1 : 0.88,
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    color: isHovered ? '#0046ad' : '#1e293b',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
                   }}
-                />
-              </div>
+                >
+                  <span style={{ color: '#94a3b8', marginRight: '6px', fontSize: '0.75rem' }}>
+                    #{index + 1}
+                  </span>
+                  {item.label}
+                </div>
 
-              {/* Valor Numérico Formateado */}
-              <div
-                style={{
-                  fontSize: '0.84rem',
-                  fontWeight: 700,
-                  textAlign: 'right',
-                  color: '#0f172a',
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {item.valorFormateado ?? valueFormatter(item.valor)}
+                {/* Barra de Progreso / Valor */}
+                <div
+                  style={{
+                    height: '14px',
+                    backgroundColor: '#e2e8f0',
+                    borderRadius: '3px',
+                    overflow: 'hidden',
+                    position: 'relative',
+                  }}
+                >
+                  <div
+                    style={{
+                      height: '100%',
+                      width: `${pct}%`,
+                      backgroundColor: barColor,
+                      borderRadius: '3px',
+                      transition: 'width 0.4s ease-out',
+                      opacity: isHovered ? 1 : 0.88,
+                    }}
+                  />
+                </div>
+
+                {/* Valor Numérico Formateado (sin corte en 2 líneas) */}
+                <div
+                  style={{
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    textAlign: 'right',
+                    color: '#0f172a',
+                    fontVariantNumeric: 'tabular-nums',
+                    whiteSpace: 'nowrap',
+                    paddingLeft: '6px',
+                  }}
+                >
+                  {item.valorFormateado ?? valueFormatter(item.valor)}
+                </div>
               </div>
-            </div>
-          </AppTooltip>
+            </AppTooltip>
           );
         })}
       </div>
     </TsCard>
   );
 };
-

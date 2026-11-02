@@ -139,9 +139,11 @@ export function useNumeroInspeccionesReport() {
   }, [fechaInicio, fechaFin, validarRango]);
 
   // Carga inicial al montar el componente
+  // Carga inicial ÚNICA al abrir la pantalla (después solo al pulsar "Consultar" o pulsar Enter)
   useEffect(() => {
     cargarInforme();
-  }, [cargarInforme]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Ordenación de columnas
   const handleSort = (column: SortableNumeroInspeccionesColumn) => {

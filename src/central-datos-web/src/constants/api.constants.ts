@@ -20,10 +20,11 @@ export const API_ENDPOINTS = {
     NUMERO_INSPECCIONES_EXPORTAR: '/api/v1/informes/numero-inspecciones/exportar-excel',
     DURACION_PROMEDIO_CONSULTAR: '/api/v1/informes/duracion-promedio/consultar',
     DURACION_PROMEDIO_EXPORTAR: '/api/v1/informes/duracion-promedio/exportar-excel',
+    DEFECTO_OBD_CONSULTAR: '/api/v1/informes/defecto-obd/consultar',
+    DEFECTO_OBD_EXPORTAR: '/api/v1/informes/defecto-obd/exportar-excel',
   },
   DOCS: {
     SWAGGER: '/swagger',
     SCALAR: '/scalar/v1',
   },
 } as const;
-

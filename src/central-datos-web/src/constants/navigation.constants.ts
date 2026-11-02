@@ -30,7 +30,7 @@ export interface MenuGroup {
 }
 
 /** Pantallas ya migradas a la web (resto muestran la ficha "en migración") */
-export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion', 'num-inspecciones', 'duracion-promedio'] as const;
+export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion', 'num-inspecciones', 'duracion-promedio', 'defecto-obd'] as const;
 
 export const DESKTOP_MENUS: MenuGroup[] = [
   {
@@ -65,7 +65,7 @@ export const DESKTOP_MENUS: MenuGroup[] = [
           { id: 'facturacion-excel', label: 'Excel facturación de inspecciones' },
         ],
       },
-      { id: 'defecto-obd', label: 'Informe inspecciones con defecto OBD' },
+      { id: 'defecto-obd', label: 'Informe inspecciones con defecto OBD', descripcion: 'Auditoría técnica y control de lecturas de emisiones OBD anómalas por estación ITV.' },
       { id: 'duracion-promedio', label: 'Informe duración promedio' },
       { id: 'cupon-descuento', label: 'Inspecciones con cupón descuento' },
       {

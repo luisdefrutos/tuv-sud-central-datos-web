@@ -98,7 +98,7 @@ public static class InformesEndpoints
         .WithName("ExportarNumeroInspeccionesExcel")
         .WithSummary("Genera y descarga el fichero estructurado de número de inspecciones con BOM UTF-8 y separador para Excel");
 
-        // 5. Consulta analítica de duración promedio de inspecciones periódicas 001
+        // 5. Consulta analítica de duración promedio de periódicas 001
         group.MapPost("/duracion-promedio/consultar", async (
             [FromBody] FiltrosDuracionPromedioRequestDto filtros,
             [FromServices] IInformesDuracionPromedioService service,
@@ -141,7 +141,49 @@ public static class InformesEndpoints
         .WithName("ExportarDuracionPromedioExcel")
         .WithSummary("Genera y descarga el fichero estructurado de duración promedio con BOM UTF-8 y separador para Excel");
 
+        // 7. Consulta analítica de inspecciones con defectos OBD (Bloque 15)
+        group.MapPost("/defecto-obd/consultar", async (
+            [FromBody] FiltrosDefectoObdRequestDto filtros,
+            [FromServices] IInformesDefectoObdService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var resultado = await service.GenerarInformeDefectoObdAsync(filtros, ct);
+                return Results.Ok(resultado);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .WithName("ConsultarDefectoObd")
+        .WithSummary("Consulta el listado y métricas de inspecciones con anomalías o defectos OBD (Bloque 15)");
+
+        // 8. Exportación oficial de defectos OBD a Excel (.xlsx multi-hoja por estación DEFECTOS_OBD_XXXX)
+        group.MapPost("/defecto-obd/exportar-excel", async (
+            [FromBody] FiltrosDefectoObdRequestDto filtros,
+            [FromServices] IInformesDefectoObdService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var archivoBytes = await service.GenerarExportacionDefectoObdExcelAsync(filtros, ct);
+                var nombreFichero = $"defectos-obd-{DateTime.Now:yyyyMMdd-HHmm}.xlsx";
+
+                return Results.File(
+                    archivoBytes,
+                    contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileDownloadName: nombreFichero);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .WithName("ExportarDefectoObdExcel")
+        .WithSummary("Genera y descarga el libro Excel oficial (.xlsx) con pestañas individuales por cada estación DEFECTOS_OBD_XXXX");
+
         return app;
     }
 }
-

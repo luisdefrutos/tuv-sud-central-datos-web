@@ -117,9 +117,6 @@ export const DuracionPromedioReportPage: React.FC<DuracionPromedioReportPageProp
             >
               Duración Promedio de Inspecciones Periódicas (001)
             </h1>
-            <TsBadge variant="primary" style={{ fontWeight: 600 }}>
-              Oficial
-            </TsBadge>
           </div>
           <p
             style={{
@@ -572,7 +569,12 @@ export const DuracionPromedioReportPage: React.FC<DuracionPromedioReportPageProp
         resumenEstaciones={estacionesFiltradas}
       />
 
-      {/* Modal bloqueante mientras se consulta en BD */}
+      {/* Modales bloqueantes mientras se consulta o exporta */}
+      <BlockingLoadingModal
+        isOpen={isExporting}
+        title="Generando Informe Oficial Excel"
+        message="Estructurando y descargando el archivo oficial de duración promedio..."
+      />
       <BlockingLoadingModal
         isOpen={isLoading}
         title="Consultando base de datos de producción de Central Datos..."

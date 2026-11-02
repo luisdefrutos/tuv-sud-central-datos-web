@@ -189,9 +189,6 @@ export const FacturacionReportPage: React.FC<FacturacionReportPageProps> = ({
             >
               Informe Facturación de Inspecciones
             </h1>
-            <TsBadge variant="primary" style={{ fontWeight: 600 }}>
-              Oficial
-            </TsBadge>
           </div>
           <p
             style={{

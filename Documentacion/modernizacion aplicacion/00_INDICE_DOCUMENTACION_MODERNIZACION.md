@@ -20,6 +20,7 @@
 | **09** | [guia_pruebas_login_y_casuisticas.md](./guia_pruebas_login_y_casuisticas.md) | Guía práctica de pruebas de autenticación para entornos locales y máquinas virtuales fuera de dominio AD, con credenciales verificadas y consultas de auditoría. |
 | **10** | [10_arquitectura_logging_auditoria_y_seguridad_pentest.md](./10_arquitectura_logging_auditoria_y_seguridad_pentest.md) | Arquitectura híbrida de logging (Oracle vs. Serilog en disco), diferenciación entre `LOG_ACCESOS_MODULOS` y `LOG_AUDITORIA_WEB`, rotación de ficheros `.log`, tratamiento exclusivo de errores Oracle y blindaje frente a Pentest (OWASP CWE-209 / CWE-203). |
 | **11** | [11_persistencia_f5_logging_sql_y_tramos_duracion.md](./11_persistencia_f5_logging_sql_y_tramos_duracion.md) | **Persistencia F5, Logging SQL y Tramos de Agilidad**: Diagnóstico de redirección 307 vs. token JWT, sincronización de vista en URL y `sessionStorage`, trazabilidad de SQL resuelta con parámetros en Serilog y especificación del gráfico Donut de agilidad operativa. |
+| **12** | [12_modulo_informe_inspecciones_defecto_obd.md](./12_modulo_informe_inspecciones_defecto_obd.md) | **Informe de Inspecciones con Defecto OBD**: Digitalización técnica del Bloque 15 (Emisiones OBD Diésel y Gasolina), consulta CTE indexada, doble validación (366 días), KPIs ejecutivos, gráficos SVG interactivos con `AppTooltip`, modal de ficha técnica y exportación oficial CSV/Excel. |
 
 ---
 
@@ -30,4 +31,3 @@ Copia sincronizada de las especificaciones del Skill oficial para Antigravity:
 - [skill-tuv-sud-algorithm-ds/SKILL.md](./skill-tuv-sud-algorithm-ds/SKILL.md) — Reglas de implementación frontend para agentes y desarrolladores.
 - [skill-tuv-sud-algorithm-ds/references/tokens-and-utilities.md](./skill-tuv-sud-algorithm-ds/references/tokens-and-utilities.md) — Referencia completa de tokens semánticos CSS y utilidades `ts-*`.
 - [skill-tuv-sud-algorithm-ds/references/components-catalog.md](./skill-tuv-sud-algorithm-ds/references/components-catalog.md) — Catálogo detallado de los 84 componentes oficiales `@tuvsud/design-system/react`.
-

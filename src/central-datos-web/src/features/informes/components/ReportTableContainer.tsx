@@ -11,6 +11,7 @@ export interface ReportTableContainerProps {
   onOpenCrystalReport?: () => void;
   isExporting?: boolean;
   exportDisabled?: boolean;
+  unidadRegistros?: string;
   children: React.ReactNode;
 }
 
@@ -28,6 +29,7 @@ export const ReportTableContainer: React.FC<ReportTableContainerProps> = ({
   onOpenCrystalReport,
   isExporting = false,
   exportDisabled = false,
+  unidadRegistros = 'estaciones',
   children,
 }) => {
   return (
@@ -81,7 +83,7 @@ export const ReportTableContainer: React.FC<ReportTableContainerProps> = ({
               fontWeight: 500,
             }}
           >
-            Mostrando <strong>{filasVisibles}</strong> de <strong>{totalFilas}</strong> estaciones
+            Mostrando <strong>{filasVisibles}</strong> de <strong>{totalFilas}</strong> {unidadRegistros}
           </span>
 
           {onOpenCrystalReport && (

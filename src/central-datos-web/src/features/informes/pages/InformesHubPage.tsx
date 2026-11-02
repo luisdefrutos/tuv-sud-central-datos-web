@@ -101,7 +101,8 @@ export const InformesHubPage: React.FC<InformesHubPageProps> = ({
           const isFacturacion = item.id === 'facturacion';
           const isNumInspecciones = item.id === 'num-inspecciones';
           const isDuracionPromedio = item.id === 'duracion-promedio';
-          const isAvailable = isFacturacion || isNumInspecciones || isDuracionPromedio;
+          const isDefectoObd = item.id === 'defecto-obd';
+          const isAvailable = isFacturacion || isNumInspecciones || isDuracionPromedio || isDefectoObd;
 
           let descripcion = 'Módulo de análisis estadístico oficial de la aplicación de escritorio Central Datos.';
           if (isFacturacion) {
@@ -110,6 +111,8 @@ export const InformesHubPage: React.FC<InformesHubPageProps> = ({
             descripcion = 'Desglose oficial de inspecciones favorables y rechazadas en Fase 1 y Fase 2, tasas de rechazo e impresión de Crystal Report.';
           } else if (isDuracionPromedio) {
             descripcion = 'Cálculo de tiempos medios de inspección periódica (001) por tipo de vehículo y estación, ranking de agilidad e impresión Crystal Report.';
+          } else if (isDefectoObd) {
+            descripcion = 'Auditoría técnica y control de lecturas de emisiones OBD anómalas por estación ITV.';
           }
 
           return (

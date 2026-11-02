@@ -7,6 +7,7 @@ import { UltimosDatosCentralizados } from './features/estaciones/components/Ulti
 import { FacturacionReportPage } from './features/informes/pages/FacturacionReportPage';
 import { NumeroInspeccionesReportPage } from './features/informes/pages/NumeroInspeccionesReportPage';
 import { DuracionPromedioReportPage } from './features/informes/pages/DuracionPromedioReportPage';
+import { DefectoObdReportPage } from './features/informes/pages/DefectoObdReportPage';
 import { InformesHubPage } from './features/informes/pages/InformesHubPage';
 import { DESKTOP_MENUS, findMenuItem } from './constants/navigation.constants';
 import { UI_CONSTANTS } from './constants/ui.constants';
@@ -28,7 +29,7 @@ function AppContent() {
       const itemId = hash.replace('#/modulo/', '').trim();
       if (itemId) {
         const { group } = findMenuItem(itemId);
-        const autoGroup = group?.id || (['facturacion', 'facturacion-excel', 'num-inspecciones', 'numero-inspecciones', 'duracion-promedio', 'informes'].includes(itemId) ? 'informes' : 'aplicacion');
+        const autoGroup = group?.id || (['facturacion', 'facturacion-excel', 'num-inspecciones', 'numero-inspecciones', 'duracion-promedio', 'defecto-obd', 'informes'].includes(itemId) ? 'informes' : 'aplicacion');
         return { itemId, groupId: autoGroup };
       }
     }
@@ -461,6 +462,17 @@ function AppContent() {
           />
         )}
 
+        {/* CASO C.4: Módulo de Inspecciones con Defecto OBD (Bloque 15) */}
+        {activeItemId === 'defecto-obd' && (
+          <DefectoObdReportPage
+            onNavigateHome={handleGoHome}
+            onNavigateToInformes={() => {
+              setActiveGroupId('informes');
+              setActiveItemId('informes');
+            }}
+          />
+        )}
+
         {/* CASO D: Catálogo / Hub de Informes */}
         {activeGroupId === 'informes' && (activeItemId === null || activeItemId === 'informes') && (
           <InformesHubPage
@@ -477,7 +489,8 @@ function AppContent() {
           activeItemId !== 'facturacion-excel' &&
           activeItemId !== 'num-inspecciones' &&
           activeItemId !== 'numero-inspecciones' &&
-          activeItemId !== 'duracion-promedio' && (
+          activeItemId !== 'duracion-promedio' &&
+          activeItemId !== 'defecto-obd' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {/* Miga de Pan Correspondiente Interactiva */}
             <TsBreadcrumb>

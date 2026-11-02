@@ -38,7 +38,7 @@ export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
   subtitle,
   data,
   loading = false,
-  valueFormatter = (val) => val.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }),
+  valueFormatter = (val) => val.toLocaleString('es-ES'),
   emptyMessage = 'No hay datos disponibles para representar en el gráfico circular.',
   maxSlices = 12,
 }) => {
@@ -322,7 +322,7 @@ export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
                 badge={badgeVal}
                 badgeColor={slice.color}
                 accentColor={slice.color}
-                subtitle={slice.tooltipSubtitle || `Estaciones comprendidas en ${slice.label}`}
+                subtitle={slice.tooltipSubtitle}
                 items={slice.detallesTooltip}
                 position="left"
                 style={{ width: '100%', display: 'block' }}

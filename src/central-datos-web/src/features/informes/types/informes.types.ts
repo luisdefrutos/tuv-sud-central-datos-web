@@ -231,3 +231,62 @@ export type SortableDuracionPromedioColumn =
 
 
 
+
+export interface FilaDefectoObd {
+  codInspeccion: string;
+  codEstacion: string;
+  desEstacion: string;
+  codEmpresa: string;
+  nombreEmpresa: string;
+  claveSociedad: string;
+  matricula: string;
+  fechaInspeccion: string;
+  fechaInspeccionFormatted: string;
+  marca: string;
+  modelo: string;
+  tipoMotor: string;
+  tipoVehiculo: string;
+  cHomologacion?: string;
+  clasificacion: string;
+  mma?: number;
+  kilometraje?: string;
+  tipoInspeccion: string;
+  resultado: string;
+  textoResultado: string;
+  fase: string;
+  desNivelEmisiones: string;
+  bloque: string;
+  defecto: string;
+  subdefecto: string;
+  numero: string;
+  codigoDefectoCompleto: string;
+  descripcionDefecto: string;
+  tipoCombustible: string;
+  gravedadDefecto: string;
+}
+
+export interface InformeDefectoObdResponse {
+  kpis: ReportKpiData[];
+  graficoEstaciones: ReportBarChartPoint[];
+  graficoTipologia: ReportBarChartPoint[];
+  graficoCombustible: ReportBarChartPoint[];
+  filas: FilaDefectoObd[];
+  totalDefectosGlobal: number;
+  totalDefectosGlobalFormatted: string;
+  totalGasolinaGlobal: number;
+  totalDieselGlobal: number;
+  totalFase1Global: number;
+  totalFase2Global: number;
+  totalEstacionesAfectadas: number;
+}
+
+export type SortableDefectoObdColumn =
+  | 'fechaInspeccion'
+  | 'matricula'
+  | 'desEstacion'
+  | 'marca'
+  | 'tipoCombustible'
+  | 'codigoDefectoCompleto'
+  | 'gravedadDefecto'
+  | 'fase'
+  | 'textoResultado';

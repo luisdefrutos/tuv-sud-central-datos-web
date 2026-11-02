@@ -13,7 +13,7 @@ using Oracle.ManagedDataAccess.Client;
 
 namespace CentralDatos.Infrastructure.Persistence.Repositories;
 
-public sealed class OracleInformesRepository : IInformesRepository
+public sealed partial class OracleInformesRepository : IInformesRepository
 {
     private readonly CentralItvOptions _options;
     private readonly ISqlLoader _sqlLoader;

@@ -4,6 +4,65 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.13.0] - 02/11/2026 — *Módulo de Inspecciones con Defecto OBD (Bloque 15) & Reingeniería SQL de Alto Rendimiento*
+
+### ⚡ Reingeniería y Optimización de la Consulta SQL de Defectos OBD (`ObtenerInformeDefectosObd.sql`)
+* **Diagnóstico de Bloqueo / Timeout en Base de Datos**:
+  * La tabla `CENTRALITV.INSPECCION_DEFECTOS` cuenta con más de **50 millones de registros históricos** indexados por su clave primaria compuesta `(CODESTACION, CODINSPECCION, INDDEFECTO)`. La columna `BLOQUE` no cuenta con índice individual.
+  * Al estructurar inicialmente la consulta con una CTE `obd_defectos` filtrando por `BLOQUE = '15'` y forzar `LEADING(dfc i e)`, el optimizador CBO de Oracle iniciaba un **Full Table Scan sobre 50 millones de filas**, provocando que cualquier consulta se bloqueara y excediera el tiempo límite de espera (timeout > 120s).
+* **Solución de Alto Rendimiento (Index-Driven Nested Loops)**:
+  * Se invirtió la estrategia de acceso conduciendo la consulta desde `CENTRALITV.INSPECCION i` mediante el hint `/*+ LEADING(i dfc e) INDEX(i P17_INSPECCION P31_INSPECCION) USE_NL(dfc) USE_NL(e) */`.
+  * Oracle localiza inmediatamente en memoria las inspecciones acotadas por el rango temporal mediante el índice de fecha `P17_INSPECCION` y se conecta directamente a los defectos de esas inspecciones específicas mediante **Nested Loops** sobre el índice primario `PK_INSPECCION_DEFECTOS`.
+  * Se optimizó el filtrado de estaciones en `OracleInformesRepository.Obd.cs` usando `i.CODESTACION IN (...)` de forma numérica pura, garantizando la poda de particiones sin funciones de conversión de tipos.
+* **Tiempos de Respuesta Verificados**:
+  * Rango de 2 días: **95 ms**.
+  * Rango de 7 días: **2,81 s** (1.533 registros analizados).
+  * Rango de 1 mes completo: **13,98 s** (5.448 registros analizados).
+
+### 🔌 Nuevo Módulo Vertical: Informe de Inspecciones con Defecto OBD
+* **Digitalización Técnica del Bloque 15 (Emisiones OBD)**:
+  * Réplica y modernización integral de `frmCriterios.vb` (`Inspecciones_Defectos_OBD`), eliminando las consultas en bucle paginado de `clsCur` y las dependencias de automatización COM de `EXCEL.EXE`.
+  * Consulta SQL indexada de alto rendimiento (`ObtenerInformeDefectosObd.sql`) sobre `CENTRALITV.INSPECCION_DEFECTOS` (Bloque 15, Defectos 02/03 Gasolina/Diésel, Subdefecto 06, Códigos 02, 03, 04, 05, 31, 51) unida directamente a `CENTRALITV.INSPECCION` y `CENTRALITV.ESTACIONES`.
+* **Arquitectura "Thick Server / Thin Client" & Doble Validación**:
+  * **Backend (.NET 10 Web API)**:
+    * `InformesDefectoObdService`: Cálculo y agregación centralizada de KPIs ejecutivos (Total Defectos, Motores Diésel, Motores Gasolina, Defectos Graves DG vs Leves DL, Estación con más anomalías).
+    * Validación estricta de coherencia de fechas y límite máximo de 366 días (año bisiesto).
+    * Desglose de tipología reglamentaria con descripciones oficiales del manual ITV (MIL encendida, conector inaccesible, códigos de anomalía DTC en centralita, etc.).
+    * **Fidelidad 1:1 en Exportación Excel (Opción A - Multi-Pestaña)**: Replicación exacta del comportamiento y estructura del cliente desktop (`frmCriterios.vb`), generando un libro `.xlsx` nativo (OpenXML / ClosedXML) con **pestañas separadas por cada estación** con anomalías (`DEFECTOS_OBD_4004`, `DEFECTOS_OBD_2875`, etc.), cabeceras en negrita y columnas autoajustadas, garantizando cero sorpresas y compatibilidad total con macros preexistentes.
+  * **Frontend (React 19 + TypeScript)**:
+    * `useDefectoObdReport`: Hook con validación reactiva previa, alerta corporativa `TsAlert`, ordenación multi-columna global y filtrado en tiempo real.
+    * `DefectoObdReportPage`: Página completa rediseñada bajo el TÜV SÜD Algorithm Design System (`@tuvsud/design-system`):
+      * **Eliminación del Distintivo "Oficial"**: Retirado el badge redundante `<TsBadge>Oficial</TsBadge>` situado junto al título en todas las cabeceras de informes (`Defectos OBD`, `Número de Inspecciones`, `Duración Promedio`, `Facturación`).
+      * **Estabilización de Ancho de Tabla y Scroll Horizontal**:
+        * Implementado `table-layout: fixed` con `<colgroup>` y anchos predeterminados en todas las columnas.
+        * Ampliado el ancho de la columna `Gravedad` a `155px` y de `Fase` a `80px` (ancho mínimo de tabla `1210px`), aislando el badge de gravedad (`Defecto Grave (DG)`) y formateando `Fase` como una píldora centrada e independiente para eliminar cualquier solapamiento o colisión visual entre ambas columnas.
+        * Las celdas de `Estación` y `Vehículo` cuentan ahora con `overflow: hidden`, `text-overflow: ellipsis` y tooltip descriptivo con `AppTooltip`.
+        * Se elimina la aparición/desaparición errática de scroll horizontal al pasar de una página con nombres cortos a otra con textos largos.
+      * **Blindaje frente a ORA-12570 y Debounce de Filtros Rápidos**:
+        * **Frontend**: Añadido un debounce de 250 ms al alternar filtros rápidos (`TSA`, `CAL`, `Fases`, estaciones) para evitar colisión de peticiones concurrentes canceladas.
+        * **Backend**: Control de excepciones específico en `OracleInformesRepository.Obd.cs` capturando `OracleException` con código `12570` cuando `cancellationToken.IsCancellationRequested`, evitando que el debugger de Visual Studio interrumpa la ejecución ante cancelaciones normales del cliente.
+      * **Modal Bloqueante en Exportación Excel**: Inclusión de `BlockingLoadingModal` oficial con spinner corporativo durante la generación y descarga del fichero Excel en todos los informes, con botones inactivos (`disabled`) cuando no hay datos (`data.filas.length === 0`).
+      * **Contador de Registros Estandarizado**: Actualizado `ReportTableContainer` con la propiedad `unidadRegistros` para mostrar `"Mostrando 50 de 1201 registros"` en lugar de `"estaciones"`.
+      * **Selector de Gráficos Homogéneo**: Alineado a la derecha (`justifyContent: 'flex-end'`) mediante botonera segmentada unificada idéntica a los demás informes.
+      * **Paginación Reactiva en Grid**: Selector combo configurable (`50`, `100`, `200`, `500` registros por página) con controles de navegación completa y reinicio reactivo ante cambios.
+      * **Ordenación Global Robusta sin Rotura por Paginado**: Las columnas ordenan el conjunto global de datos antes de paginar, reseteando a la página 1 para inspeccionar los primeros registros ordenados sin perder consistencia.
+      * **Unificación de Eventos de Búsqueda Homogénea**:
+        * El clic en filtros rápidos (`Fase: Todas / 1ª Fase / 2ª Fase`, `Sociedad: Todas / TSA / CAL`) y en el selector de estaciones (marcar, desmarcar, seleccionar estación) ejecuta la búsqueda o refresco de inmediato en todos los informes, actualizando KPIs, gráficos y tablas.
+        * Los selectores de fechas (`Desde`, `Hasta`) no ejecutan búsquedas directas en ningún informe, esperando a que el usuario pulse el botón "Consultar" o presione la tecla **Enter** (formulario `<form>` nativo con `type="submit"`).
+      * **Gráficos Donut sin Euros**: Corrección del formateador a unidades contables de defectos (`def.`) y eliminación de textos hardcodeados de estaciones en tooltips.
+      * **Ranking con Scroll Completo**: Vista de todas las estaciones en `ReportBarChart` con ancho suficiente para evitar roturas de línea en el desglose Diésel/Gasolina.
+      * **Indicador Informativo de Límite (Opción A)**: Distintivo unificado `ℹ️ Rango máx. 1 año` en `ReportFiltersBar` con `AppTooltip` contextual (*"Puede seleccionar libremente cualquier periodo de fechas hasta un máximo de 1 año (365 días) por consulta para optimizar el rendimiento."*), visible de forma homogénea y autoexplicativa en todos los informes sin inducir a confusión sobre el periodo por defecto (mes en curso).
+      * **Validación Reactiva de Fechas (> 1 año) y Limpieza de Grid Inconsistente**:
+        * Activado el atributo `open` y `heading="Validación de Rango de Fechas"` en el componente `<TsAlert>` de `DefectoObdReportPage`, garantizando su visibilidad inmediata ante rangos mayores a 366 días o fecha fin anterior a fecha inicio.
+        * Incorporado botón interactivo *"Ajustar a 1 año"* dentro del banner de alerta para corregir automáticamente el rango con un solo clic.
+        * Limpieza estricta de datos obsoletos (`setData(null)`) al activarse la alerta de fechas o pulsar "Consultar" con rango inválido, evitando que permanezcan en pantalla registros o KPIs desalineados que induzcan a confusión sobre las fechas reales de la petición.
+        * El cuerpo de la tabla muestra un mensaje informativo contextual: *"Indique un rango de fechas válido (máximo 1 año) para realizar la consulta."*
+      * **Efecto Hover Homogéneo en Filas del Grid**: Implementado `transition: 'background-color 0.15s ease'` y eventos `onMouseEnter` / `onMouseLeave` con el azul suave corporativo (`#edf5ff`) sobre fondo alternado (`#ffffff` / `#f8fafc`), idéntico al comportamiento del resto de grids de la aplicación.
+* **Navegación e Integración**:
+  * Registrado el módulo `'defecto-obd'` en `IMPLEMENTED_SCREENS` (`navigation.constants.ts`) y habilitado en el catálogo general de informes (`InformesHubPage.tsx`) y en el enrutamiento principal con persistencia de F5 (`App.tsx`).
+
+---
+
 ## [2.12.0] - 02/11/2026 — *Persistencia de Sesión F5, Gráfico Donut de Tramos de Agilidad, Ordenación Ascendente y Logging de Consultas SQL*
 
 ### ⚡ Optimización Masiva de Consultas Oracle (1 Año), Tooltips Unificados y Cuota por Estación

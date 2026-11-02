@@ -178,9 +178,6 @@ export const NumeroInspeccionesReportPage: React.FC<NumeroInspeccionesReportPage
             >
               Informe Número de Inspecciones
             </h1>
-            <TsBadge variant="primary" style={{ fontWeight: 600 }}>
-              Oficial
-            </TsBadge>
           </div>
           <p
             style={{
