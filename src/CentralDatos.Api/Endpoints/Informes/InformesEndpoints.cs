@@ -483,6 +483,81 @@ public static class InformesEndpoints
         .WithName("ExportarInspeccionesRangoHorarioExcel")
         .WithSummary("Genera y descarga el libro Excel oficial de inspecciones por rango horario");
 
+        // 21. Consulta de volumen de defectos detectados por categoría y gravedad
+        group.MapPost("/volumen-defectos", async (
+            [FromBody] VolumenDefectosFiltroDto filtros,
+            [FromServices] IInformesVolumenDefectosService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var resultado = await service.ObtenerInformeAsync(filtros, ct);
+                return Results.Ok(resultado);
+            }
+            catch (OperationCanceledException)
+            {
+                return Results.StatusCode(499);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .WithName("ConsultarVolumenDefectos")
+        .WithSummary("Consulta el volumen de defectos detectados por grupo de categoría de vehículo y gravedad");
+
+        // 22. Exportación de volumen de defectos a Excel (.xlsx multi-pestaña)
+        group.MapPost("/volumen-defectos/exportar-excel", async (
+            [FromBody] VolumenDefectosFiltroDto filtros,
+            [FromServices] IInformesVolumenDefectosService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var archivoBytes = await service.ExportarExcelAsync(filtros, ct);
+                var nombreFichero = $"Volumen_Defectos_{filtros.FechaInicio:yyyyMMdd}_{filtros.FechaFin:yyyyMMdd}.xlsx";
+
+                return Results.File(
+                    archivoBytes,
+                    contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileDownloadName: nombreFichero);
+            }
+            catch (OperationCanceledException)
+            {
+                return Results.StatusCode(499);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .RequireRateLimiting("excel-export-policy")
+        .WithName("ExportarVolumenDefectosExcel")
+        .WithSummary("Genera y descarga el libro Excel oficial de volumen de defectos detectados");
+
+        // 23. Catálogo de bloques de defectos
+        group.MapGet("/volumen-defectos/bloques", async (
+            [FromServices] IInformesVolumenDefectosService service,
+            CancellationToken ct) =>
+        {
+            var bloques = await service.ObtenerBloquesAsync(ct);
+            return Results.Ok(bloques);
+        })
+        .WithName("ObtenerBloquesDefectos")
+        .WithSummary("Obtiene el listado de capítulos o bloques del catálogo de defectos");
+
+        // 24. Catálogo de elementos / defectos por bloque
+        group.MapGet("/volumen-defectos/elementos/{bloque}", async (
+            string bloque,
+            [FromServices] IInformesVolumenDefectosService service,
+            CancellationToken ct) =>
+        {
+            var elementos = await service.ObtenerElementosAsync(bloque, ct);
+            return Results.Ok(elementos);
+        })
+        .WithName("ObtenerElementosDefectos")
+        .WithSummary("Obtiene los defectos de un bloque específico");
+
         return app;
     }
 }

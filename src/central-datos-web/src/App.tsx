@@ -15,6 +15,7 @@ import { FacturacionComparativaReportPage } from './features/informes/pages/Fact
 import { MinerReportPage } from './features/informes/pages/MinerReportPage';
 import { BastidoresObdReportPage } from './features/informes/pages/BastidoresObdReportPage';
 import { InspRangoHorarioReportPage } from './features/informes/pages/InspRangoHorarioReportPage';
+import { VolumenDefectosReportPage } from './features/informes/pages/VolumenDefectosReportPage';
 import { InformesHubPage } from './features/informes/pages/InformesHubPage';
 import { DESKTOP_MENUS, findMenuItem } from './constants/navigation.constants';
 import { UI_CONSTANTS } from './constants/ui.constants';
@@ -35,9 +36,10 @@ function AppContent() {
     if (hash && hash.startsWith('#/modulo/')) {
       let itemId = hash.replace('#/modulo/', '').trim();
       if (itemId === 'bastidores-obd-no-coincidentes') itemId = 'control-obd-no-coincidentes';
+      if (itemId === 'volumen-defectos') itemId = 'defectologia-volumen';
       if (itemId) {
         const { group } = findMenuItem(itemId);
-        const autoGroup = group?.id || (['facturacion', 'facturacion-excel', 'num-inspecciones', 'numero-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'sin-inspector', 'cupon-descuento', 'miner-datos-globales', 'control-obd-no-coincidentes', 'bastidores-obd-no-coincidentes', 'inspecciones-rango-horario', 'rango-horario', 'informes'].includes(itemId) ? 'informes' : 'aplicacion');
+        const autoGroup = group?.id || (['facturacion', 'facturacion-excel', 'num-inspecciones', 'numero-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'sin-inspector', 'cupon-descuento', 'miner-datos-globales', 'control-obd-no-coincidentes', 'bastidores-obd-no-coincidentes', 'inspecciones-rango-horario', 'rango-horario', 'defectologia-volumen', 'volumen-defectos', 'informes'].includes(itemId) ? 'informes' : 'aplicacion');
         return { itemId, groupId: autoGroup };
       }
     }
@@ -45,6 +47,7 @@ function AppContent() {
     const savedGroup = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('cd_active_group') : null;
     if (savedItem) {
       if (savedItem === 'bastidores-obd-no-coincidentes') savedItem = 'control-obd-no-coincidentes';
+      if (savedItem === 'volumen-defectos') savedItem = 'defectologia-volumen';
       return { itemId: savedItem, groupId: savedGroup || 'informes' };
     }
     return { itemId: null, groupId: null };
@@ -570,6 +573,19 @@ function AppContent() {
           </ErrorBoundary>
         )}
 
+        {/* CASO C.9: Módulo de Volumen de Defectos Detectados */}
+        {(activeItemId === 'defectologia-volumen' || activeItemId === 'volumen-defectos') && (
+          <ErrorBoundary fallbackTitle="Error en Volumen de Defectos Detectados">
+            <VolumenDefectosReportPage
+              onNavigateHome={handleGoHome}
+              onNavigateToInformes={() => {
+                setActiveGroupId('informes');
+                setActiveItemId('informes');
+              }}
+            />
+          </ErrorBoundary>
+        )}
+
         {/* CASO D: Catálogo / Hub de Informes */}
         {activeGroupId === 'informes' && (activeItemId === null || activeItemId === 'informes') && (
           <InformesHubPage
@@ -595,7 +611,9 @@ function AppContent() {
           activeItemId !== 'control-obd-no-coincidentes' &&
           activeItemId !== 'bastidores-obd-no-coincidentes' &&
           activeItemId !== 'inspecciones-rango-horario' &&
-          activeItemId !== 'rango-horario' && (
+          activeItemId !== 'rango-horario' &&
+          activeItemId !== 'defectologia-volumen' &&
+          activeItemId !== 'volumen-defectos' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {/* Miga de Pan Correspondiente Interactiva */}
             <TsBreadcrumb>

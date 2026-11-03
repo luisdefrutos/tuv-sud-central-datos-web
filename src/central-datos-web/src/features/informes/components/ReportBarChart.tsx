@@ -29,6 +29,7 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
   valueFormatter = (val) => val.toLocaleString('es-ES'),
   emptyMessage = 'No hay datos disponibles para representar en el gráfico con los filtros seleccionados.',
   sortOrder = 'desc',
+  height = 360,
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -142,13 +143,13 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
           display: 'flex',
           flexDirection: 'column',
           gap: '6px',
-          maxHeight: '440px',
+          maxHeight: typeof height === 'number' ? `${height}px` : height,
           overflowY: 'auto',
           paddingRight: '8px',
           width: '100%',
           boxSizing: 'border-box',
           scrollbarWidth: 'thin',
-          scrollbarColor: '#94a3b8 #f1f5f9',
+          scrollbarColor: '#0046ad #f1f5f9',
         }}
       >
         {visibleData.map((item, index) => {

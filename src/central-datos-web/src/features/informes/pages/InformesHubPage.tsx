@@ -16,7 +16,7 @@ export interface InformesHubPageProps {
 /**
  * Catálogo / Hub Principal de Informes de Central Datos
  * Muestra todas las opciones de la sección 'Informes' de la aplicación de escritorio (mdiMain.vb),
- * permitiendo acceder a 'Facturación de Inspecciones' y volver en cualquier momento.
+ * permitiendo acceder a los informes migrados y volver en cualquier momento.
  */
 export const InformesHubPage: React.FC<InformesHubPageProps> = ({
   onSelectReport,
@@ -117,7 +117,8 @@ export const InformesHubPage: React.FC<InformesHubPageProps> = ({
             descripcion = 'Control y auditoría técnica de inspecciones que no tienen asignado ningún inspector responsable en la red ITV.';
           } else if (item.id === 'inspecciones-rango-horario') {
             descripcion = 'Análisis de afluencia e inspecciones por franja horaria (06 a 21 h), mapa de calor semanal y exportación oficial a Excel.';
-            descripcion = 'Control y auditoría técnica de inspecciones que no tienen asignado ningún inspector responsable en la red ITV.';
+          } else if (item.id === 'defectologia-volumen') {
+            descripcion = 'Análisis de concentración y frecuencia de defectos por grupo de vehículo, capítulo del manual y nivel de gravedad.';
           }
 
           return (

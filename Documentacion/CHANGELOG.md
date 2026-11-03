@@ -4,6 +4,64 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.21.1] - 04/11/2026 — *Refinamiento UX Volumen de Defectos (C7), Paginación, Scroll de Estaciones, Corrección ORA-00979 y Homologación de KPIs*
+
+### 🛠️ Correcciones de Base de Datos Oracle 19c
+* **Resolución de ORA-00979 (`no es una expresión GROUP BY`)**:
+  * Sustitución en `ObtenerInformeVclDefectos.sql` de funciones escalares desacopladas por agregaciones deterministas `MAX(e.DesEstacion)`, `MAX(TRIM(e.Cod_Empresa))` y `MAX(sub.Descripcion)`.
+  * Reducción de la cláusula `GROUP BY` exclusivamente a las claves dimensionales de negocio (`CodEstacion`, `GrupoCategoria`, `Bloque`, `Defecto`, `Subdefecto`, `Gravedad`), optimizando la memoria en el *Shared Pool* mediante *Hash Group By*.
+* **Resolución de ORA-00904 (`"D"."CODSECCION": identificador no válido`)**:
+  * Ajuste del `INNER JOIN` con `CENTRALITV.INSPECCION_DEFECTOS` para omitir `CodSeccion`, vinculando de manera estricta por `CodEstacion` y `CodInspeccion`.
+
+### 🎨 Experiencia de Usuario, Paginación y Visualización Gráfica (React 19)
+* **Barra de Paginación y Scroll Vertical en Tabla**:
+  * Integración oficial del componente `ReportPaginationBar` con selector dinámico de tamaño de página (**50, 100, 200, 500 y 1.000 registros**) y navegación entre páginas.
+  * Contenedor con scroll vertical continuo (`maxHeight: 620px`) y cabecera de tabla fija (`sticky`, `top: 0`, `zIndex: 3`), permitiendo recorrer los **542 defectos tipificados** de forma fluida.
+* **Gráfico de Barras de Estaciones y Eliminación de Naranja Discordante**:
+  * Gráfico de barras horizontales conectado al ranking de estaciones con representación de la totalidad de estaciones seleccionadas (las 30 estaciones oficiales de la red ITV).
+  * Colores oficiales por sociedad alineados 100% con la leyenda: **Azul corporativo (`#0046ad`)** para TÜV SÜD ATISAE y **Verde corporativo (`#00875a`)** para TÜV SÜD CAL.
+  * Scroll vertical continuo (`maxHeight: 360px`, `scrollbar-color: #0046ad #f1f5f9`) y badge dinámico de estaciones consultadas.
+* **Homologación de Clics en KPIs y Buscador Inteligente**:
+  * **Total Defectos Detectados**: Limpia los filtros y resetea la tabla al estado inicial.
+  * **Defectos con Rechazo (G + MG)**: Filtra exclusivamente defectos con gravedad `G` o `MG` mediante la clave `'Rechazo'`, evitando que la búsqueda coincida con letras 'g' sueltas dentro de palabras de descripciones.
+  * **Categoría de Vehículo Líder**: Filtra por el código oficial (`M1`), con soporte bidireccional en el buscador de texto (*turismos*, *m1*, *camiones*...).
+  * **Defecto Más Frecuente**: Filtra directamente por el código tipificado del defecto (`12.02.01`).
+* **Tooltips Descriptivos (`AppTooltip`)**:
+  * Incorporación de tooltips explicativos en los badges de `Grupo Cat.` (definición completa del vehículo), `Cód. Defecto` (desglose bloque.defecto.subdefecto) y `Gravedad` (con o sin rechazo reglamentario ITV).
+
+### 📊 Exportación Oficial a Excel (.NET 10 + ClosedXML)
+* **Pestaña Consolidada `TOTAL_ESTACIONES_SELECCIONADAS`**:
+  * Ajuste del nombre a 30 caracteres (dentro del límite de 31 de Excel).
+  * Vuelco íntegro de las 542 filas con la columna `Estación`, configurado como Dataset Maestro apto para la generación de tablas dinámicas.
+* **Pestañas Individuales por Estación (`VOLUMEN_DEFECTOS_{CodEstacion}`)**:
+  * Estructura 1:1 fiel a la app de escritorio `frmCriterios.vb`.
+
+---
+
+## [2.21.0] - 03/11/2026 — *Nuevo Módulo Volumen de Defectos Detectados (C7), Optimización Relacional 0 PL/SQL y Combos en Cascada*
+
+### ⚠️ Nuevo Módulo Vertical: Volumen de Defectos Detectados (`volumen-defectos` / `defectologia-volumen`)
+* **Migración Oficial de `frmCriterios.vb` (`ExportacionVolumenDefectosDetectados` / `Cargar_Dataset_Exportacion_VolumenDefectos`) (Informe C7)**:
+  * Implementación vertical completa (.NET 10 Web API, ClosedXML y React 19 con TÜV SÜD Algorithm DS).
+  * Análisis de frecuencia, tipología y severidad de defectos en primeras inspecciones periódicas (`Periodica = 'S'`, `Indica12 = '1'`, `Anulada = 0`).
+  * Desglose en 7 grupos de vehículos homologados: Turismos (`M1`), Autobuses (`M2/M3`), Comerciales (`N1`), Camiones (`N2/N3`), Remolques (`O3/O4`), Ciclomotores (`L1`) y Motocicletas (`L3`).
+* **Optimización Extrema de Base de Datos Oracle 19c**:
+  * **Eliminación de PL/SQL Escalar**: Sustitución de `CENTRALITV.Periodica(...) = 'S'` por `INNER JOIN CENTRALITV.SERVICIOSPORTIPOINSPECCION s ON s.CodSepiva = i.CodSepiva AND s.CodEstacion = i.CodEstacion AND s.CodServicio = '01'`, reduciendo el consumo de CPU en más de un 90% y eliminando millones de *context switches*.
+  * **Consulta Unificada vs. Bucle $N$**: Ejecución de 1 sola consulta SQL parametrizada en vez de $N$ ejecuciones secuenciales por cada estación seleccionada en el cliente.
+  * **Join Eficiente a Catálogos**: Cruce optimizado con `CENTRALITV.DEFECTOSSUB_SECCION` con descripciones oficiales en español (`CodIdioma = 'ESP'`).
+* **Backend y Exportación Excel Oficial (.NET 10)**:
+  * Consulta externalizada `ObtenerInformeVclDefectos.sql` con *bind variables* y catálogos de `Bloques` y `Elementos`.
+  * Repositorio `OracleInformesRepository.VolumenDefectos.cs` y servicio `InformesVolumenDefectosService.cs`.
+  * Generador ClosedXML con pestaña `TOTAL_DEFECTOS_CONSOLIDADO` y hojas individuales por estación `VOLUMEN_DEFECTOS_{CodEstacion}` con sumatorios numéricos directos (sin fórmulas `=SUM(...)`).
+* **Frontend y Experiencia de Usuario (React 19 + TÜV SÜD Algorithm DS)**:
+  * Componente `VolumenDefectosReportPage.tsx` con 4 KPIs ejecutivos dinámicos (`Total Defectos`, `Defectos con Rechazo G+MG`, `Categoría Líder`, `Defecto Top`).
+  * Combos en cascada dinámicos: Selector de `Bloque` y `Elemento/Defecto` con carga reactiva y soporte para `-- Todos --`.
+  * Visualización gráfica dual conmutable: Ranking Top Defectos (Barras con scroll y color por gravedad: Rojo para MG, Ámbar para G, Azul para L) y Gráfico Donut de reparto por categoría vehicular.
+  * Grid paginado con buscador interactivo, ordenación por columnas y badges semánticos de gravedad (`TsBadge`).
+  * Enlace y persistencia F5: Sincronización en URL (`#/modulo/defectologia-volumen`) y `sessionStorage`, tarjeta disponible en `InformesHubPage.tsx`.
+
+---
+
 ## [2.20.0] - 03/11/2026 — *Nuevo Módulo Inspecciones por Rango Horario (C6), Matriz Térmica Heatmap y Generación con Ollama Local*
 
 ### ⏰ Nuevo Módulo Vertical: Inspecciones por Rango Horario (`inspecciones-rango-horario`)

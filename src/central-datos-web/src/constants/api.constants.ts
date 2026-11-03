@@ -34,6 +34,10 @@ export const API_ENDPOINTS = {
     BASTIDORES_OBD_EXPORTAR: '/api/v1/informes/bastidores-obd-no-coincidentes/exportar-excel',
     INSP_RANGO_HORARIO_CONSULTAR: '/api/v1/informes/inspecciones-rango-horario',
     INSP_RANGO_HORARIO_EXPORTAR: '/api/v1/informes/inspecciones-rango-horario/exportar-excel',
+    VOLUMEN_DEFECTOS_CONSULTAR: '/api/v1/informes/volumen-defectos',
+    VOLUMEN_DEFECTOS_EXPORTAR: '/api/v1/informes/volumen-defectos/exportar-excel',
+    VOLUMEN_DEFECTOS_BLOQUES: '/api/v1/informes/volumen-defectos/bloques',
+    VOLUMEN_DEFECTOS_ELEMENTOS: '/api/v1/informes/volumen-defectos/elementos',
   },
   DOCS: {
     SWAGGER: '/swagger',
