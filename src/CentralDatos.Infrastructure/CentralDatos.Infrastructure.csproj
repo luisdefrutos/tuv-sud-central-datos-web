@@ -21,6 +21,12 @@
     <EmbeddedResource Include="Persistence\Sql\**\*.sql" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Templates\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

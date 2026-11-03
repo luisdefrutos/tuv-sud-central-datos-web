@@ -30,7 +30,7 @@ export interface MenuGroup {
 }
 
 /** Pantallas ya migradas a la web (resto muestran la ficha "en migración") */
-export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion', 'num-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'cupon-descuento'] as const;
+export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion', 'facturacion-excel', 'num-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'cupon-descuento'] as const;
 
 export const DESKTOP_MENUS: MenuGroup[] = [
   {
@@ -62,7 +62,12 @@ export const DESKTOP_MENUS: MenuGroup[] = [
             label: 'Informe de facturación de inspecciones',
             descripcion: 'Dashboard interactivo de liquidación, facturación neta y ranking por ITV.',
           },
-          { id: 'facturacion-excel', label: 'Excel facturación de inspecciones' },
+          {
+            id: 'facturacion-excel',
+            label: 'Excel facturación de inspecciones',
+            icon: '📈',
+            descripcion: 'Análisis comparativo de ingresos e inspecciones entre dos periodos (TSA / CAL) con exportación a libro Excel oficial.',
+          },
         ],
       },
       { id: 'defecto-obd', label: 'Informe inspecciones con defecto OBD', descripcion: 'Auditoría técnica y control de lecturas de emisiones OBD anómalas por estación ITV.' },

@@ -276,6 +276,58 @@ public static class InformesEndpoints
         .WithName("ExportarCuponDescuentoExcel")
         .WithSummary("Genera y descarga el libro Excel oficial (.xlsx) de inspecciones con cupón descuento con pestañas individuales por estación CUPONES_DTO_ITV_XXXX");
 
+        // 13. Consulta de facturación comparativa (TSA / CAL)
+        group.MapPost("/facturacion-comparativa/consultar", async (
+            [FromBody] FiltrosFacturacionComparativaRequestDto filtros,
+            [FromServices] IInformesFacturacionComparativaService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var resultado = await service.GenerarInformeFacturacionComparativaAsync(filtros, ct);
+                return Results.Ok(resultado);
+            }
+            catch (OperationCanceledException)
+            {
+                return Results.StatusCode(499);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .WithName("ConsultarFacturacionComparativa")
+        .WithSummary("Consulta comparativa de facturación e inspecciones entre dos periodos por estación (TSA / CAL)");
+
+        // 14. Exportación de facturación comparativa a Excel oficial (.xlsx)
+        group.MapPost("/facturacion-comparativa/exportar-excel", async (
+            [FromBody] FiltrosFacturacionComparativaRequestDto filtros,
+            [FromServices] IInformesFacturacionComparativaService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var archivoBytes = await service.GenerarExportacionFacturacionComparativaExcelAsync(filtros, ct);
+                var nombreFichero = $"informe-facturacion-comparativa-{DateTime.Now:yyyyMMdd-HHmm}.xlsx";
+
+                return Results.File(
+                    archivoBytes,
+                    contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileDownloadName: nombreFichero);
+            }
+            catch (OperationCanceledException)
+            {
+                return Results.StatusCode(499);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .RequireRateLimiting("excel-export-policy")
+        .WithName("ExportarFacturacionComparativaExcel")
+        .WithSummary("Genera y descarga el libro Excel comparativo oficial de facturación e inspecciones");
+
         return app;
     }
 }

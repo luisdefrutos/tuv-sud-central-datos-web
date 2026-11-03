@@ -103,6 +103,8 @@ export const InformesHubPage: React.FC<InformesHubPageProps> = ({
           let descripcion = item.descripcion || 'Módulo de análisis estadístico oficial de la aplicación de escritorio Central Datos.';
           if (item.id === 'facturacion') {
             descripcion = 'Dashboard interactivo con KPIs de liquidación neta, ranking por estación, gráfico circular y exportación a Excel.';
+          } else if (item.id === 'facturacion-excel') {
+            descripcion = 'Análisis comparativo de ingresos e inspecciones entre dos periodos (TSA / CAL) con exportación a libro Excel oficial.';
           } else if (item.id === 'num-inspecciones') {
             descripcion = 'Desglose oficial de inspecciones favorables y rechazadas en Fase 1 y Fase 2, tasas de rechazo e impresión de Crystal Report.';
           } else if (item.id === 'duracion-promedio') {

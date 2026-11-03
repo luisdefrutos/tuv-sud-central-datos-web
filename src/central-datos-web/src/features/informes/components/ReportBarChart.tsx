@@ -63,10 +63,10 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
     ? [...data]
     : [...data].sort((a, b) => (sortOrder === 'asc' ? a.valor - b.valor : b.valor - a.valor));
   const visibleData = sorted;
-  const maxVal = Math.max(...visibleData.map((d) => d.valor), 1);
+  const maxVal = Math.max(...visibleData.map((d) => (d.valor > 0 ? d.valor : 0)), 1);
 
   return (
-    <TsCard style={{ padding: 'clamp(1rem, 2vw, 1.25rem) clamp(0.75rem, 2vw, 1.5rem)', backgroundColor: '#ffffff', borderRadius: '8px' }}>
+    <TsCard style={{ width: '100%', boxSizing: 'border-box', padding: 'clamp(1rem, 2vw, 1.25rem) clamp(0.75rem, 2vw, 1.5rem)', backgroundColor: '#ffffff', borderRadius: '8px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
         <div>
           <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 700, color: '#0b253b' }}>
@@ -130,25 +130,26 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
         </div>
       </div>
 
-      {/* Contenedor con Scroll Vertical para albergar todas las estaciones */}
+      {/* Contenedor vertical continuo: #1, #2, #3... orden natural a todo el ancho */}
       <div
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '9px',
-          maxHeight: '380px',
+          gap: '6px',
+          maxHeight: '440px',
           overflowY: 'auto',
           paddingRight: '6px',
+          width: '100%',
+          boxSizing: 'border-box',
         }}
       >
         {visibleData.map((item, index) => {
-          const pct = Math.max(2, Math.round((item.valor / maxVal) * 100));
+          const isNegative = item.valor < 0;
+          const pct = isNegative
+            ? 2
+            : Math.max(3, Math.min(100, Math.round((item.valor / maxVal) * 100)));
           const isHovered = hoveredId === item.id;
-          const barColor =
-            item.color ??
-            (item.sociedad === 'CAL'
-              ? SOCIEDADES.CAL.colorBorde
-              : SOCIEDADES.ATISAE.colorBorde);
+          const barColor = item.color ?? (item.sociedad === 'CAL' ? SOCIEDADES.CAL.colorBorde : SOCIEDADES.ATISAE.colorBorde);
 
           return (
             <AppTooltip
@@ -168,10 +169,10 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
                 onMouseLeave={() => setHoveredId(null)}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'minmax(110px, 220px) 1fr auto',
+                  gridTemplateColumns: 'minmax(140px, 260px) 1fr auto',
                   alignItems: 'center',
-                  gap: '12px',
-                  padding: '5px 8px',
+                  gap: '16px',
+                  padding: '6px 10px',
                   borderRadius: '4px',
                   backgroundColor: isHovered ? '#f1f5f9' : 'transparent',
                   transition: 'background-color 0.15s ease',
@@ -218,16 +219,17 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
                   />
                 </div>
 
-                {/* Valor Numérico Formateado (sin corte en 2 líneas) */}
+                {/* Valor Numérico Formateado */}
                 <div
                   style={{
                     fontSize: '0.82rem',
                     fontWeight: 700,
                     textAlign: 'right',
-                    color: '#0f172a',
+                    color: isNegative ? '#dc2626' : (isHovered ? '#0046ad' : '#0f172a'),
                     fontVariantNumeric: 'tabular-nums',
                     whiteSpace: 'nowrap',
                     paddingLeft: '6px',
+                    minWidth: '80px',
                   }}
                 >
                   {item.valorFormateado ?? valueFormatter(item.valor)}

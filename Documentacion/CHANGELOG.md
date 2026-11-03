@@ -4,6 +4,26 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.17.0] - 03/11/2026 — *Nuevo Módulo Excel Facturación Comparativa (TSA / CAL), Triple Footer, Identidad de Sociedad y Corrección Bug Legacy*
+
+### 📈 Nuevo Módulo Vertical: Excel Facturación de Inspecciones Comparativa (`facturacion-excel`)
+* **Migración Oficial de `frmCriteriosExcel.vb` / `clsExcelFacturacion.vb` (Informe C3)**:
+  * Implementación vertical completa (.NET 10 Web API, ClosedXML y React 19 con TÜV SÜD Algorithm DS).
+  * **Corrección Definitiva del "Bug de Arrastre" del Legacy**:
+    * En el código VB.NET legacy (`clsExcelFacturacion.vb`), la variable de matriz `ingresosInspecciones(0, 3)` se declaraba fuera del bucle de estaciones sin limpiarse, duplicando datos en UMAs vacías e inflando artificialmente el total en más de **589.445,24 €** y **14.254 inspecciones**.
+    * En Central Datos Web se establece aislamiento estricto por estación con inicialización explícita a **0,00 €** y **0** inspecciones, garantizando 100% de coincidencia al céntimo con la base de datos Oracle.
+  * **Exportación Oficial a Plantilla Excel (`.xlsx`) mediante ClosedXML**:
+    * Inyección de datos respetando la plantilla corporativa oficial `Plantilla Informe de facturación.xlsx` con recálculo dinámico de fórmulas de subtotales por CC.AA, ratios interanuales y totales por sociedad (TSA y CAL).
+  * **Frontend Estandarizado (`FacturacionComparativaReportPage.tsx`)**:
+    * Selector dual de rangos de fechas (Periodo 1 vs Periodo 2) con botón de actualización compacto.
+    * 4 Tarjetas KPI interactivas con comparativas y variaciones porcentuales.
+    * Resumen dinámico por Sociedad (TSA / CAL / TOTAL RED) cuadrando al céntimo con el libro Excel.
+    * **Triple Fila en Pie de Tabla (`<tfoot>`)**: Subtotal TSA, Subtotal CAL y Total Red Global con cálculo reactivo dinámico.
+    * Gráfico comparativo continuo (#1, #2, #3...) de ancho completo con identidad de color corporativo permanente (Azul TSA, Verde CAL) y números negativos en rojo suave.
+    * Tabla detallada con paginador homogéneo (`ReportPaginationBar`).
+
+---
+
 ## [2.16.0] - 03/11/2026 — *Nuevo Módulo Inspecciones con Cupón Descuento & Estabilización de Inspecciones sin Inspector*
 
 ### 🎟️ Nuevo Módulo Vertical: Informe de Inspecciones con Cupón Descuento (`cupon-descuento`)
@@ -38,6 +58,25 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.17.0] - 03/11/2026 — *Nuevo Módulo Excel Facturación Comparativa (TSA / CAL), Corrección Bug Arrastre Legacy y Ranking Visual*
+
+### 📈 Nuevo Módulo Vertical: Excel Facturación de Inspecciones Comparativa (`facturacion-excel`)
+* **Migración Oficial de `frmCriteriosExcel.vb` / `clsExcelFacturacion.vb` (Informe C3)**:
+  * Implementación vertical completa (Oracle SQL, .NET 10 Web API, ClosedXML y React 19 con TÜV SÜD Algorithm DS).
+  * **Corrección Definitiva del "Bug de Arrastre" del Legacy**:
+    * En el código VB.NET legacy (`clsExcelFacturacion.vb`), la variable de matriz `ingresosInspecciones(0, 3)` se declaraba fuera del bucle de estaciones sin limpiarse, duplicando datos en UMAs vacías e inflando artificialmente el total en más de **589.445,24 €** y **14.254 inspecciones**.
+    * En Central Datos Web se establece aislamiento estricto por estación con inicialización explícita a `0,00 €` y `0` inspecciones, garantizando 100% de coincidencia al céntimo con la base de datos Oracle.
+  * **Exportación Oficial a Plantilla Excel (`.xlsx`) mediante ClosedXML**:
+    * Inyección de datos respetando la plantilla corporativa oficial `Plantilla Informe de facturación.xlsx` con recálculo dinámico de fórmulas de subtotales por CC.AA, ratios interanuales y totales por sociedad (TSA y CAL).
+  * **Frontend Estandarizado (`FacturacionComparativaReportPage.tsx`)**:
+    * Selector dual de rangos de fechas (Periodo 1 de Referencia vs Periodo 2 Actual / Comparado) con botón de actualización compacto.
+    * 4 Tarjetas KPI interactivas (`Facturación Periodo Actual`, `Inspecciones Fase 1`, `Ingreso Medio / Insp.`, `Estaciones Comparadas`).
+    * Resumen comparativo por Sociedad (TSA / CAL / TOTAL GLOBAL) con chips de variación porcentual semántica.
+    * Gráfico comparativo de barras (`ReportBarChart`) continuo de ancho completo (`#1, #2, #3...` en orden vertical descendente), ordenado por tasa de crecimiento real (desde los mayores crecimientos positivos hasta los negativos en rojo tenue).
+    * Tabla detallada con ordenación en todas las columnas y paginador homogéneo con selector de tamaño (`ReportPaginationBar`).
+
+---
+
 ## [2.15.0] - 03/11/2026 — *Blindaje de la Aplicación con ErrorBoundary y Corrección de Props de Componentes*
 
 ### 🛡️ Estabilidad y Blindaje de UI contra Pantallas en Blanco (React 19)
@@ -49,6 +88,25 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
   * Envoltorio individual por módulo (`control-sin-inspector`, `defecto-obd`, `duracion-promedio`, `numero-inspecciones`, `facturacion`, `ultima-fecha`). Si un módulo sufre una anomalía aislada, la cabecera corporativa y la barra de navegación superior permanecen 100% operativas e interactivas.
 * **Corrección de Propiedades de Web Components (`TsBadge`)**:
   * Unificación de la propiedad `size="small"` en lugar del valor no estándar `size="sm"` en `SinInspectorReportPage.tsx` y `DefectoObdReportPage.tsx`.
+
+---
+
+## [2.17.0] - 03/11/2026 — *Nuevo Módulo Excel Facturación Comparativa (TSA / CAL), Corrección Bug Arrastre Legacy y Ranking Visual*
+
+### 📈 Nuevo Módulo Vertical: Excel Facturación de Inspecciones Comparativa (`facturacion-excel`)
+* **Migración Oficial de `frmCriteriosExcel.vb` / `clsExcelFacturacion.vb` (Informe C3)**:
+  * Implementación vertical completa (Oracle SQL, .NET 10 Web API, ClosedXML y React 19 con TÜV SÜD Algorithm DS).
+  * **Corrección Definitiva del "Bug de Arrastre" del Legacy**:
+    * En el código VB.NET legacy (`clsExcelFacturacion.vb`), la variable de matriz `ingresosInspecciones(0, 3)` se declaraba fuera del bucle de estaciones sin limpiarse, duplicando datos en UMAs vacías e inflando artificialmente el total en más de **589.445,24 €** y **14.254 inspecciones**.
+    * En Central Datos Web se establece aislamiento estricto por estación con inicialización explícita a `0,00 €` y `0` inspecciones, garantizando 100% de coincidencia al céntimo con la base de datos Oracle.
+  * **Exportación Oficial a Plantilla Excel (`.xlsx`) mediante ClosedXML**:
+    * Inyección de datos respetando la plantilla corporativa oficial `Plantilla Informe de facturación.xlsx` con recálculo dinámico de fórmulas de subtotales por CC.AA, ratios interanuales y totales por sociedad (TSA y CAL).
+  * **Frontend Estandarizado (`FacturacionComparativaReportPage.tsx`)**:
+    * Selector dual de rangos de fechas (Periodo 1 de Referencia vs Periodo 2 Actual / Comparado) con botón de actualización compacto.
+    * 4 Tarjetas KPI interactivas (`Facturación Periodo Actual`, `Inspecciones Fase 1`, `Ingreso Medio / Insp.`, `Estaciones Comparadas`).
+    * Resumen comparativo por Sociedad (TSA / CAL / TOTAL GLOBAL) con chips de variación porcentual semántica.
+    * Gráfico comparativo de barras (`ReportBarChart`) continuo de ancho completo (`#1, #2, #3...` en orden vertical descendente), ordenado por tasa de crecimiento real (desde los mayores crecimientos positivos hasta los negativos en rojo tenue).
+    * Tabla detallada con ordenación en todas las columnas y paginador homogéneo con selector de tamaño (`ReportPaginationBar`).
 
 ---
 
@@ -84,6 +142,25 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
   * Cuello de botella en 1 año (de 20,2 s a 2,3 s): El hint `INDEX(i P17_INSPECCION)` forzaba un acceso individual por ROWID sobre 1,5 millones de filas anuales e ignoraba el índice compuesto `P31_INSPECCION (CODESTACION, FECHAINSPECCION)`. Se actualizó a `/*+ INDEX(i P17_INSPECCION P31_INSPECCION) */` y `LEFT JOIN`, reduciendo el tiempo de respuesta a 2,34 s (estación individual) y 2,78 s (red completa de 30 estaciones en 362 días, 7,2x más rápido).
   * Limpieza estricta de datos técnicos en UI: Se eliminaron todas las menciones a tecnologías internas ("Oracle", "ClosedXML", "base de datos", "índices optimizados") en modales de carga, alertas y tooltips de `SinInspectorReportPage`, `DuracionPromedioReportPage`, `NumeroInspeccionesReportPage` y `ui.constants`, sustituyéndolas por mensajes 100 % corporativos orientados al usuario final.
   * Selector dual de visualización gráfica (Barras y Donut): Integración del conmutador de vistas corporativo idéntico a `NumeroInspecciones` para alternar entre "📊 Barras (Ranking)" y "🍩 Cuota por Estación", reutilizando `ReportDonutChart` sin alterar ni sobrecargar la exportación oficial a Excel.
+
+---
+
+## [2.17.0] - 03/11/2026 — *Nuevo Módulo Excel Facturación Comparativa (TSA / CAL), Corrección Bug Arrastre Legacy y Ranking Visual*
+
+### 📈 Nuevo Módulo Vertical: Excel Facturación de Inspecciones Comparativa (`facturacion-excel`)
+* **Migración Oficial de `frmCriteriosExcel.vb` / `clsExcelFacturacion.vb` (Informe C3)**:
+  * Implementación vertical completa (Oracle SQL, .NET 10 Web API, ClosedXML y React 19 con TÜV SÜD Algorithm DS).
+  * **Corrección Definitiva del "Bug de Arrastre" del Legacy**:
+    * En el código VB.NET legacy (`clsExcelFacturacion.vb`), la variable de matriz `ingresosInspecciones(0, 3)` se declaraba fuera del bucle de estaciones sin limpiarse, duplicando datos en UMAs vacías e inflando artificialmente el total en más de **589.445,24 €** y **14.254 inspecciones**.
+    * En Central Datos Web se establece aislamiento estricto por estación con inicialización explícita a `0,00 €` y `0` inspecciones, garantizando 100% de coincidencia al céntimo con la base de datos Oracle.
+  * **Exportación Oficial a Plantilla Excel (`.xlsx`) mediante ClosedXML**:
+    * Inyección de datos respetando la plantilla corporativa oficial `Plantilla Informe de facturación.xlsx` con recálculo dinámico de fórmulas de subtotales por CC.AA, ratios interanuales y totales por sociedad (TSA y CAL).
+  * **Frontend Estandarizado (`FacturacionComparativaReportPage.tsx`)**:
+    * Selector dual de rangos de fechas (Periodo 1 de Referencia vs Periodo 2 Actual / Comparado) con botón de actualización compacto.
+    * 4 Tarjetas KPI interactivas (`Facturación Periodo Actual`, `Inspecciones Fase 1`, `Ingreso Medio / Insp.`, `Estaciones Comparadas`).
+    * Resumen comparativo por Sociedad (TSA / CAL / TOTAL GLOBAL) con chips de variación porcentual semántica.
+    * Gráfico comparativo de barras (`ReportBarChart`) continuo de ancho completo (`#1, #2, #3...` en orden vertical descendente), ordenado por tasa de crecimiento real (desde los mayores crecimientos positivos hasta los negativos en rojo tenue).
+    * Tabla detallada con ordenación en todas las columnas y paginador homogéneo con selector de tamaño (`ReportPaginationBar`).
 
 ---
 
@@ -143,6 +220,25 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
       * **Efecto Hover Homogéneo en Filas del Grid**: Implementado `transition: 'background-color 0.15s ease'` y eventos `onMouseEnter` / `onMouseLeave` con el azul suave corporativo (`#edf5ff`) sobre fondo alternado (`#ffffff` / `#f8fafc`), idéntico al comportamiento del resto de grids de la aplicación.
 * **Navegación e Integración**:
   * Registrado el módulo `'defecto-obd'` en `IMPLEMENTED_SCREENS` (`navigation.constants.ts`) y habilitado en el catálogo general de informes (`InformesHubPage.tsx`) y en el enrutamiento principal con persistencia de F5 (`App.tsx`).
+
+---
+
+## [2.17.0] - 03/11/2026 — *Nuevo Módulo Excel Facturación Comparativa (TSA / CAL), Corrección Bug Arrastre Legacy y Ranking Visual*
+
+### 📈 Nuevo Módulo Vertical: Excel Facturación de Inspecciones Comparativa (`facturacion-excel`)
+* **Migración Oficial de `frmCriteriosExcel.vb` / `clsExcelFacturacion.vb` (Informe C3)**:
+  * Implementación vertical completa (Oracle SQL, .NET 10 Web API, ClosedXML y React 19 con TÜV SÜD Algorithm DS).
+  * **Corrección Definitiva del "Bug de Arrastre" del Legacy**:
+    * En el código VB.NET legacy (`clsExcelFacturacion.vb`), la variable de matriz `ingresosInspecciones(0, 3)` se declaraba fuera del bucle de estaciones sin limpiarse, duplicando datos en UMAs vacías e inflando artificialmente el total en más de **589.445,24 €** y **14.254 inspecciones**.
+    * En Central Datos Web se establece aislamiento estricto por estación con inicialización explícita a `0,00 €` y `0` inspecciones, garantizando 100% de coincidencia al céntimo con la base de datos Oracle.
+  * **Exportación Oficial a Plantilla Excel (`.xlsx`) mediante ClosedXML**:
+    * Inyección de datos respetando la plantilla corporativa oficial `Plantilla Informe de facturación.xlsx` con recálculo dinámico de fórmulas de subtotales por CC.AA, ratios interanuales y totales por sociedad (TSA y CAL).
+  * **Frontend Estandarizado (`FacturacionComparativaReportPage.tsx`)**:
+    * Selector dual de rangos de fechas (Periodo 1 de Referencia vs Periodo 2 Actual / Comparado) con botón de actualización compacto.
+    * 4 Tarjetas KPI interactivas (`Facturación Periodo Actual`, `Inspecciones Fase 1`, `Ingreso Medio / Insp.`, `Estaciones Comparadas`).
+    * Resumen comparativo por Sociedad (TSA / CAL / TOTAL GLOBAL) con chips de variación porcentual semántica.
+    * Gráfico comparativo de barras (`ReportBarChart`) continuo de ancho completo (`#1, #2, #3...` en orden vertical descendente), ordenado por tasa de crecimiento real (desde los mayores crecimientos positivos hasta los negativos en rojo tenue).
+    * Tabla detallada con ordenación en todas las columnas y paginador homogéneo con selector de tamaño (`ReportPaginationBar`).
 
 ---
 
@@ -229,6 +325,25 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.17.0] - 03/11/2026 — *Nuevo Módulo Excel Facturación Comparativa (TSA / CAL), Corrección Bug Arrastre Legacy y Ranking Visual*
+
+### 📈 Nuevo Módulo Vertical: Excel Facturación de Inspecciones Comparativa (`facturacion-excel`)
+* **Migración Oficial de `frmCriteriosExcel.vb` / `clsExcelFacturacion.vb` (Informe C3)**:
+  * Implementación vertical completa (Oracle SQL, .NET 10 Web API, ClosedXML y React 19 con TÜV SÜD Algorithm DS).
+  * **Corrección Definitiva del "Bug de Arrastre" del Legacy**:
+    * En el código VB.NET legacy (`clsExcelFacturacion.vb`), la variable de matriz `ingresosInspecciones(0, 3)` se declaraba fuera del bucle de estaciones sin limpiarse, duplicando datos en UMAs vacías e inflando artificialmente el total en más de **589.445,24 €** y **14.254 inspecciones**.
+    * En Central Datos Web se establece aislamiento estricto por estación con inicialización explícita a `0,00 €` y `0` inspecciones, garantizando 100% de coincidencia al céntimo con la base de datos Oracle.
+  * **Exportación Oficial a Plantilla Excel (`.xlsx`) mediante ClosedXML**:
+    * Inyección de datos respetando la plantilla corporativa oficial `Plantilla Informe de facturación.xlsx` con recálculo dinámico de fórmulas de subtotales por CC.AA, ratios interanuales y totales por sociedad (TSA y CAL).
+  * **Frontend Estandarizado (`FacturacionComparativaReportPage.tsx`)**:
+    * Selector dual de rangos de fechas (Periodo 1 de Referencia vs Periodo 2 Actual / Comparado) con botón de actualización compacto.
+    * 4 Tarjetas KPI interactivas (`Facturación Periodo Actual`, `Inspecciones Fase 1`, `Ingreso Medio / Insp.`, `Estaciones Comparadas`).
+    * Resumen comparativo por Sociedad (TSA / CAL / TOTAL GLOBAL) con chips de variación porcentual semántica.
+    * Gráfico comparativo de barras (`ReportBarChart`) continuo de ancho completo (`#1, #2, #3...` en orden vertical descendente), ordenado por tasa de crecimiento real (desde los mayores crecimientos positivos hasta los negativos en rojo tenue).
+    * Tabla detallada con ordenación en todas las columnas y paginador homogéneo con selector de tamaño (`ReportPaginationBar`).
+
+---
+
 ## [2.11.0] - 30/10/2026 — *Módulo Oficial de Duración Promedio de Inspecciones Periódicas (001), Fidelidad 1:1 Crystal Reports y Gráficos Visuales*
 
 ### ⏱️ Módulo de Duración Promedio de Inspecciones (001)
@@ -263,6 +378,25 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.17.0] - 03/11/2026 — *Nuevo Módulo Excel Facturación Comparativa (TSA / CAL), Corrección Bug Arrastre Legacy y Ranking Visual*
+
+### 📈 Nuevo Módulo Vertical: Excel Facturación de Inspecciones Comparativa (`facturacion-excel`)
+* **Migración Oficial de `frmCriteriosExcel.vb` / `clsExcelFacturacion.vb` (Informe C3)**:
+  * Implementación vertical completa (Oracle SQL, .NET 10 Web API, ClosedXML y React 19 con TÜV SÜD Algorithm DS).
+  * **Corrección Definitiva del "Bug de Arrastre" del Legacy**:
+    * En el código VB.NET legacy (`clsExcelFacturacion.vb`), la variable de matriz `ingresosInspecciones(0, 3)` se declaraba fuera del bucle de estaciones sin limpiarse, duplicando datos en UMAs vacías e inflando artificialmente el total en más de **589.445,24 €** y **14.254 inspecciones**.
+    * En Central Datos Web se establece aislamiento estricto por estación con inicialización explícita a `0,00 €` y `0` inspecciones, garantizando 100% de coincidencia al céntimo con la base de datos Oracle.
+  * **Exportación Oficial a Plantilla Excel (`.xlsx`) mediante ClosedXML**:
+    * Inyección de datos respetando la plantilla corporativa oficial `Plantilla Informe de facturación.xlsx` con recálculo dinámico de fórmulas de subtotales por CC.AA, ratios interanuales y totales por sociedad (TSA y CAL).
+  * **Frontend Estandarizado (`FacturacionComparativaReportPage.tsx`)**:
+    * Selector dual de rangos de fechas (Periodo 1 de Referencia vs Periodo 2 Actual / Comparado) con botón de actualización compacto.
+    * 4 Tarjetas KPI interactivas (`Facturación Periodo Actual`, `Inspecciones Fase 1`, `Ingreso Medio / Insp.`, `Estaciones Comparadas`).
+    * Resumen comparativo por Sociedad (TSA / CAL / TOTAL GLOBAL) con chips de variación porcentual semántica.
+    * Gráfico comparativo de barras (`ReportBarChart`) continuo de ancho completo (`#1, #2, #3...` en orden vertical descendente), ordenado por tasa de crecimiento real (desde los mayores crecimientos positivos hasta los negativos en rojo tenue).
+    * Tabla detallada con ordenación en todas las columnas y paginador homogéneo con selector de tamaño (`ReportPaginationBar`).
+
+---
+
 ## [2.10.0] - 30/10/2026 — *Restricción Integral de Estaciones por Permisos de Usuario (`CENTRAL_GENERAL`) y Optimización Reactiva del KPI Redondo*
 
 ### 🔐 Seguridad y Permisos de Estaciones por Usuario (Active Directory / Oracle)
@@ -284,6 +418,25 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
   * Se elimina la discrepancia que provocaba que el gráfico se quedara en blanco o sin datos al marcar y desmarcar estaciones en el filtro.
   * Respeto de la paleta semántica en el componente `ReportDonutChart`: Fav. F1 (Azul corporativo `#0046ad`), Rech. F1 (Rojo `#dc2626`), Fav. F2 (Celeste `#0284c7`), Rech. F2 (Naranja `#ea580c`).
   * Limpieza y reseteo defensivo del estado de hover al variar los datos representados.
+
+---
+
+## [2.17.0] - 03/11/2026 — *Nuevo Módulo Excel Facturación Comparativa (TSA / CAL), Corrección Bug Arrastre Legacy y Ranking Visual*
+
+### 📈 Nuevo Módulo Vertical: Excel Facturación de Inspecciones Comparativa (`facturacion-excel`)
+* **Migración Oficial de `frmCriteriosExcel.vb` / `clsExcelFacturacion.vb` (Informe C3)**:
+  * Implementación vertical completa (Oracle SQL, .NET 10 Web API, ClosedXML y React 19 con TÜV SÜD Algorithm DS).
+  * **Corrección Definitiva del "Bug de Arrastre" del Legacy**:
+    * En el código VB.NET legacy (`clsExcelFacturacion.vb`), la variable de matriz `ingresosInspecciones(0, 3)` se declaraba fuera del bucle de estaciones sin limpiarse, duplicando datos en UMAs vacías e inflando artificialmente el total en más de **589.445,24 €** y **14.254 inspecciones**.
+    * En Central Datos Web se establece aislamiento estricto por estación con inicialización explícita a `0,00 €` y `0` inspecciones, garantizando 100% de coincidencia al céntimo con la base de datos Oracle.
+  * **Exportación Oficial a Plantilla Excel (`.xlsx`) mediante ClosedXML**:
+    * Inyección de datos respetando la plantilla corporativa oficial `Plantilla Informe de facturación.xlsx` con recálculo dinámico de fórmulas de subtotales por CC.AA, ratios interanuales y totales por sociedad (TSA y CAL).
+  * **Frontend Estandarizado (`FacturacionComparativaReportPage.tsx`)**:
+    * Selector dual de rangos de fechas (Periodo 1 de Referencia vs Periodo 2 Actual / Comparado) con botón de actualización compacto.
+    * 4 Tarjetas KPI interactivas (`Facturación Periodo Actual`, `Inspecciones Fase 1`, `Ingreso Medio / Insp.`, `Estaciones Comparadas`).
+    * Resumen comparativo por Sociedad (TSA / CAL / TOTAL GLOBAL) con chips de variación porcentual semántica.
+    * Gráfico comparativo de barras (`ReportBarChart`) continuo de ancho completo (`#1, #2, #3...` en orden vertical descendente), ordenado por tasa de crecimiento real (desde los mayores crecimientos positivos hasta los negativos en rojo tenue).
+    * Tabla detallada con ordenación en todas las columnas y paginador homogéneo con selector de tamaño (`ReportPaginationBar`).
 
 ---
 
@@ -316,6 +469,25 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
     * Fase 2 (2ª Inspección): Favorables, Rechazadas, Total, % Rechazo.
     * Total Inspecciones: Total Fav., Total Rech., Total Insp., % Rechazo.
   * Impresión mediante iframe oculto aislado: se eliminan botones, scrollbars y bordes del navegador, ajustando la red completa de estaciones en **1 sola página A4 horizontal**.
+
+---
+
+## [2.17.0] - 03/11/2026 — *Nuevo Módulo Excel Facturación Comparativa (TSA / CAL), Corrección Bug Arrastre Legacy y Ranking Visual*
+
+### 📈 Nuevo Módulo Vertical: Excel Facturación de Inspecciones Comparativa (`facturacion-excel`)
+* **Migración Oficial de `frmCriteriosExcel.vb` / `clsExcelFacturacion.vb` (Informe C3)**:
+  * Implementación vertical completa (Oracle SQL, .NET 10 Web API, ClosedXML y React 19 con TÜV SÜD Algorithm DS).
+  * **Corrección Definitiva del "Bug de Arrastre" del Legacy**:
+    * En el código VB.NET legacy (`clsExcelFacturacion.vb`), la variable de matriz `ingresosInspecciones(0, 3)` se declaraba fuera del bucle de estaciones sin limpiarse, duplicando datos en UMAs vacías e inflando artificialmente el total en más de **589.445,24 €** y **14.254 inspecciones**.
+    * En Central Datos Web se establece aislamiento estricto por estación con inicialización explícita a `0,00 €` y `0` inspecciones, garantizando 100% de coincidencia al céntimo con la base de datos Oracle.
+  * **Exportación Oficial a Plantilla Excel (`.xlsx`) mediante ClosedXML**:
+    * Inyección de datos respetando la plantilla corporativa oficial `Plantilla Informe de facturación.xlsx` con recálculo dinámico de fórmulas de subtotales por CC.AA, ratios interanuales y totales por sociedad (TSA y CAL).
+  * **Frontend Estandarizado (`FacturacionComparativaReportPage.tsx`)**:
+    * Selector dual de rangos de fechas (Periodo 1 de Referencia vs Periodo 2 Actual / Comparado) con botón de actualización compacto.
+    * 4 Tarjetas KPI interactivas (`Facturación Periodo Actual`, `Inspecciones Fase 1`, `Ingreso Medio / Insp.`, `Estaciones Comparadas`).
+    * Resumen comparativo por Sociedad (TSA / CAL / TOTAL GLOBAL) con chips de variación porcentual semántica.
+    * Gráfico comparativo de barras (`ReportBarChart`) continuo de ancho completo (`#1, #2, #3...` en orden vertical descendente), ordenado por tasa de crecimiento real (desde los mayores crecimientos positivos hasta los negativos en rojo tenue).
+    * Tabla detallada con ordenación en todas las columnas y paginador homogéneo con selector de tamaño (`ReportPaginationBar`).
 
 ---
 
@@ -352,6 +524,25 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.17.0] - 03/11/2026 — *Nuevo Módulo Excel Facturación Comparativa (TSA / CAL), Corrección Bug Arrastre Legacy y Ranking Visual*
+
+### 📈 Nuevo Módulo Vertical: Excel Facturación de Inspecciones Comparativa (`facturacion-excel`)
+* **Migración Oficial de `frmCriteriosExcel.vb` / `clsExcelFacturacion.vb` (Informe C3)**:
+  * Implementación vertical completa (Oracle SQL, .NET 10 Web API, ClosedXML y React 19 con TÜV SÜD Algorithm DS).
+  * **Corrección Definitiva del "Bug de Arrastre" del Legacy**:
+    * En el código VB.NET legacy (`clsExcelFacturacion.vb`), la variable de matriz `ingresosInspecciones(0, 3)` se declaraba fuera del bucle de estaciones sin limpiarse, duplicando datos en UMAs vacías e inflando artificialmente el total en más de **589.445,24 €** y **14.254 inspecciones**.
+    * En Central Datos Web se establece aislamiento estricto por estación con inicialización explícita a `0,00 €` y `0` inspecciones, garantizando 100% de coincidencia al céntimo con la base de datos Oracle.
+  * **Exportación Oficial a Plantilla Excel (`.xlsx`) mediante ClosedXML**:
+    * Inyección de datos respetando la plantilla corporativa oficial `Plantilla Informe de facturación.xlsx` con recálculo dinámico de fórmulas de subtotales por CC.AA, ratios interanuales y totales por sociedad (TSA y CAL).
+  * **Frontend Estandarizado (`FacturacionComparativaReportPage.tsx`)**:
+    * Selector dual de rangos de fechas (Periodo 1 de Referencia vs Periodo 2 Actual / Comparado) con botón de actualización compacto.
+    * 4 Tarjetas KPI interactivas (`Facturación Periodo Actual`, `Inspecciones Fase 1`, `Ingreso Medio / Insp.`, `Estaciones Comparadas`).
+    * Resumen comparativo por Sociedad (TSA / CAL / TOTAL GLOBAL) con chips de variación porcentual semántica.
+    * Gráfico comparativo de barras (`ReportBarChart`) continuo de ancho completo (`#1, #2, #3...` en orden vertical descendente), ordenado por tasa de crecimiento real (desde los mayores crecimientos positivos hasta los negativos en rojo tenue).
+    * Tabla detallada con ordenación en todas las columnas y paginador homogéneo con selector de tamaño (`ReportPaginationBar`).
+
+---
+
 ## [2.07.0] - 30/10/2026 — *Resiliencia de Auditoría, Cola Offline y Diagnóstico Técnico Local*
 
 ### 📡 Resiliencia y Auditoría Desconectada (Offline Buffer & Auto-Sync)
@@ -366,6 +557,25 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
   * Accesible desde el banner global de advertencia offline en `App.tsx` y desde la alerta de incidencia de comunicación en `LoginPage.tsx`.
 * **Documentación Técnica**:
   * Actualización de `10_arquitectura_logging_auditoria_y_seguridad_pentest.md` incorporando la Sección 7 con diagrama de flujo Mermaid y especificación técnica exhaustiva.
+
+---
+
+## [2.17.0] - 03/11/2026 — *Nuevo Módulo Excel Facturación Comparativa (TSA / CAL), Corrección Bug Arrastre Legacy y Ranking Visual*
+
+### 📈 Nuevo Módulo Vertical: Excel Facturación de Inspecciones Comparativa (`facturacion-excel`)
+* **Migración Oficial de `frmCriteriosExcel.vb` / `clsExcelFacturacion.vb` (Informe C3)**:
+  * Implementación vertical completa (Oracle SQL, .NET 10 Web API, ClosedXML y React 19 con TÜV SÜD Algorithm DS).
+  * **Corrección Definitiva del "Bug de Arrastre" del Legacy**:
+    * En el código VB.NET legacy (`clsExcelFacturacion.vb`), la variable de matriz `ingresosInspecciones(0, 3)` se declaraba fuera del bucle de estaciones sin limpiarse, duplicando datos en UMAs vacías e inflando artificialmente el total en más de **589.445,24 €** y **14.254 inspecciones**.
+    * En Central Datos Web se establece aislamiento estricto por estación con inicialización explícita a `0,00 €` y `0` inspecciones, garantizando 100% de coincidencia al céntimo con la base de datos Oracle.
+  * **Exportación Oficial a Plantilla Excel (`.xlsx`) mediante ClosedXML**:
+    * Inyección de datos respetando la plantilla corporativa oficial `Plantilla Informe de facturación.xlsx` con recálculo dinámico de fórmulas de subtotales por CC.AA, ratios interanuales y totales por sociedad (TSA y CAL).
+  * **Frontend Estandarizado (`FacturacionComparativaReportPage.tsx`)**:
+    * Selector dual de rangos de fechas (Periodo 1 de Referencia vs Periodo 2 Actual / Comparado) con botón de actualización compacto.
+    * 4 Tarjetas KPI interactivas (`Facturación Periodo Actual`, `Inspecciones Fase 1`, `Ingreso Medio / Insp.`, `Estaciones Comparadas`).
+    * Resumen comparativo por Sociedad (TSA / CAL / TOTAL GLOBAL) con chips de variación porcentual semántica.
+    * Gráfico comparativo de barras (`ReportBarChart`) continuo de ancho completo (`#1, #2, #3...` en orden vertical descendente), ordenado por tasa de crecimiento real (desde los mayores crecimientos positivos hasta los negativos en rojo tenue).
+    * Tabla detallada con ordenación en todas las columnas y paginador homogéneo con selector de tamaño (`ReportPaginationBar`).
 
 ---
 
@@ -392,6 +602,25 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
   * Ordenación nativa SQL actualizada en `ObtenerUltimosDatosCentralizados.sql` con `ORDER BY e.Cod_Empresa, e.DesEstacion`.
 * **Optimización de Estilos en Tabla**:
   * Reemplazo de manipulación DOM imperativa en cabeceras `th` por clases nativas CSS (`.cd-table-th`, `.cd-table-th-active`) en `responsive.css`.
+
+---
+
+## [2.17.0] - 03/11/2026 — *Nuevo Módulo Excel Facturación Comparativa (TSA / CAL), Corrección Bug Arrastre Legacy y Ranking Visual*
+
+### 📈 Nuevo Módulo Vertical: Excel Facturación de Inspecciones Comparativa (`facturacion-excel`)
+* **Migración Oficial de `frmCriteriosExcel.vb` / `clsExcelFacturacion.vb` (Informe C3)**:
+  * Implementación vertical completa (Oracle SQL, .NET 10 Web API, ClosedXML y React 19 con TÜV SÜD Algorithm DS).
+  * **Corrección Definitiva del "Bug de Arrastre" del Legacy**:
+    * En el código VB.NET legacy (`clsExcelFacturacion.vb`), la variable de matriz `ingresosInspecciones(0, 3)` se declaraba fuera del bucle de estaciones sin limpiarse, duplicando datos en UMAs vacías e inflando artificialmente el total en más de **589.445,24 €** y **14.254 inspecciones**.
+    * En Central Datos Web se establece aislamiento estricto por estación con inicialización explícita a `0,00 €` y `0` inspecciones, garantizando 100% de coincidencia al céntimo con la base de datos Oracle.
+  * **Exportación Oficial a Plantilla Excel (`.xlsx`) mediante ClosedXML**:
+    * Inyección de datos respetando la plantilla corporativa oficial `Plantilla Informe de facturación.xlsx` con recálculo dinámico de fórmulas de subtotales por CC.AA, ratios interanuales y totales por sociedad (TSA y CAL).
+  * **Frontend Estandarizado (`FacturacionComparativaReportPage.tsx`)**:
+    * Selector dual de rangos de fechas (Periodo 1 de Referencia vs Periodo 2 Actual / Comparado) con botón de actualización compacto.
+    * 4 Tarjetas KPI interactivas (`Facturación Periodo Actual`, `Inspecciones Fase 1`, `Ingreso Medio / Insp.`, `Estaciones Comparadas`).
+    * Resumen comparativo por Sociedad (TSA / CAL / TOTAL GLOBAL) con chips de variación porcentual semántica.
+    * Gráfico comparativo de barras (`ReportBarChart`) continuo de ancho completo (`#1, #2, #3...` en orden vertical descendente), ordenado por tasa de crecimiento real (desde los mayores crecimientos positivos hasta los negativos en rojo tenue).
+    * Tabla detallada con ordenación en todas las columnas y paginador homogéneo con selector de tamaño (`ReportPaginationBar`).
 
 ---
 
@@ -440,6 +669,25 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.17.0] - 03/11/2026 — *Nuevo Módulo Excel Facturación Comparativa (TSA / CAL), Corrección Bug Arrastre Legacy y Ranking Visual*
+
+### 📈 Nuevo Módulo Vertical: Excel Facturación de Inspecciones Comparativa (`facturacion-excel`)
+* **Migración Oficial de `frmCriteriosExcel.vb` / `clsExcelFacturacion.vb` (Informe C3)**:
+  * Implementación vertical completa (Oracle SQL, .NET 10 Web API, ClosedXML y React 19 con TÜV SÜD Algorithm DS).
+  * **Corrección Definitiva del "Bug de Arrastre" del Legacy**:
+    * En el código VB.NET legacy (`clsExcelFacturacion.vb`), la variable de matriz `ingresosInspecciones(0, 3)` se declaraba fuera del bucle de estaciones sin limpiarse, duplicando datos en UMAs vacías e inflando artificialmente el total en más de **589.445,24 €** y **14.254 inspecciones**.
+    * En Central Datos Web se establece aislamiento estricto por estación con inicialización explícita a `0,00 €` y `0` inspecciones, garantizando 100% de coincidencia al céntimo con la base de datos Oracle.
+  * **Exportación Oficial a Plantilla Excel (`.xlsx`) mediante ClosedXML**:
+    * Inyección de datos respetando la plantilla corporativa oficial `Plantilla Informe de facturación.xlsx` con recálculo dinámico de fórmulas de subtotales por CC.AA, ratios interanuales y totales por sociedad (TSA y CAL).
+  * **Frontend Estandarizado (`FacturacionComparativaReportPage.tsx`)**:
+    * Selector dual de rangos de fechas (Periodo 1 de Referencia vs Periodo 2 Actual / Comparado) con botón de actualización compacto.
+    * 4 Tarjetas KPI interactivas (`Facturación Periodo Actual`, `Inspecciones Fase 1`, `Ingreso Medio / Insp.`, `Estaciones Comparadas`).
+    * Resumen comparativo por Sociedad (TSA / CAL / TOTAL GLOBAL) con chips de variación porcentual semántica.
+    * Gráfico comparativo de barras (`ReportBarChart`) continuo de ancho completo (`#1, #2, #3...` en orden vertical descendente), ordenado por tasa de crecimiento real (desde los mayores crecimientos positivos hasta los negativos en rojo tenue).
+    * Tabla detallada con ordenación en todas las columnas y paginador homogéneo con selector de tamaño (`ReportPaginationBar`).
+
+---
+
 ## [1.1.0] - 29/10/2026 — *Optimizaciones de Rendimiento y Negocio* (Commit: `cca987e`)
 
 ### Añadido
@@ -448,6 +696,25 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 * Filtrado operativo de las 29 estaciones oficiales activas de TÜV SÜD.
 * Componente vectorial corporativo del logotipo TÜV SÜD (`TuvSudLogo.tsx`).
 * Soporte para conexión directa a Oracle `ORCLDV` por puerto TCP `1521` eliminando el doble salto SOAP.
+
+---
+
+## [2.17.0] - 03/11/2026 — *Nuevo Módulo Excel Facturación Comparativa (TSA / CAL), Corrección Bug Arrastre Legacy y Ranking Visual*
+
+### 📈 Nuevo Módulo Vertical: Excel Facturación de Inspecciones Comparativa (`facturacion-excel`)
+* **Migración Oficial de `frmCriteriosExcel.vb` / `clsExcelFacturacion.vb` (Informe C3)**:
+  * Implementación vertical completa (Oracle SQL, .NET 10 Web API, ClosedXML y React 19 con TÜV SÜD Algorithm DS).
+  * **Corrección Definitiva del "Bug de Arrastre" del Legacy**:
+    * En el código VB.NET legacy (`clsExcelFacturacion.vb`), la variable de matriz `ingresosInspecciones(0, 3)` se declaraba fuera del bucle de estaciones sin limpiarse, duplicando datos en UMAs vacías e inflando artificialmente el total en más de **589.445,24 €** y **14.254 inspecciones**.
+    * En Central Datos Web se establece aislamiento estricto por estación con inicialización explícita a `0,00 €` y `0` inspecciones, garantizando 100% de coincidencia al céntimo con la base de datos Oracle.
+  * **Exportación Oficial a Plantilla Excel (`.xlsx`) mediante ClosedXML**:
+    * Inyección de datos respetando la plantilla corporativa oficial `Plantilla Informe de facturación.xlsx` con recálculo dinámico de fórmulas de subtotales por CC.AA, ratios interanuales y totales por sociedad (TSA y CAL).
+  * **Frontend Estandarizado (`FacturacionComparativaReportPage.tsx`)**:
+    * Selector dual de rangos de fechas (Periodo 1 de Referencia vs Periodo 2 Actual / Comparado) con botón de actualización compacto.
+    * 4 Tarjetas KPI interactivas (`Facturación Periodo Actual`, `Inspecciones Fase 1`, `Ingreso Medio / Insp.`, `Estaciones Comparadas`).
+    * Resumen comparativo por Sociedad (TSA / CAL / TOTAL GLOBAL) con chips de variación porcentual semántica.
+    * Gráfico comparativo de barras (`ReportBarChart`) continuo de ancho completo (`#1, #2, #3...` en orden vertical descendente), ordenado por tasa de crecimiento real (desde los mayores crecimientos positivos hasta los negativos en rojo tenue).
+    * Tabla detallada con ordenación en todas las columnas y paginador homogéneo con selector de tamaño (`ReportPaginationBar`).
 
 ---
 

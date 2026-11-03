@@ -11,6 +11,7 @@ import { DuracionPromedioReportPage } from './features/informes/pages/DuracionPr
 import { DefectoObdReportPage } from './features/informes/pages/DefectoObdReportPage';
 import { SinInspectorReportPage } from './features/informes/pages/SinInspectorReportPage';
 import { CuponDescuentoReportPage } from './features/informes/pages/CuponDescuentoReportPage';
+import { FacturacionComparativaReportPage } from './features/informes/pages/FacturacionComparativaReportPage';
 import { InformesHubPage } from './features/informes/pages/InformesHubPage';
 import { DESKTOP_MENUS, findMenuItem } from './constants/navigation.constants';
 import { UI_CONSTANTS } from './constants/ui.constants';
@@ -435,9 +436,22 @@ function AppContent() {
         )}
 
         {/* CASO C: Módulo de Facturación de Inspecciones (Dashboard + Ranking + Grid + Excel) */}
-        {(activeItemId === 'facturacion' || activeItemId === 'facturacion-excel') && (
+        {activeItemId === 'facturacion' && (
           <ErrorBoundary fallbackTitle="Error en Informe de Facturación">
             <FacturacionReportPage
+              onNavigateHome={handleGoHome}
+              onNavigateToInformes={() => {
+                setActiveGroupId('informes');
+                setActiveItemId('informes');
+              }}
+            />
+          </ErrorBoundary>
+        )}
+
+        {/* CASO C.3: Módulo de Excel Facturación Comparativa (TSA / CAL) */}
+        {activeItemId === 'facturacion-excel' && (
+          <ErrorBoundary fallbackTitle="Error en Informe Facturación Comparativa Excel">
+            <FacturacionComparativaReportPage
               onNavigateHome={handleGoHome}
               onNavigateToInformes={() => {
                 setActiveGroupId('informes');

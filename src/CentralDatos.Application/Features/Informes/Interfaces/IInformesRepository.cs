@@ -49,4 +49,12 @@ public interface IInformesRepository
         IReadOnlyList<string>? codEstaciones = null,
         string? fase = null,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<FacturacionComparativaDato>> ObtenerFacturacionComparativaAsync(
+        DateTime fechaInicioRango1,
+        DateTime fechaFinRango1,
+        DateTime fechaInicioRango2,
+        DateTime fechaFinRango2,
+        IReadOnlyList<string>? codEstaciones = null,
+        CancellationToken cancellationToken = default);
 }

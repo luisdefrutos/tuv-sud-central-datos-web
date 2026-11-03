@@ -431,3 +431,85 @@ export type SortableCuponDescuentoColumn =
   | 'importeAbonado'
   | 'marca'
   | 'fase';
+
+// ==========================================
+// TIPOS PARA INFORME DE FACTURACIÓN COMPARATIVA (TSA / CAL)
+// ==========================================
+
+export interface FilaFacturacionComparativa {
+  codEstacion: string;
+  desEstacion: string;
+  sociedad: string;
+  totalInspecciones1: number;
+  totalIngresos1: number;
+  totalIngresos1Formatted: string;
+  mediaIngreso1: number;
+  mediaIngreso1Formatted: string;
+  totalInspecciones2: number;
+  totalIngresos2: number;
+  totalIngresos2Formatted: string;
+  mediaIngreso2: number;
+  mediaIngreso2Formatted: string;
+  difInspecciones: number;
+  difInspeccionesFormatted: string;
+  porcentajeDifInspecciones: number;
+  porcentajeDifInspeccionesFormatted: string;
+  difIngresos: number;
+  difIngresosFormatted: string;
+  porcentajeDifIngresos: number;
+  porcentajeDifIngresosFormatted: string;
+}
+
+export interface TotalesSociedadFacturacion {
+  sociedad: string;
+  totalInspecciones1: number;
+  totalIngresos1: number;
+  totalIngresos1Formatted: string;
+  totalInspecciones2: number;
+  totalIngresos2: number;
+  totalIngresos2Formatted: string;
+  difIngresos: number;
+  difIngresosFormatted: string;
+  porcentajeDifIngresos: number;
+  porcentajeDifIngresosFormatted: string;
+  difInspecciones: number;
+  difInspeccionesFormatted: string;
+  porcentajeDifInspecciones: number;
+  porcentajeDifInspeccionesFormatted: string;
+}
+
+export interface GraficoFacturacionComparativa {
+  codEstacion: string;
+  estacionNombre: string;
+  sociedad: string;
+  inspecciones1: number;
+  inspecciones2: number;
+  ingresos1: number;
+  ingresos2: number;
+  ingresos1Formatted: string;
+  ingresos2Formatted: string;
+  porcentajeVariacionIngresos: number;
+}
+
+export interface InformeFacturacionComparativaResponse {
+  rango1Label: string;
+  rango2Label: string;
+  filas: FilaFacturacionComparativa[];
+  totalRegistros: number;
+  totalesPorSociedad: TotalesSociedadFacturacion[];
+  totalGlobal: TotalesSociedadFacturacion;
+  kpis: ReportKpiData[];
+  graficoEstaciones: GraficoFacturacionComparativa[];
+}
+
+export type SortableFacturacionComparativaColumn =
+  | 'desEstacion'
+  | 'sociedad'
+  | 'totalIngresos1'
+  | 'totalInspecciones1'
+  | 'totalIngresos2'
+  | 'totalInspecciones2'
+  | 'difIngresos'
+  | 'porcentajeDifIngresos'
+  | 'difInspecciones'
+  | 'porcentajeDifInspecciones';
