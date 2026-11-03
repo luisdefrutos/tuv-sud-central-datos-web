@@ -30,7 +30,7 @@ export interface MenuGroup {
 }
 
 /** Pantallas ya migradas a la web (resto muestran la ficha "en migración") */
-export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion', 'num-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector'] as const;
+export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion', 'num-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'cupon-descuento'] as const;
 
 export const DESKTOP_MENUS: MenuGroup[] = [
   {
@@ -67,7 +67,7 @@ export const DESKTOP_MENUS: MenuGroup[] = [
       },
       { id: 'defecto-obd', label: 'Informe inspecciones con defecto OBD', descripcion: 'Auditoría técnica y control de lecturas de emisiones OBD anómalas por estación ITV.' },
       { id: 'duracion-promedio', label: 'Informe duración promedio' },
-      { id: 'cupon-descuento', label: 'Inspecciones con cupón descuento' },
+      { id: 'cupon-descuento', label: 'Inspecciones con cupón descuento', icon: '🎟️', descripcion: 'Auditoría técnica y control de liquidación de promociones y cupones de descuento aplicados en la red ITV.' },
       {
         id: 'info-clientes',
         label: 'Información Clientes',

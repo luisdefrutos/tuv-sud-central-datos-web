@@ -11,6 +11,7 @@ import {
   ReportTableContainer,
   ReportBarChart,
   ReportDonutChart,
+  ReportPaginationBar,
 } from '../components';
 import { useSinInspectorReport } from '../hooks/useSinInspectorReport';
 import type { FilaSinInspector } from '../types/informes.types';
@@ -143,7 +144,7 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
         </TsAlert>
       )}
 
-      {/* 4. Tarjetas KPIs Ejecutivas */}
+      {/* 4. Tarjetas KPIs Ejecutivas con Filtros Rápidos en Botón */}
       <div
         style={{
           display: 'grid',
@@ -152,17 +153,61 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
         }}
       >
         {data && data.kpis && data.kpis.length > 0 ? (
-          data.kpis.map((kpi, index) => (
-            <ReportKpiCard
-              key={`${kpi.id}_${index}`}
-              title={kpi.titulo}
-              value={kpi.valor}
-              subtitle={kpi.subtitulo}
-              icon={kpi.icon}
-              variant={kpi.variant}
-              loading={isLoading}
-            />
-          ))
+          data.kpis.map((kpi, index) => {
+            const isFase1Active = kpi.id === 'fase1-sin-inspector' && filters.fase === '1';
+            const isFase2Active = kpi.id === 'fase2-sin-inspector' && filters.fase === '2';
+            const isTodasActive = (kpi.id === 'total-sin-inspector' || kpi.id === 'estaciones-afectadas') && filters.fase === 'TODAS';
+            const isActive = isFase1Active || isFase2Active || (isTodasActive && kpi.id === 'total-sin-inspector');
+
+            const handleClick = () => {
+              if (kpi.id === 'fase1-sin-inspector') {
+                filters.setFase(filters.fase === '1' ? 'TODAS' : '1');
+              } else if (kpi.id === 'fase2-sin-inspector') {
+                filters.setFase(filters.fase === '2' ? 'TODAS' : '2');
+              } else {
+                filters.setFase('TODAS');
+              }
+            };
+
+            return (
+              <div
+                key={`${kpi.id}_${index}`}
+                onClick={handleClick}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleClick();
+                  }
+                }}
+                style={{
+                  cursor: 'pointer',
+                  borderRadius: '8px',
+                  outline: isActive ? '2px solid #0046ad' : 'none',
+                  outlineOffset: '2px',
+                  boxShadow: isActive ? '0 4px 12px rgba(0, 70, 173, 0.15)' : 'none',
+                  transition: 'all 0.15s ease',
+                }}
+                title={
+                  kpi.id === 'fase1-sin-inspector'
+                    ? 'Filtrar inspecciones de 1ª Fase'
+                    : kpi.id === 'fase2-sin-inspector'
+                    ? 'Filtrar inspecciones de 2ª Fase'
+                    : 'Ver todas las fases'
+                }
+              >
+                <ReportKpiCard
+                  title={kpi.titulo}
+                  value={kpi.valor}
+                  subtitle={kpi.subtitulo}
+                  icon={kpi.icon}
+                  variant={kpi.variant}
+                  loading={isLoading}
+                />
+              </div>
+            );
+          })
         ) : (
           [
             { id: 'total-sin-inspector', title: 'Total Sin Inspector', value: isLoading ? '...' : '0', subtitle: 'Centros con incidencias', icon: '⚠️', variant: 'neutral' as const },
@@ -183,8 +228,8 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
         )}
       </div>
 
-      {/* 5. Gráfico de Estaciones Afectadas (Barras Ranking / Donut Cuota) */}
-      {data && data.graficoEstaciones && data.graficoEstaciones.length > 0 && (
+      {/* 5. Selector Gráfico Permanente (Barras Ranking / Donut Cuota) */}
+      {data && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#64748b' }}>Vista del Gráfico:</span>
@@ -225,20 +270,39 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
             </div>
           </div>
 
-          {chartMode === 'bar' ? (
-            <ReportBarChart
-              title="Ranking de Estaciones con Inspecciones sin Inspector"
-              subtitle="Centros ITV ordenados por volumen de inspecciones sin inspector registrado"
-              data={data.graficoEstaciones}
-              valueFormatter={(val) => `${val.toLocaleString('es-ES')} insp.`}
-            />
+          {data.graficoEstaciones && data.graficoEstaciones.length > 0 ? (
+            chartMode === 'bar' ? (
+              <ReportBarChart
+                title="Ranking de Estaciones con Inspecciones sin Inspector"
+                subtitle="Centros ITV ordenados por volumen de inspecciones sin inspector registrado"
+                data={data.graficoEstaciones}
+                valueFormatter={(val) => `${val.toLocaleString('es-ES')} insp.`}
+              />
+            ) : (
+              <ReportDonutChart
+                title="Distribución de Inspecciones sin Inspector por Estación"
+                subtitle="Porcentaje de cuota sobre el total de incidencias registradas en la red analizada"
+                data={data.graficoEstaciones}
+                valueFormatter={(val) => `${val.toLocaleString('es-ES')} insp.`}
+              />
+            )
           ) : (
-            <ReportDonutChart
-              title="Distribución de Inspecciones sin Inspector por Estación"
-              subtitle="Porcentaje de cuota sobre el total de incidencias registradas en la red analizada"
-              data={data.graficoEstaciones}
-              valueFormatter={(val) => `${val.toLocaleString('es-ES')} insp.`}
-            />
+            <div
+              style={{
+                backgroundColor: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                padding: '2rem',
+                textAlign: 'center',
+                color: '#15803d',
+              }}
+            >
+              <span style={{ fontSize: '1.75rem', display: 'block', marginBottom: '0.5rem' }}>✅</span>
+              <strong style={{ fontSize: '0.95rem' }}>No hay incidencias sin inspector registradas</strong>
+              <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.84rem', color: '#64748b' }}>
+                Todas las inspecciones para los filtros indicados tienen inspectores técnicos formalmente asignados.
+              </p>
+            </div>
           )}
         </div>
       )}
@@ -266,15 +330,15 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
             }}
           >
             <colgroup>
-              <col style={{ width: '105px' }} /> {/* Fecha */}
-              <col style={{ width: '95px' }} />  {/* Matrícula */}
-              <col style={{ width: '180px' }} /> {/* Estación */}
-              <col style={{ width: '210px' }} /> {/* Vehículo */}
-              <col style={{ width: '85px' }} />  {/* Motor */}
-              <col style={{ width: '130px' }} /> {/* Tipo Inspección */}
-              <col style={{ width: '80px' }} />  {/* Fase */}
-              <col style={{ width: '140px' }} /> {/* Resultado */}
-              <col style={{ width: '75px' }} />  {/* Detalle */}
+              <col style={{ width: '105px' }} />
+              <col style={{ width: '95px' }} />
+              <col style={{ width: '180px' }} />
+              <col style={{ width: '210px' }} />
+              <col style={{ width: '85px' }} />
+              <col style={{ width: '130px' }} />
+              <col style={{ width: '80px' }} />
+              <col style={{ width: '140px' }} />
+              <col style={{ width: '75px' }} />
             </colgroup>
             <thead>
               <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0', color: '#475569', textAlign: 'left' }}>
@@ -459,69 +523,16 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
           </table>
         </div>
 
-        {/* 6.1 Barra de Paginación Reactiva */}
-        {totalFilas > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '0.85rem 1rem',
-              borderTop: '1px solid #e2e8f0',
-              backgroundColor: '#ffffff',
-              flexWrap: 'wrap',
-              gap: '12px',
-              fontSize: '0.82rem',
-            }}
-          >
-            <div style={{ color: '#64748b' }}>
-              Página <span style={{ fontWeight: 700, color: '#1e293b' }}>{page}</span> de{' '}
-              <span style={{ fontWeight: 700, color: '#1e293b' }}>{totalPaginas}</span> ({totalFilas} registros en total)
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <TsButton
-                variant="secondary"
-                size="small"
-                onClick={() => setPage(1)}
-                disabled={page <= 1}
-                style={{ padding: '3px 8px', fontSize: '0.75rem' }}
-              >
-                « Primera
-              </TsButton>
-              <TsButton
-                variant="secondary"
-                size="small"
-                onClick={() => setPage(page - 1)}
-                disabled={page <= 1}
-                style={{ padding: '3px 8px', fontSize: '0.75rem' }}
-              >
-                ‹ Anterior
-              </TsButton>
-              <span style={{ margin: '0 6px', fontWeight: 600, color: '#0046ad' }}>
-                {page} / {totalPaginas}
-              </span>
-              <TsButton
-                variant="secondary"
-                size="small"
-                onClick={() => setPage(page + 1)}
-                disabled={page >= totalPaginas}
-                style={{ padding: '3px 8px', fontSize: '0.75rem' }}
-              >
-                Siguiente ›
-              </TsButton>
-              <TsButton
-                variant="secondary"
-                size="small"
-                onClick={() => setPage(totalPaginas)}
-                disabled={page >= totalPaginas}
-                style={{ padding: '3px 8px', fontSize: '0.75rem' }}
-              >
-                Última »
-              </TsButton>
-            </div>
-          </div>
-        )}
+        {/* 6.1 Barra de Paginación Reactiva Homogénea */}
+        <ReportPaginationBar
+          page={page}
+          pageSize={pageSize}
+          totalFilas={totalFilas}
+          totalPaginas={totalPaginas}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+          unidadRegistros="registros"
+        />
       </ReportTableContainer>
 
       {/* 7. Modal Flotante de Ficha Técnica */}

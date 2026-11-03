@@ -5,6 +5,7 @@ export * from './ReportLoadingModal';
 export * from './ReportTableContainer';
 export * from './ReportDateRangeAlert';
 export * from './ReportPageHeader';
+export * from './ReportPaginationBar';
 export * from './CrystalReportPreviewModal';
 export * from '../../../components/common/ReportKpiCard';
 export * from '../../../components/common/SortIndicator';

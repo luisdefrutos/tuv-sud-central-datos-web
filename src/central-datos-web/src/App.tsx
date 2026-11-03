@@ -10,6 +10,7 @@ import { NumeroInspeccionesReportPage } from './features/informes/pages/NumeroIn
 import { DuracionPromedioReportPage } from './features/informes/pages/DuracionPromedioReportPage';
 import { DefectoObdReportPage } from './features/informes/pages/DefectoObdReportPage';
 import { SinInspectorReportPage } from './features/informes/pages/SinInspectorReportPage';
+import { CuponDescuentoReportPage } from './features/informes/pages/CuponDescuentoReportPage';
 import { InformesHubPage } from './features/informes/pages/InformesHubPage';
 import { DESKTOP_MENUS, findMenuItem } from './constants/navigation.constants';
 import { UI_CONSTANTS } from './constants/ui.constants';
@@ -31,7 +32,7 @@ function AppContent() {
       const itemId = hash.replace('#/modulo/', '').trim();
       if (itemId) {
         const { group } = findMenuItem(itemId);
-        const autoGroup = group?.id || (['facturacion', 'facturacion-excel', 'num-inspecciones', 'numero-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'sin-inspector', 'informes'].includes(itemId) ? 'informes' : 'aplicacion');
+        const autoGroup = group?.id || (['facturacion', 'facturacion-excel', 'num-inspecciones', 'numero-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'sin-inspector', 'cupon-descuento', 'informes'].includes(itemId) ? 'informes' : 'aplicacion');
         return { itemId, groupId: autoGroup };
       }
     }
@@ -485,6 +486,19 @@ function AppContent() {
           </ErrorBoundary>
         )}
 
+        {/* CASO C.6: Módulo de Inspecciones con Cupón Descuento */}
+        {activeItemId === 'cupon-descuento' && (
+          <ErrorBoundary fallbackTitle="Error en Informe Cupón Descuento">
+            <CuponDescuentoReportPage
+              onNavigateHome={handleGoHome}
+              onNavigateToInformes={() => {
+                setActiveGroupId('informes');
+                setActiveItemId('informes');
+              }}
+            />
+          </ErrorBoundary>
+        )}
+
         {/* CASO C.5: Módulo de Inspecciones sin Inspector (Informes de Control) */}
         {(activeItemId === 'control-sin-inspector' || activeItemId === 'sin-inspector') && (
           <ErrorBoundary fallbackTitle="Error en Informe Inspecciones Sin Inspector">
@@ -517,7 +531,8 @@ function AppContent() {
           activeItemId !== 'duracion-promedio' &&
           activeItemId !== 'defecto-obd' &&
           activeItemId !== 'control-sin-inspector' &&
-          activeItemId !== 'sin-inspector' && (
+          activeItemId !== 'sin-inspector' &&
+          activeItemId !== 'cupon-descuento' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {/* Miga de Pan Correspondiente Interactiva */}
             <TsBreadcrumb>

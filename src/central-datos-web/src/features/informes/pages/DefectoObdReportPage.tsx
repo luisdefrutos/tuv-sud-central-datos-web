@@ -12,6 +12,7 @@ import { ReportKpiCard } from '../../../components/common/ReportKpiCard';
 import { ReportBarChart } from '../components/ReportBarChart';
 import { ReportDonutChart } from '../components/ReportDonutChart';
 import { ReportTableContainer } from '../components/ReportTableContainer';
+import { ReportPaginationBar } from '../components/ReportPaginationBar';
 import { BlockingLoadingModal } from '../../../components/common/BlockingLoadingModal';
 import { SortIndicator } from '../../../components/common/SortIndicator';
 import { AppTooltip } from '../../../components/common/AppTooltip';
@@ -591,135 +592,19 @@ export const DefectoObdReportPage: React.FC<DefectoObdReportPageProps> = ({
           </table>
         </div>
 
-        {/* 7.1 Barra de Paginación Reactiva */}
-        {totalFilas > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '12px',
-              padding: '0.75rem 1rem',
-              backgroundColor: '#f8fafc',
-              borderTop: '1px solid #e2e8f0',
-              fontSize: '0.84rem',
-              color: '#475569',
-            }}
-          >
-            {/* Información de registros visibles */}
-            <div>
-              Mostrando <strong style={{ color: '#0f172a' }}>{inicioIndice + 1}</strong> a{' '}
-              <strong style={{ color: '#0f172a' }}>{finIndice}</strong> de{' '}
-              <strong style={{ color: '#0046ad' }}>{totalFilas.toLocaleString('es-ES')}</strong> registros
-            </div>
-
-            {/* Controles de Navegación de Página */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <button
-                type="button"
-                onClick={() => setCurrentPage(1)}
-                disabled={pageActual <= 1}
-                style={{
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  border: '1px solid #cbd5e1',
-                  backgroundColor: pageActual <= 1 ? '#f1f5f9' : '#ffffff',
-                  color: pageActual <= 1 ? '#94a3b8' : '#0046ad',
-                  cursor: pageActual <= 1 ? 'not-allowed' : 'pointer',
-                  fontWeight: 600,
-                  fontSize: '0.8rem',
-                }}
-              >
-                « Primera
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={pageActual <= 1}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: '4px',
-                  border: '1px solid #cbd5e1',
-                  backgroundColor: pageActual <= 1 ? '#f1f5f9' : '#ffffff',
-                  color: pageActual <= 1 ? '#94a3b8' : '#0046ad',
-                  cursor: pageActual <= 1 ? 'not-allowed' : 'pointer',
-                  fontWeight: 600,
-                  fontSize: '0.8rem',
-                }}
-              >
-                ‹ Anterior
-              </button>
-
-              <span style={{ margin: '0 6px', fontWeight: 600, color: '#1e293b' }}>
-                Página {pageActual} de {totalPaginas}
-              </span>
-
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.min(totalPaginas, p + 1))}
-                disabled={pageActual >= totalPaginas}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: '4px',
-                  border: '1px solid #cbd5e1',
-                  backgroundColor: pageActual >= totalPaginas ? '#f1f5f9' : '#ffffff',
-                  color: pageActual >= totalPaginas ? '#94a3b8' : '#0046ad',
-                  cursor: pageActual >= totalPaginas ? 'not-allowed' : 'pointer',
-                  fontWeight: 600,
-                  fontSize: '0.8rem',
-                }}
-              >
-                Siguiente ›
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrentPage(totalPaginas)}
-                disabled={pageActual >= totalPaginas}
-                style={{
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  border: '1px solid #cbd5e1',
-                  backgroundColor: pageActual >= totalPaginas ? '#f1f5f9' : '#ffffff',
-                  color: pageActual >= totalPaginas ? '#94a3b8' : '#0046ad',
-                  cursor: pageActual >= totalPaginas ? 'not-allowed' : 'pointer',
-                  fontWeight: 600,
-                  fontSize: '0.8rem',
-                }}
-              >
-                Última »
-              </button>
-            </div>
-
-            {/* Selector de Tamaño de Página (Combo 50, 100, 200, 500) */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Registros por página:</span>
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                style={{
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  border: '1px solid #cbd5e1',
-                  backgroundColor: '#ffffff',
-                  color: '#0f172a',
-                  fontWeight: 600,
-                  fontSize: '0.82rem',
-                  cursor: 'pointer',
-                  outline: 'none',
-                }}
-              >
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-                <option value={200}>200</option>
-                <option value={500}>500</option>
-              </select>
-            </div>
-          </div>
-        )}
+        {/* 7.1 Barra de Paginación Reactiva Homogénea */}
+        <ReportPaginationBar
+          page={pageActual}
+          pageSize={pageSize}
+          totalFilas={totalFilas}
+          totalPaginas={totalPaginas}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setCurrentPage(1);
+          }}
+          unidadRegistros="registros"
+        />
       </ReportTableContainer>
 
       {/* 8. Modal de Ficha Técnica Detallada */}

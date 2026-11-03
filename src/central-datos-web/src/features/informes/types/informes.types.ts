@@ -351,3 +351,83 @@ export type SortableSinInspectorColumn =
   | 'tipoInspeccion'
   | 'fase'
   | 'textoResultado';
+
+// ==========================================
+// Tipos para Inspecciones con Cupón Descuento
+// ==========================================
+
+export interface FilaCuponDescuento {
+  codInspeccion: string;
+  codEstacion: string;
+  desEstacion: string;
+  codEmpresa: string;
+  nombreEmpresa: string;
+  claveSociedad: string;
+  matricula: string;
+  fechaInspeccion: string;
+  fechaInspeccionFormatted: string;
+  codCupon: string;
+  promocion: string;
+  descuento: number;
+  descuentoFormatted: string;
+  importeAbonado: number;
+  importeAbonadoFormatted: string;
+  marca: string;
+  modelo: string;
+  tipoMotor: string;
+  tipoVehiculo: string;
+  tipoInspeccion: string;
+  textoResultado: string;
+  resultado: string;
+  fase: string;
+  indica12: string;
+  cHomologacion: string | null;
+  clasificacion: string;
+  mma: number | null;
+  kilometraje: string | null;
+}
+
+export interface GraficoEstacionCuponDescuento {
+  codEstacion: string;
+  desEstacion: string;
+  claveSociedad: string;
+  totalInspecciones: number;
+  totalDescuento: number;
+  totalDescuentoFormatted: string;
+  totalAbonado: number;
+  totalAbonadoFormatted: string;
+  pctSobreTotal: string;
+}
+
+export interface GraficoPromocionCupon {
+  promocion: string;
+  totalInspecciones: number;
+  totalDescuento: number;
+  totalDescuentoFormatted: string;
+  pctSobreTotal: string;
+}
+
+export interface InformeCuponDescuentoResponse {
+  filas: FilaCuponDescuento[];
+  totalInspecciones: number;
+  totalInspeccionesFormatted: string;
+  totalDescuento: number;
+  totalDescuentoFormatted: string;
+  totalImporteAbonado: number;
+  totalImporteAbonadoFormatted: string;
+  totalEstacionesAfectadas: number;
+  kpis: ReportKpiData[];
+  graficoEstaciones: ReportBarChartPoint[];
+  graficoPromociones: ReportBarChartPoint[];
+}
+
+export type SortableCuponDescuentoColumn =
+  | 'fechaInspeccion'
+  | 'matricula'
+  | 'desEstacion'
+  | 'codCupon'
+  | 'promocion'
+  | 'descuento'
+  | 'importeAbonado'
+  | 'marca'
+  | 'fase';

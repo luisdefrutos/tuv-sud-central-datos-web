@@ -24,6 +24,8 @@ export const API_ENDPOINTS = {
     DEFECTO_OBD_EXPORTAR: '/api/v1/informes/defecto-obd/exportar-excel',
     SIN_INSPECTOR_CONSULTAR: '/api/v1/informes/sin-inspector/consultar',
     SIN_INSPECTOR_EXPORTAR: '/api/v1/informes/sin-inspector/exportar-excel',
+    CUPON_DESCUENTO_CONSULTAR: '/api/v1/informes/cupon-descuento/consultar',
+    CUPON_DESCUENTO_EXPORTAR: '/api/v1/informes/cupon-descuento/exportar-excel',
   },
   DOCS: {
     SWAGGER: '/swagger',

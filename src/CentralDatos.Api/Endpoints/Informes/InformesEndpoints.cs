@@ -232,6 +232,50 @@ public static class InformesEndpoints
         .WithName("ExportarSinInspectorExcel")
         .WithSummary("Genera y descarga el libro Excel oficial (.xlsx) de inspecciones sin inspector con pestañas individuales por estación");
 
+        // 11. Consulta de inspecciones con cupón descuento
+        group.MapPost("/cupon-descuento/consultar", async (
+            [FromBody] FiltrosCuponDescuentoRequestDto filtros,
+            [FromServices] IInformesCuponDescuentoService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var resultado = await service.GenerarInformeCuponDescuentoAsync(filtros, ct);
+                return Results.Ok(resultado);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .WithName("ConsultarCuponDescuento")
+        .WithSummary("Consulta el listado y métricas analíticas de inspecciones realizadas con cupón de descuento");
+
+        // 12. Exportación de inspecciones con cupón descuento a Excel (.xlsx multi-hoja por estación CUPONES_DTO_ITV_XXXX)
+        group.MapPost("/cupon-descuento/exportar-excel", async (
+            [FromBody] FiltrosCuponDescuentoRequestDto filtros,
+            [FromServices] IInformesCuponDescuentoService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var archivoBytes = await service.GenerarExportacionCuponDescuentoExcelAsync(filtros, ct);
+                var nombreFichero = $"inspecciones-cupon-descuento-{DateTime.Now:yyyyMMdd-HHmm}.xlsx";
+
+                return Results.File(
+                    archivoBytes,
+                    contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileDownloadName: nombreFichero);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .RequireRateLimiting("excel-export-policy")
+        .WithName("ExportarCuponDescuentoExcel")
+        .WithSummary("Genera y descarga el libro Excel oficial (.xlsx) de inspecciones con cupón descuento con pestañas individuales por estación CUPONES_DTO_ITV_XXXX");
+
         return app;
     }
 }

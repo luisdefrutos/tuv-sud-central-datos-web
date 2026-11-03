@@ -41,4 +41,12 @@ public interface IInformesRepository
         IReadOnlyList<string>? codEstaciones = null,
         string? fase = null,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<InspeccionCuponDescuentoDato>> ObtenerInspeccionesCuponDescuentoAsync(
+        DateTime fechaInicio,
+        DateTime fechaFin,
+        string? codEmpresa = null,
+        IReadOnlyList<string>? codEstaciones = null,
+        string? fase = null,
+        CancellationToken cancellationToken = default);
 }

@@ -109,6 +109,8 @@ export const InformesHubPage: React.FC<InformesHubPageProps> = ({
             descripcion = 'Cálculo de tiempos medios de inspección periódica (001) por tipo de vehículo y estación, ranking de agilidad e impresión Crystal Report.';
           } else if (item.id === 'defecto-obd') {
             descripcion = 'Auditoría técnica y control de lecturas de emisiones OBD anómalas por estación ITV.';
+          } else if (item.id === 'cupon-descuento') {
+            descripcion = 'Auditoría técnica y control de liquidación de promociones y cupones de descuento aplicados en la red ITV.';
           } else if (item.id === 'control-sin-inspector') {
             descripcion = 'Control y auditoría técnica de inspecciones que no tienen asignado ningún inspector responsable en la red ITV.';
           }

@@ -4,6 +4,40 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.16.0] - 03/11/2026 — *Nuevo Módulo Inspecciones con Cupón Descuento & Estabilización de Inspecciones sin Inspector*
+
+### 🎟️ Nuevo Módulo Vertical: Informe de Inspecciones con Cupón Descuento (`cupon-descuento`)
+* **Migración Oficial de `frmCriterios.vb` (`Inspecciones_Con_Cupon_Descuento`)**:
+  * Implementación vertical completa (Oracle SQL, .NET 10 Web API, React 19 con TÜV SÜD Algorithm DS).
+  * **Consulta SQL Indexada de Ultra Alto Rendimiento (`ObtenerInformeCuponDescuento.sql`)**:
+    * Optimización con `LEFT JOIN CENTRALITV.CUPONES c ON i.CODCUPON = c.CODCUPON` sin envoltorios `TRIM` en las claves indexadas, permitiendo el uso inmediato del índice.
+    * Hint `/*+ INDEX(i P17_INSPECCION P31_INSPECCION) */`.
+    * **Benchmark Verificado**: **165 ms** para consulta por estación individual y **3,89 s** para 1 mes completo en toda la red de 30 estaciones (10.968 inspecciones con cupón).
+  * **Exportación Oficial a Excel Multi-pestaña**:
+    * Generación de libro Excel mediante `ClosedXML` particionado por estación (`CUPONES_DTO_ITV_{CodEstacion}`), idéntico al generado por la aplicación de escritorio legacy.
+    * Protegido por limitador de concurrencia `excel-export-policy` (RateLimiter) para garantizar la estabilidad del servidor ante descargas masivas.
+  * **Frontend Estandarizado (`CuponDescuentoReportPage.tsx`)**:
+    * 4 Tarjetas KPI financieras (`Inspecciones con Cupón`, `Total Descuento Aplicado`, `Importe Abonado en Caja`, `Campaña Más Utilizada`).
+    * Selector dual de gráficos interactivos: Ranking por estación en barras (`ReportBarChart`) y distribución de promociones en gráfico circular (`ReportDonutChart`).
+    * Grid de 9 columnas con búsqueda en memoria, ordenación global previa a paginación y modal de ficha técnica.
+
+### 📄 Paginación Homogénea en Todos los Informes (`ReportPaginationBar`)
+* **Componente Oficial Reutilizable (`ReportPaginationBar.tsx`)**:
+  * Creación e integración del componente estándar de paginación con selector interactivo de tamaño de página (`25, 50, 100, 200, 500`) homogéneo en todos los informes de listado tabular (`CuponDescuentoReportPage`, `SinInspectorReportPage`, `DefectoObdReportPage`).
+  * Unificación de la experiencia de usuario: contador textual (`Página X de Y - Z registros en total`), botones corporativos de navegación (`« Primera`, `‹ Anterior`, `página / total`, `Siguiente ›`, `Última »`) y selector reactivo que resetea automáticamente a la página 1.
+
+### 🛠️ Estabilización y Mejoras en Inspecciones sin Inspector (`control-sin-inspector`)
+* **Corrección de Error de Anidación e Hidratación de React 19 (`<colgroup>`)**:
+  * Eliminación de comentarios y nodos de texto dentro de `<colgroup>` en las tablas de `SinInspectorReportPage.tsx` y `CuponDescuentoReportPage.tsx`, eliminando el error de consola de React 19 que provocaba comportamientos anómalos o pantallazos blancos al renderizar.
+* **Estabilización de Referencias de Estaciones en `useReportFilters`**:
+  * Creación de la constante a nivel de módulo `TODAS_LAS_ESTACIONES_CODIGOS` para evitar que `estacionesPermitidas` re-instancie una nueva matriz cada vez que el contexto de usuario actualiza la sesión, erradicando los re-disparos involuntarios de `useEffect` ('reactividad fantasma a los pocos segundos').
+* **Tarjetas KPI Interactivas y Botones de Filtro Rápido**:
+  * Integración de comportamiento interactivo en las tarjetas KPI de `SinInspectorReportPage`: hacer clic en *Fase 1*, *Fase 2* o *Total* filtra reactivamente las inspecciones correspondientes.
+* **Selector Dual Permanente de Gráficos con Estado Vacío Corporativo**:
+  * El selector de gráficos (`📊 Barras` / `🍩 Cuota por Estación`) permanece visible incluso si el resultado no tiene incidencias (0 inspecciones sin inspector), mostrando una tarjeta informativa verde de calidad conforme en lugar de hacer parpadear o colapsar la vista.
+
+---
+
 ## [2.15.0] - 03/11/2026 — *Blindaje de la Aplicación con ErrorBoundary y Corrección de Props de Componentes*
 
 ### 🛡️ Estabilidad y Blindaje de UI contra Pantallas en Blanco (React 19)

@@ -3,6 +3,8 @@ import type { FiltroSociedad } from '../../estaciones/types/estaciones.types';
 import { ESTACIONES_OFICIALES } from '../../../constants/estaciones.constants';
 import { useAuth } from '../../auth/context/AuthContext';
 
+const TODAS_LAS_ESTACIONES_CODIGOS = ESTACIONES_OFICIALES.map((e) => e.codigo);
+
 export interface ReportFilterValues {
   fechaInicio: string;
   fechaFin: string;
@@ -51,7 +53,7 @@ export function useReportFilters(options: UseReportFiltersOptions = {}) {
   // Estaciones autorizadas para el usuario en sesión
   const estacionesPermitidas = useMemo(() => {
     if (!user || user.isSupervisor || !user.allowedStations || user.allowedStations.length === 0) {
-      return ESTACIONES_OFICIALES.map((e) => e.codigo);
+      return TODAS_LAS_ESTACIONES_CODIGOS;
     }
     return user.allowedStations;
   }, [user]);
