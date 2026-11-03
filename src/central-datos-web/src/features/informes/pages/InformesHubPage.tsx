@@ -115,6 +115,9 @@ export const InformesHubPage: React.FC<InformesHubPageProps> = ({
             descripcion = 'Auditoría técnica y control de liquidación de promociones y cupones de descuento aplicados en la red ITV.';
           } else if (item.id === 'control-sin-inspector') {
             descripcion = 'Control y auditoría técnica de inspecciones que no tienen asignado ningún inspector responsable en la red ITV.';
+          } else if (item.id === 'inspecciones-rango-horario') {
+            descripcion = 'Análisis de afluencia e inspecciones por franja horaria (06 a 21 h), mapa de calor semanal y exportación oficial a Excel.';
+            descripcion = 'Control y auditoría técnica de inspecciones que no tienen asignado ningún inspector responsable en la red ITV.';
           }
 
           return (

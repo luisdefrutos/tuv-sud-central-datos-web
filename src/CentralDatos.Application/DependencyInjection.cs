@@ -23,6 +23,7 @@ public static class DependencyInjection
         services.AddScoped<IInformesFacturacionComparativaService, InformesFacturacionComparativaService>();
         services.AddScoped<IInformesMinerService, InformesMinerService>();
         services.AddScoped<IInformesBastidoresObdService, InformesBastidoresObdService>();
+        services.AddScoped<IInformesInspRangoHorarioService, InformesInspRangoHorarioService>();
 
         return services;
     }

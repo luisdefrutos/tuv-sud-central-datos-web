@@ -32,6 +32,8 @@ export const API_ENDPOINTS = {
     MINER_EXPORTAR: '/api/v1/informes/miner-global/exportar-excel',
     BASTIDORES_OBD_CONSULTAR: '/api/v1/informes/bastidores-obd-no-coincidentes/consultar',
     BASTIDORES_OBD_EXPORTAR: '/api/v1/informes/bastidores-obd-no-coincidentes/exportar-excel',
+    INSP_RANGO_HORARIO_CONSULTAR: '/api/v1/informes/inspecciones-rango-horario',
+    INSP_RANGO_HORARIO_EXPORTAR: '/api/v1/informes/inspecciones-rango-horario/exportar-excel',
   },
   DOCS: {
     SWAGGER: '/swagger',

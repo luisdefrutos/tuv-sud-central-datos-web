@@ -14,6 +14,7 @@ import { CuponDescuentoReportPage } from './features/informes/pages/CuponDescuen
 import { FacturacionComparativaReportPage } from './features/informes/pages/FacturacionComparativaReportPage';
 import { MinerReportPage } from './features/informes/pages/MinerReportPage';
 import { BastidoresObdReportPage } from './features/informes/pages/BastidoresObdReportPage';
+import { InspRangoHorarioReportPage } from './features/informes/pages/InspRangoHorarioReportPage';
 import { InformesHubPage } from './features/informes/pages/InformesHubPage';
 import { DESKTOP_MENUS, findMenuItem } from './constants/navigation.constants';
 import { UI_CONSTANTS } from './constants/ui.constants';
@@ -36,7 +37,7 @@ function AppContent() {
       if (itemId === 'bastidores-obd-no-coincidentes') itemId = 'control-obd-no-coincidentes';
       if (itemId) {
         const { group } = findMenuItem(itemId);
-        const autoGroup = group?.id || (['facturacion', 'facturacion-excel', 'num-inspecciones', 'numero-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'sin-inspector', 'cupon-descuento', 'miner-datos-globales', 'control-obd-no-coincidentes', 'bastidores-obd-no-coincidentes', 'informes'].includes(itemId) ? 'informes' : 'aplicacion');
+        const autoGroup = group?.id || (['facturacion', 'facturacion-excel', 'num-inspecciones', 'numero-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'sin-inspector', 'cupon-descuento', 'miner-datos-globales', 'control-obd-no-coincidentes', 'bastidores-obd-no-coincidentes', 'inspecciones-rango-horario', 'rango-horario', 'informes'].includes(itemId) ? 'informes' : 'aplicacion');
         return { itemId, groupId: autoGroup };
       }
     }
@@ -556,6 +557,19 @@ function AppContent() {
           </ErrorBoundary>
         )}
 
+        {/* CASO C.8: Módulo de Inspecciones por Rango Horario */}
+        {(activeItemId === 'inspecciones-rango-horario' || activeItemId === 'rango-horario') && (
+          <ErrorBoundary fallbackTitle="Error en Inspecciones por Rango Horario">
+            <InspRangoHorarioReportPage
+              onNavigateHome={handleGoHome}
+              onNavigateToInformes={() => {
+                setActiveGroupId('informes');
+                setActiveItemId('informes');
+              }}
+            />
+          </ErrorBoundary>
+        )}
+
         {/* CASO D: Catálogo / Hub de Informes */}
         {activeGroupId === 'informes' && (activeItemId === null || activeItemId === 'informes') && (
           <InformesHubPage
@@ -579,7 +593,9 @@ function AppContent() {
           activeItemId !== 'cupon-descuento' &&
           activeItemId !== 'miner-datos-globales' &&
           activeItemId !== 'control-obd-no-coincidentes' &&
-          activeItemId !== 'bastidores-obd-no-coincidentes' && (
+          activeItemId !== 'bastidores-obd-no-coincidentes' &&
+          activeItemId !== 'inspecciones-rango-horario' &&
+          activeItemId !== 'rango-horario' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {/* Miga de Pan Correspondiente Interactiva */}
             <TsBreadcrumb>

@@ -8,7 +8,7 @@ Este documento detalla la arquitectura, configuración y operativa para conectar
 
 1. **Modelo Local en Ollama**:
    - Modelo base: `qwen2.5-coder:7b` (4.7 GB).
-   - Modelo personalizado: `qwen-antigravity:latest` configurado con ventana de contexto ampliada a **16.384 tokens** (`PARAMETER num_ctx 16384`) y `temperature 0.2` para máxima precisión en código.
+   - Modelo personalizado: `qwen-antigravity:latest` configurado con ventana de contexto optimizada a **8.192 tokens** (`PARAMETER num_ctx 8192`) y `temperature 0.2` para máxima velocidad e inferencia ágil.
    - Endpoint: `http://127.0.0.1:11434`.
 
 2. **Puente MCP (`ollama-mcp`)**:

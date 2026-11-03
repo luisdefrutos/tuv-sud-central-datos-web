@@ -431,6 +431,58 @@ public static class InformesEndpoints
         .WithName("ExportarBastidoresObdNoCoincidentesExcel")
         .WithSummary("Genera y descarga el libro Excel oficial de bastidores OBD no coincidentes");
 
+        // 19. Consulta de inspecciones por rango horario (PIVOT 06 a 21 h + Heatmap)
+        group.MapPost("/inspecciones-rango-horario", async (
+            [FromBody] InspRangoHorarioFiltroDto filtros,
+            [FromServices] IInformesInspRangoHorarioService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var resultado = await service.ObtenerInformeAsync(filtros, ct);
+                return Results.Ok(resultado);
+            }
+            catch (OperationCanceledException)
+            {
+                return Results.StatusCode(499);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .WithName("ConsultarInspeccionesRangoHorario")
+        .WithSummary("Consulta el informe de afluencia de inspecciones por franja horaria (06 a 21 h) y matriz de calor");
+
+        // 20. Exportación de inspecciones por rango horario a Excel (.xlsx multi-pestaña)
+        group.MapPost("/inspecciones-rango-horario/exportar-excel", async (
+            [FromBody] InspRangoHorarioFiltroDto filtros,
+            [FromServices] IInformesInspRangoHorarioService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var archivoBytes = await service.GenerarExcelAsync(filtros, ct);
+                var nombreFichero = $"Inspecciones_Rango_Horario_{filtros.FechaInicio:yyyyMMdd}_{filtros.FechaFin:yyyyMMdd}.xlsx";
+
+                return Results.File(
+                    archivoBytes,
+                    contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileDownloadName: nombreFichero);
+            }
+            catch (OperationCanceledException)
+            {
+                return Results.StatusCode(499);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .RequireRateLimiting("excel-export-policy")
+        .WithName("ExportarInspeccionesRangoHorarioExcel")
+        .WithSummary("Genera y descarga el libro Excel oficial de inspecciones por rango horario");
+
         return app;
     }
 }

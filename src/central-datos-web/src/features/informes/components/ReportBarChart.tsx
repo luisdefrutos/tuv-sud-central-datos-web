@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TsCard } from '@tuvsud/design-system/react';
+import { TsCard, TsBadge } from '@tuvsud/design-system/react';
 import type { ReportBarChartPoint } from '../types/informes.types';
 import { AppTooltip } from '../../../components/common/AppTooltip';
 import { SOCIEDADES } from '../../../constants/companies.constants';
@@ -78,6 +78,11 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
             </p>
           )}
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <TsBadge variant="neutral" size="small">
+            {visibleData.length} {visibleData.length === 1 ? 'estación' : 'estaciones'}
+          </TsBadge>
+        </div>
       </div>
 
       {/* Leyenda Oficial de Colores de Sociedad */}
@@ -130,17 +135,20 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
         </div>
       </div>
 
-      {/* Contenedor vertical continuo: #1, #2, #3... orden natural a todo el ancho */}
+      {/* Contenedor vertical continuo: #1, #2, #3... orden natural a todo el ancho con scroll visible */}
       <div
+        className="cd-touch-scroll"
         style={{
           display: 'flex',
           flexDirection: 'column',
           gap: '6px',
           maxHeight: '440px',
           overflowY: 'auto',
-          paddingRight: '6px',
+          paddingRight: '8px',
           width: '100%',
           boxSizing: 'border-box',
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#94a3b8 #f1f5f9',
         }}
       >
         {visibleData.map((item, index) => {

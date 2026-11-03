@@ -4,6 +4,34 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.20.0] - 03/11/2026 — *Nuevo Módulo Inspecciones por Rango Horario (C6), Matriz Térmica Heatmap y Generación con Ollama Local*
+
+### ⏰ Nuevo Módulo Vertical: Inspecciones por Rango Horario (`inspecciones-rango-horario`)
+* **Migración Oficial de `frmCriterios.vb` (`ExportacionInspeccionesRangoHorario` / `Cargar_Dataset_Exportacion_InspRangoHorario`) (Informe C6)**:
+  * Implementación vertical completa (.NET 10 Web API, ClosedXML y React 19 con TÜV SÜD Algorithm DS).
+  * Código base de DTOs y mapeos C# generado con el modelo local de Ollama `qwen-antigravity:latest`.
+  * Análisis de la distribución de carga de trabajo por franja horaria (06:00 a 21:00 h) y por día de la semana.
+  * Selector opcional de fase de inspección (Todas, 1ª Inspección Periódica, 2ª Inspección Reiterada).
+* **Backend y Acceso a Datos Oracle (.NET 10)**:
+  * Archivo SQL `ObtenerInformeInspRangoHorario.sql` con operador `PIVOT` de Oracle sobre franjas de 06 a 21 h y filtrado dinámico por estación/empresa/fase.
+  * Repositorio `OracleInformesRepository.InspRangoHorario.cs` con binding directo por nombre y reintento ante desconexión transitoria ORA-12570.
+  * **Corrección de ORA-00904 y Filtro 'TODAS'**: Diagnóstico asistido por modelo local Ollama (`qwen-antigravity`). Corrección de la subconsulta de estaciones para omitir `Cod_Empresa` cuando el filtro es `"TODAS"` (evitando que la consulta devolviese 0 filas en Web) y mapeo automático `"TSA" -> "01"`, `"CAL" -> "03"`.
+  * **Corrección de Fórmulas Excel (`#¿NOMBRE?`)**: Sustitución de cadenas de fórmula en inglés (`=SUM(...)`) por inyección de valores calculados nativos numéricos en celdas de total de fila y columna, asegurando compatibilidad 100% en todas las versiones e idiomas de Microsoft Excel.
+  * Servicio `InformesInspRangoHorarioService.cs` con cálculo de KPIs ejecutivos, agregación de matriz Heatmap y generación de libro Excel multi-pestaña (`TOTAL_ESTACIONES_SELECCIONADAS` y hojas individuales `INSPECCIONES_ITV_{codEstacion}`).
+* **Frontend y Experiencia de Usuario (React 19 + TÜV SÜD Algorithm DS)**:
+  * Componente `ReportHeatmapChart.tsx`: Matriz interactiva de 6 días × 16 horas con escala de calor corporativa de 5 niveles y tooltips detallados `AppTooltip`.
+  * **Selector Gráfico Condicional y Gráficos por Estación**: Píldoras conmutables `[ 📅 Matriz Térmica Horaria ]` | `[ 📊 Distribución por Estaciones ]` con soporte dual para `ReportBarChart` y `ReportDonutChart`, scroll vertical continuo visible, badge de conteo de estaciones analizadas y coloreado estricto por sociedad (Azul para ATISAE y Verde corporativo `#00875a` para CAL).
+  * **Highlight Visual de Columna Horaria de Alto Contraste**: Al filtrar u ordenar por una franja (ej. `10h`), tanto el botón en el Heatmap como la cabecera y columna completa del grid de datos se resaltan de manera inequívoca en azul eléctrico (`#0284c7`) con realce superior y celdas en fondo cielo (`#e0f2fe`) con bordes de 2px, asegurando diferenciación visual instantánea.
+  * **Asignación de Color por Sociedad (TSA vs CAL)**: Integración de la clave de sociedad para que estaciones pertenecientes a TÜV SÜD CAL (Miranda `0902`, Villasante `0905`, Belorado `0906`, Briviesca `0908`) se representen en verde corporativo (`#00875a`), mientras que el resto de estaciones de la red (Madrid, Toledo, Cataluña 0826/4308/2511, La Rioja 2605/2607) se muestran en azul (`#0046ad`) al pertenecer formalmente a TÜV SÜD ATISAE.
+  * **KPI Dinámico de Estación Líder**: Indicador ejecutivo `Estación Mayor Demanda` que se activa al consultar múltiples estaciones, con filtrado suave hacia el grid al hacer clic.
+  * **Búsqueda Avanzada por Franjas Horarias**: Reconocimiento de sintaxis horaria (`10h`, `10:00`, `h10`, `Martes 10h`, `10h > 5`), permitiendo aislar jornadas con actividad en horas específicas.
+  * **Columnas Horarias Ordenables**: Las 16 columnas horarias (`06h` a `21h`) admiten ordenación ascendente y descendente al hacer clic en sus cabeceras.
+  * **Unificación de Búsqueda por Fechas (Enter / Consultar)**: Aplicación estricta de la regla de informes: la carga inicial se ejecuta con fechas por defecto, pero los cambios posteriores en los selectores de fecha no disparan peticiones automáticas, requiriendo pulsar `Intro` o el botón `🔍 Consultar`.
+  * Página `InspRangoHorarioReportPage.tsx`: 4 KPIs ejecutivos con filtrado reactivo hacia el buscador del grid (`filtrarPorValor`), selector de fase, grid paginado con franjas horarias y totales de jornada.
+  * Ruta y navegación: Registrado en `navigation.constants.ts` y enrutamiento en `App.tsx` con persistencia F5 en `sessionStorage`.
+
+---
+
 ## [2.19.0] - 03/11/2026 — *Nuevo Módulo Bastidores OBD No Coincidentes, Control Antifraude, AppTooltip Unificado y Experiencia Reactiva 100% Responsiva*
 
 ### 🔌 Nuevo Módulo Vertical: Bastidores OBD No Coincidentes (`control-obd-no-coincidentes`)
