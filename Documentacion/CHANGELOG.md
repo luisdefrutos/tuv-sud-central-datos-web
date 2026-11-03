@@ -4,6 +4,26 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.19.0] - 03/11/2026 — *Nuevo Módulo Bastidores OBD No Coincidentes, Control Antifraude, AppTooltip Unificado y Experiencia Reactiva 100% Responsiva*
+
+### 🔌 Nuevo Módulo Vertical: Bastidores OBD No Coincidentes (`control-obd-no-coincidentes`)
+* **Migración Oficial de `frmCriterios.vb` (`Informe_Bastidores_OBD_No_Coincidentes`) y `frmGridBastidoresOBD.vb` (Informe C5)**:
+  * Implementación vertical completa (.NET 10 Web API, ClosedXML y React 19 con TÜV SÜD Algorithm DS).
+  * Control de calidad y antifraude técnico en ITV: identifica discrepancias entre el bastidor de la ficha técnica / documental (`I.NUMBASTIDOR`) y el bastidor electrónico extraído por el escáner OBD de la centralita (`OBD.NUMBASTIDOR_OBD`).
+  * Aplicación estricta de las 4 reglas oficiales de filtrado de ruido electrónico (longitud 17, exclusión de caracteres especiales `[-¿?\/<>]`, exclusión de secuencias monótonas repetidas y descarte de errores EEPROM `EEPR READ ERR`).
+* **Backend y Acceso a Datos Oracle**:
+  * Archivo de consulta parametrizado `ObtenerInformeBastidoresObdNoCoincidentes.sql` optimizado con `INNER JOIN` directo sobre clave primaria compuesta `(CODESTACION, CODINSPECCION)`.
+  * Repositorio `OracleInformesRepository.BastidoresObd.cs` con reintento ante desconexión transitoria y timeout de 120 s.
+  * Servicio `InformesBastidoresObdService.cs` con agrupación por estación y categoría, cálculo de KPIs y generación Excel multi-hoja (`BASTIDORES_OBD`).
+* **Frontend, UX y Diseño Responsivo (React 19 + TÜV SÜD Algorithm DS)**:
+  * **Unificación de Tooltips Corporativos (`AppTooltip`)**: Sustitución sistemática del atributo nativo `title` del navegador por el componente oficial `AppTooltip` en KPIs, celdas de tabla y caja de búsqueda.
+  * **Navegación Interactiva al Buscador del Grid**: Al hacer clic sobre cualquier KPI interactivo (ej. *Equipo OBD con Más Casos*, *Estación Máxima*) o sobre celdas de bastidor/matrícula, la pantalla realiza un desplazamiento suave (`scrollIntoView`) hasta el buscador del grid, inyecta el valor, aplica un halo visual azul de foco (`box-shadow`) durante 1.5s y sitúa el cursor.
+  * **Tooltip Contextual del Filtro**: Mensaje dinámico en `ReportTableContainer.tsx` indicando el filtro activo y cómo limpiarlo para mostrar todos los datos.
+  * **Diseño 100% Responsivo**: Layout fluido con `clamp()`, KPIs en `grid auto-fit`, tabla con scroll horizontal táctil (`.cd-touch-scroll`) con primera columna fija (`sticky left: 0`), y modal de comparativa carácter a carácter con ancho y alto adaptativo (`min(720px, 94vw)` y `max-height: 90vh`).
+  * **Corrección de Renderizado Duplicado (`App.tsx`)**: Exclusión de la ruta `control-obd-no-coincidentes` del contenedor dummy de módulos pendientes para evitar pantallas montadas simultáneamente.
+
+---
+
 ## [2.18.0] - 03/11/2026 — *Nuevo Módulo Estadística MINER Global, Optimización SQL Relacional Pura y Estabilización de Rendimiento*
 
 ### 📊 Nuevo Módulo Vertical: Estadística MINER Global (`miner-datos-globales`)

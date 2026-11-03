@@ -30,7 +30,7 @@ export interface MenuGroup {
 }
 
 /** Pantallas ya migradas a la web (resto muestran la ficha "en migración") */
-export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion', 'facturacion-excel', 'num-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'cupon-descuento', 'miner-datos-globales'] as const;
+export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion', 'facturacion-excel', 'num-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'cupon-descuento', 'miner-datos-globales', 'control-obd-no-coincidentes'] as const;
 
 export const DESKTOP_MENUS: MenuGroup[] = [
   {
@@ -88,7 +88,7 @@ export const DESKTOP_MENUS: MenuGroup[] = [
         label: 'Informes de control',
         children: [
           { id: 'control-sin-inspector', label: 'Inspecciones sin inspector', icon: '⚠️', descripcion: 'Control y auditoría técnica de inspecciones que no tienen asignado ningún inspector responsable.' },
-          { id: 'control-obd-no-coincidentes', label: 'Informe bastidores OBD no coincidentes' },
+          { id: 'control-obd-no-coincidentes', label: 'Informe bastidores OBD no coincidentes', icon: '🔌', descripcion: 'Auditoría técnica antifraude de discrepancias entre bastidor de ficha e inspección electrónica OBD.' },
         ],
       },
       {

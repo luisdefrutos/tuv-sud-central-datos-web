@@ -380,6 +380,57 @@ public static class InformesEndpoints
         .WithName("ExportarMinerGlobalExcel")
         .WithSummary("Genera y descarga el libro Excel oficial de MINER (plantilla Industria.xls) con las 9 categorías");
 
+        // 17. Consulta de bastidores OBD no coincidentes
+        group.MapPost("/bastidores-obd-no-coincidentes/consultar", async (
+            [FromBody] FiltrosBastidoresObdRequestDto filtros,
+            [FromServices] IInformesBastidoresObdService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var resultado = await service.GenerarInformeBastidoresObdAsync(filtros, ct);
+                return Results.Ok(resultado);
+            }
+            catch (OperationCanceledException)
+            {
+                return Results.StatusCode(499);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .WithName("ConsultarBastidoresObdNoCoincidentes")
+        .WithSummary("Consulta el informe de bastidores de inspección que no coinciden con la lectura electrónica OBD");
+
+        // 18. Exportación de bastidores OBD no coincidentes a Excel (.xlsx)
+        group.MapPost("/bastidores-obd-no-coincidentes/exportar-excel", async (
+            [FromBody] FiltrosBastidoresObdRequestDto filtros,
+            [FromServices] IInformesBastidoresObdService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var (archivoBytes, nombreFichero, contentType) = await service.ExportarExcelAsync(filtros, ct);
+
+                return Results.File(
+                    archivoBytes,
+                    contentType: contentType,
+                    fileDownloadName: nombreFichero);
+            }
+            catch (OperationCanceledException)
+            {
+                return Results.StatusCode(499);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .RequireRateLimiting("excel-export-policy")
+        .WithName("ExportarBastidoresObdNoCoincidentesExcel")
+        .WithSummary("Genera y descarga el libro Excel oficial de bastidores OBD no coincidentes");
+
         return app;
     }
 }

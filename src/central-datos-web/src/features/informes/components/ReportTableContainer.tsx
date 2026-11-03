@@ -1,5 +1,6 @@
 import React from 'react';
 import { TsCard, TsInput, TsButton } from '@tuvsud/design-system/react';
+import { AppTooltip } from '../../../components/common/AppTooltip';
 
 export interface ReportTableContainerProps {
   searchTerm: string;
@@ -57,14 +58,35 @@ export const ReportTableContainer: React.FC<ReportTableContainerProps> = ({
         }}
       >
         {/* Buscador */}
-        <div style={{ flex: '1 1 260px', maxWidth: '400px', width: '100%' }}>
-          <TsInput
-            placeholder={searchPlaceholder}
-            value={searchTerm}
-            onTsInput={(e: any) => onSearchChange(e.target.value)}
-            clearable
-            style={{ width: '100%' }}
-          />
+        <div style={{ flex: '1 1 280px', maxWidth: '420px', width: '100%' }}>
+          <AppTooltip
+            title={searchTerm ? 'Filtro de búsqueda activo' : 'Búsqueda rápida en el grid'}
+            subtitle={searchTerm ? `Filtrando por: "${searchTerm}"` : 'Filtro en tiempo real'}
+            content={
+              searchTerm
+                ? 'Datos del grid filtrados por el valor introducido en la caja. Para mostrar todos los datos limpie dicho valor.'
+                : 'Escriba cualquier término (bastidor, matrícula, estación, equipo OBD...) o pulse en un KPI o bastidor para filtrar al instante.'
+            }
+            position="top"
+            style={{ display: 'block', width: '100%' }}
+          >
+            <div
+              id="report-search-container"
+              style={{
+                borderRadius: '6px',
+                transition: 'box-shadow 0.3s ease, border-color 0.3s ease',
+              }}
+            >
+              <TsInput
+                id="report-search-input"
+                placeholder={searchPlaceholder}
+                value={searchTerm}
+                onTsInput={(e: any) => onSearchChange(e.target.value)}
+                clearable
+                style={{ width: '100%' }}
+              />
+            </div>
+          </AppTooltip>
         </div>
 
         {/* Contador y Exportación */}

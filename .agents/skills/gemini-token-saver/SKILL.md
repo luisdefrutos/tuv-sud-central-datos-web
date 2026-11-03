@@ -32,3 +32,11 @@ description: Enforces strict token-saving rules, minimal context reads, surgical
 - Never sacrifice type safety, null checks, or error handling to save tokens.
 - If a prompt is ambiguous and risks a wrong multi-file edit, ask 1 concise question in Spanish BEFORE coding.
 
+## 5. Local LLM Delegation (Ollama MCP)
+- **Model local disponible**: `qwen-antigravity:latest` (o `qwen2.5-coder:7b`) a través del MCP `ollama`.
+- **Cuándo delegar a Ollama**:
+  1. Si el usuario pide explícitamente "usa ollama", "con el modelo local", "delega a qwen" o "modo ahorro".
+  2. Para generar código repetitivo pesado (DTOs extensos, mappings manuales, mocks de test, fixtures de datos, regex complejas).
+- **Cómo delegar**: Ejecutar la herramienta MCP `ollama_chat` con `model: "qwen-antigravity:latest"`, obtener el resultado y aplicarlo al archivo con la herramienta de edición correspondiente.
+
+

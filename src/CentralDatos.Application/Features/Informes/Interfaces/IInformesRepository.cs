@@ -63,4 +63,11 @@ public interface IInformesRepository
         DateTime fechaFin,
         IReadOnlyList<string>? codEstaciones = null,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<BastidorObdNoCoincidenteDato>> ObtenerBastidoresObdNoCoincidentesAsync(
+        DateTime fechaInicio,
+        DateTime fechaFin,
+        string? codEmpresa = null,
+        IReadOnlyList<string>? codEstaciones = null,
+        CancellationToken cancellationToken = default);
 }

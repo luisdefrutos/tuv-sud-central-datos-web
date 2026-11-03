@@ -13,6 +13,7 @@ import { SinInspectorReportPage } from './features/informes/pages/SinInspectorRe
 import { CuponDescuentoReportPage } from './features/informes/pages/CuponDescuentoReportPage';
 import { FacturacionComparativaReportPage } from './features/informes/pages/FacturacionComparativaReportPage';
 import { MinerReportPage } from './features/informes/pages/MinerReportPage';
+import { BastidoresObdReportPage } from './features/informes/pages/BastidoresObdReportPage';
 import { InformesHubPage } from './features/informes/pages/InformesHubPage';
 import { DESKTOP_MENUS, findMenuItem } from './constants/navigation.constants';
 import { UI_CONSTANTS } from './constants/ui.constants';
@@ -31,16 +32,18 @@ function AppContent() {
   const getInitialNavigation = () => {
     const hash = typeof window !== 'undefined' ? window.location.hash : '';
     if (hash && hash.startsWith('#/modulo/')) {
-      const itemId = hash.replace('#/modulo/', '').trim();
+      let itemId = hash.replace('#/modulo/', '').trim();
+      if (itemId === 'bastidores-obd-no-coincidentes') itemId = 'control-obd-no-coincidentes';
       if (itemId) {
         const { group } = findMenuItem(itemId);
-        const autoGroup = group?.id || (['facturacion', 'facturacion-excel', 'num-inspecciones', 'numero-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'sin-inspector', 'cupon-descuento', 'miner-datos-globales', 'informes'].includes(itemId) ? 'informes' : 'aplicacion');
+        const autoGroup = group?.id || (['facturacion', 'facturacion-excel', 'num-inspecciones', 'numero-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'sin-inspector', 'cupon-descuento', 'miner-datos-globales', 'control-obd-no-coincidentes', 'bastidores-obd-no-coincidentes', 'informes'].includes(itemId) ? 'informes' : 'aplicacion');
         return { itemId, groupId: autoGroup };
       }
     }
-    const savedItem = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('cd_active_item') : null;
+    let savedItem = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('cd_active_item') : null;
     const savedGroup = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('cd_active_group') : null;
     if (savedItem) {
+      if (savedItem === 'bastidores-obd-no-coincidentes') savedItem = 'control-obd-no-coincidentes';
       return { itemId: savedItem, groupId: savedGroup || 'informes' };
     }
     return { itemId: null, groupId: null };
@@ -540,6 +543,19 @@ function AppContent() {
           </ErrorBoundary>
         )}
 
+        {/* CASO C.7: Módulo de Bastidores OBD No Coincidentes */}
+        {activeItemId === 'control-obd-no-coincidentes' && (
+          <ErrorBoundary fallbackTitle="Error en Bastidores OBD No Coincidentes">
+            <BastidoresObdReportPage
+              onNavigateHome={handleGoHome}
+              onNavigateToInformes={() => {
+                setActiveGroupId('informes');
+                setActiveItemId('informes');
+              }}
+            />
+          </ErrorBoundary>
+        )}
+
         {/* CASO D: Catálogo / Hub de Informes */}
         {activeGroupId === 'informes' && (activeItemId === null || activeItemId === 'informes') && (
           <InformesHubPage
@@ -561,7 +577,9 @@ function AppContent() {
           activeItemId !== 'control-sin-inspector' &&
           activeItemId !== 'sin-inspector' &&
           activeItemId !== 'cupon-descuento' &&
-          activeItemId !== 'miner-datos-globales' && (
+          activeItemId !== 'miner-datos-globales' &&
+          activeItemId !== 'control-obd-no-coincidentes' &&
+          activeItemId !== 'bastidores-obd-no-coincidentes' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {/* Miga de Pan Correspondiente Interactiva */}
             <TsBreadcrumb>
