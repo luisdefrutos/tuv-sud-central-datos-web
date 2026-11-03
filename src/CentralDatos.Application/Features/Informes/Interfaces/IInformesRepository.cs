@@ -57,4 +57,10 @@ public interface IInformesRepository
         DateTime fechaFinRango2,
         IReadOnlyList<string>? codEstaciones = null,
         CancellationToken cancellationToken = default);
+
+    Task<MinerEstadisticaGlobalDato> ObtenerEstadisticaMinerAsync(
+        DateTime fechaInicio,
+        DateTime fechaFin,
+        IReadOnlyList<string>? codEstaciones = null,
+        CancellationToken cancellationToken = default);
 }

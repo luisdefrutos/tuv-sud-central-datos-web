@@ -4,6 +4,35 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.18.0] - 03/11/2026 — *Nuevo Módulo Estadística MINER Global, Optimización SQL Relacional Pura y Estabilización de Rendimiento*
+
+### 📊 Nuevo Módulo Vertical: Estadística MINER Global (`miner-datos-globales`)
+* **Migración Oficial de frmCriterios.vb (ExportacionEstadistica_MINER_Global) e Inyección en Plantilla Ministerial**:
+  * Implementación vertical completa (.NET 10 Web API, ClosedXML y React 19 con TÜV SÜD Algorithm DS).
+  * Réplica visual exacta de la hoja ministerial PERIODICAS con matriz cruzada de 20 filas de defectos (11L a 20G) y 9 categorías vehiculares reglamentarias (MO, TP, TR, MP, MG, AU, RS, AG, OT), además del balance de primera y segunda inspección.
+  * Inyección fidedigna en plantilla ministerial oficial Plantilla_Industria_MINER.xlsx preservando todas las fórmulas y sumatorios de celda oficiales.
+
+### ⚡ Optimización SQL Relacional Pura & Eliminación de Cuellos de Botella
+* **Sustitución de Funciones PL/SQL por Relacional Puro**:
+  * Reemplazo de CENTRALITV.PERIODICA y CENTRALITV.CLASIFICACION_MINER evaluadas fila a fila por INNER JOIN CENTRALITV.SERVICIOSPORTIPOINSPECCION y doble LEFT JOIN CENTRALITV.tipovehiculo_ident.
+* **Unificación de Inspecciones Fase 1 y Fase 2 (ObtenerMinerInspecciones.sql)**:
+  * Se fusionaron las dos consultas separadas de balance en una sola con indica12 IN ('1', '2') y agrupación dual, ahorrando un escaneo de la tabla masiva INSPECCION y reduciendo el tiempo de obtención de fases a ~440 ms.
+* **Eliminación de Full Table Scan en Defectos con Hint USE_NL (ObtenerMinerDefectos.sql)**:
+  * Inclusión del hint `/*+ LEADING(i s d) INDEX(i P17_INSPECCION P31_INSPECCION) USE_NL(d) INDEX(d IX1_INSPECCION_DEFECTOS) */`, evitando el escaneo completo de los 50M de registros de INSPECCION_DEFECTOS y reduciendo el tiempo de 2 meses a ~13,4 s.
+* **Resolución de Error de Host Remoto (IOException / Desconexión Socket)**:
+  * Ejecución secuencial controlada (primero balance de inspecciones y después matriz de defectos) para evitar saturación de memoria PGA y sockets concurrentes en el servidor Oracle dedicado.
+  * Formateo estricto VARCHAR2('0202', '2878') en filtro de estaciones para preservar índices sin conversiones implícitas a NUMBER.
+  * Ampliación del timeout de consulta a 300 segundos (CommandTimeout = 300).
+
+### 🎨 Mejoras UX/UI & Tipografía
+* **Corrección de Espaciado Tipográfico en Encabezados**:
+  * Títulos de sección FRECUENCIA DE DEFECTOS y BALANCE DE INSPECCIONES Y VEHÍCULOS (FASE 1 Y 2) con espaciado natural de palabras y letter-spacing: 1.2px controlado por CSS.
+* **Comportamiento Óptimo de Búsqueda**:
+  * Consulta inicial automática al entrar con las fechas por defecto del mes actual.
+  * Desacoplamiento del evento de búsqueda en los inputs de fecha (la consulta solo se dispara al pulsar explícitamente Consultar).
+
+---
+
 ## [2.17.0] - 03/11/2026 — *Nuevo Módulo Excel Facturación Comparativa (TSA / CAL), Triple Footer, Identidad de Sociedad y Corrección Bug Legacy*
 
 ### 📈 Nuevo Módulo Vertical: Excel Facturación de Inspecciones Comparativa (`facturacion-excel`)

@@ -30,7 +30,7 @@ export interface MenuGroup {
 }
 
 /** Pantallas ya migradas a la web (resto muestran la ficha "en migración") */
-export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion', 'facturacion-excel', 'num-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'cupon-descuento'] as const;
+export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion', 'facturacion-excel', 'num-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'cupon-descuento', 'miner-datos-globales'] as const;
 
 export const DESKTOP_MENUS: MenuGroup[] = [
   {
@@ -81,7 +81,7 @@ export const DESKTOP_MENUS: MenuGroup[] = [
       {
         id: 'miner-excel',
         label: 'Estadística "MINER" Excel',
-        children: [{ id: 'miner-datos-globales', label: 'Datos Globales' }],
+        children: [{ id: 'miner-datos-globales', label: 'Datos Globales', icon: '📊', descripcion: 'Estadística regulatoria oficial MINER de defectos e inspecciones en 9 categorías de vehículos (Industria.xls).' }],
       },
       {
         id: 'informes-control',

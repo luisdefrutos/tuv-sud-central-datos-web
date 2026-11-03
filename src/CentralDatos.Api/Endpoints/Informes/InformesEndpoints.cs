@@ -328,6 +328,58 @@ public static class InformesEndpoints
         .WithName("ExportarFacturacionComparativaExcel")
         .WithSummary("Genera y descarga el libro Excel comparativo oficial de facturación e inspecciones");
 
+        // 15. Consulta de estadística MINER global
+        group.MapPost("/miner-global/consultar", async (
+            [FromBody] FiltrosMinerRequestDto filtros,
+            [FromServices] IInformesMinerService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var resultado = await service.ConsultarEstadisticaMinerAsync(filtros, ct);
+                return Results.Ok(resultado);
+            }
+            catch (OperationCanceledException)
+            {
+                return Results.StatusCode(499);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .WithName("ConsultarMinerGlobal")
+        .WithSummary("Consulta el informe regulatorio MINER global de defectos e inspecciones por categoría de vehículo");
+
+        // 16. Exportación de estadística MINER global a Excel oficial (.xlsx sobre plantilla Industria.xls)
+        group.MapPost("/miner-global/exportar-excel", async (
+            [FromBody] FiltrosMinerRequestDto filtros,
+            [FromServices] IInformesMinerService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var archivoBytes = await service.ExportarExcelMinerAsync(filtros, ct);
+                var nombreFichero = $"estadistica-miner-global-{DateTime.Now:yyyyMMdd-HHmm}.xlsx";
+
+                return Results.File(
+                    archivoBytes,
+                    contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileDownloadName: nombreFichero);
+            }
+            catch (OperationCanceledException)
+            {
+                return Results.StatusCode(499);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .RequireRateLimiting("excel-export-policy")
+        .WithName("ExportarMinerGlobalExcel")
+        .WithSummary("Genera y descarga el libro Excel oficial de MINER (plantilla Industria.xls) con las 9 categorías");
+
         return app;
     }
 }

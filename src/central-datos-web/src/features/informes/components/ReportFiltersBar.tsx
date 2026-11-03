@@ -483,7 +483,7 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
         {/* BOTÓN CONSULTAR / ACEPTAR */}
         <div className="cd-fullwidth-mobile" style={{ flexShrink: 0, marginLeft: 'auto' }}>
           <TsButton
-            type="submit"
+            type="button"
             variant="primary"
             onClick={onConsultar}
             disabled={loading}

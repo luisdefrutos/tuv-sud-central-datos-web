@@ -150,7 +150,7 @@ export const InformesHubPage: React.FC<InformesHubPageProps> = ({
                     lineHeight: 1.3,
                   }}
                 >
-                  {item.label}
+                  {item.id === 'miner-datos-globales' ? 'Estadística MINER — Datos Globales' : item.label}
                 </h3>
                 <p
                   style={{

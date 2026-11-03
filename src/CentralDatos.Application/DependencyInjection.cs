@@ -21,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<IInformesSinInspectorService, InformesSinInspectorService>();
         services.AddScoped<IInformesCuponDescuentoService, InformesCuponDescuentoService>();
         services.AddScoped<IInformesFacturacionComparativaService, InformesFacturacionComparativaService>();
+        services.AddScoped<IInformesMinerService, InformesMinerService>();
 
         return services;
     }

@@ -28,6 +28,8 @@ export const API_ENDPOINTS = {
     CUPON_DESCUENTO_EXPORTAR: '/api/v1/informes/cupon-descuento/exportar-excel',
     FACTURACION_COMPARATIVA_CONSULTAR: '/api/v1/informes/facturacion-comparativa/consultar',
     FACTURACION_COMPARATIVA_EXPORTAR: '/api/v1/informes/facturacion-comparativa/exportar-excel',
+    MINER_CONSULTAR: '/api/v1/informes/miner-global/consultar',
+    MINER_EXPORTAR: '/api/v1/informes/miner-global/exportar-excel',
   },
   DOCS: {
     SWAGGER: '/swagger',
