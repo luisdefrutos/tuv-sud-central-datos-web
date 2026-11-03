@@ -1,0 +1,43 @@
+# Archivos que sí van a Git (o están en local) pero que la IA NUNCA debe leer ni indexar
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+*.min.js
+*.min.css
+*.map
+*.Designer.cs
+*.g.cs
+*.g.i.cs
+*.svg
+
+# Tus carpetas pesadas y documentación en borrador
+[Bb]in/
+[Oo]bj/
+node_modules/
+dist/
+TestResults/
+Documentacion/modernizacion aplicacion/11_hoja_de_ruta_modulo_informes_dashboard_grid_excel.md
+
+# Extensiones binarias y archivos pesados adicionales
+*.log
+*.woff
+*.woff2
+*.ttf
+*.eot
+*.png
+*.jpg
+*.jpeg
+*.ico
+*.gif
+*.xlsx
+*.xls
+*.pdf
+
+# Metadatos de IDE y entorno
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+coverage/
+

@@ -28,10 +28,11 @@
 
 ---
 
-## Referencias Técnicas del Skill `tuv-sud-algorithm-ds`
+## Referencias Técnicas de Skills del Proyecto
 
-Copia sincronizada de las especificaciones del Skill oficial para Antigravity:
+Copia sincronizada de las especificaciones de Skills oficiales para Antigravity:
 
+- [skill-gemini-token-saver/SKILL.md](./skill-gemini-token-saver/SKILL.md) — Protocolo de eficiencia de tokens, lecturas acotadas, diffs quirúrgicos y respuestas telegráficas en español.
 - [skill-tuv-sud-algorithm-ds/SKILL.md](./skill-tuv-sud-algorithm-ds/SKILL.md) — Reglas de implementación frontend para agentes y desarrolladores.
 - [skill-tuv-sud-algorithm-ds/references/tokens-and-utilities.md](./skill-tuv-sud-algorithm-ds/references/tokens-and-utilities.md) — Referencia completa de tokens semánticos CSS y utilidades `ts-*`.
 - [skill-tuv-sud-algorithm-ds/references/components-catalog.md](./skill-tuv-sud-algorithm-ds/references/components-catalog.md) — Catálogo detallado de los 84 componentes oficiales `@tuvsud/design-system/react`.
