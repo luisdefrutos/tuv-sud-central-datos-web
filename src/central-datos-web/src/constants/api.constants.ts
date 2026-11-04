@@ -38,6 +38,10 @@ export const API_ENDPOINTS = {
     VOLUMEN_DEFECTOS_EXPORTAR: '/api/v1/informes/volumen-defectos/exportar-excel',
     VOLUMEN_DEFECTOS_BLOQUES: '/api/v1/informes/volumen-defectos/bloques',
     VOLUMEN_DEFECTOS_ELEMENTOS: '/api/v1/informes/volumen-defectos/elementos',
+    CLIENTES_VOLUMEN_CONSULTAR: '/api/v1/informes/clientes-volumen/consultar',
+    CLIENTES_VOLUMEN_EXPORTAR: '/api/v1/informes/clientes-volumen/exportar-excel',
+    CLIENTES_VOLUMEN_PROYECTOS: '/api/v1/informes/clientes-volumen/proyectos-comerciales',
+    CLIENTES_VOLUMEN_TIPOS_VEHICULO: '/api/v1/informes/clientes-volumen/tipos-vehiculo',
   },
   DOCS: {
     SWAGGER: '/swagger',

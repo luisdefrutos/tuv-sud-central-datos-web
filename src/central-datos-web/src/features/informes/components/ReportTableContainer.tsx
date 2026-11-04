@@ -13,6 +13,7 @@ export interface ReportTableContainerProps {
   isExporting?: boolean;
   exportDisabled?: boolean;
   unidadRegistros?: string;
+  totalSumTexto?: string;
   children: React.ReactNode;
 }
 
@@ -31,6 +32,7 @@ export const ReportTableContainer: React.FC<ReportTableContainerProps> = ({
   isExporting = false,
   exportDisabled = false,
   unidadRegistros = 'estaciones',
+  totalSumTexto,
   children,
 }) => {
   return (
@@ -58,7 +60,7 @@ export const ReportTableContainer: React.FC<ReportTableContainerProps> = ({
         }}
       >
         {/* Buscador */}
-        <div style={{ flex: '1 1 280px', maxWidth: '420px', width: '100%' }}>
+        <div style={{ flex: '1 1 360px', maxWidth: '580px', width: '100%' }}>
           <AppTooltip
             title={searchTerm ? 'Filtro de búsqueda activo' : 'Búsqueda rápida en el grid'}
             subtitle={searchTerm ? `Filtrando por: "${searchTerm}"` : 'Filtro en tiempo real'}
@@ -73,18 +75,65 @@ export const ReportTableContainer: React.FC<ReportTableContainerProps> = ({
             <div
               id="report-search-container"
               style={{
+                display: 'flex',
+                alignItems: 'center',
+                backgroundColor: '#ffffff',
+                border: '1.5px solid #cbd5e1',
                 borderRadius: '6px',
-                transition: 'box-shadow 0.3s ease, border-color 0.3s ease',
+                padding: '0 10px',
+                height: '38px',
+                boxSizing: 'border-box',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
               }}
             >
-              <TsInput
+              <span style={{ fontSize: '14px', color: '#64748b', marginRight: '8px', userSelect: 'none' }}>
+                🔍
+              </span>
+              <input
                 id="report-search-input"
-                placeholder={searchPlaceholder}
+                className="cd-report-search-input"
+                type="text"
                 value={searchTerm}
-                onTsInput={(e: any) => onSearchChange(e.target.value)}
-                clearable
-                style={{ width: '100%' }}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder={searchPlaceholder}
+                style={{
+                  border: 'none',
+                  outline: 'none',
+                  width: '100%',
+                  fontSize: '0.84rem',
+                  color: '#0f172a',
+                  backgroundColor: 'transparent',
+                  fontWeight: 500,
+                }}
               />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => onSearchChange('')}
+                  title="Limpiar búsqueda"
+                  aria-label="Limpiar búsqueda"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#94a3b8',
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    padding: '2px 4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '50%',
+                    transition: 'color 0.15s ease',
+                    lineHeight: 1,
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#0046ad')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
+                >
+                  ✕
+                </button>
+              )}
             </div>
           </AppTooltip>
         </div>
@@ -105,7 +154,7 @@ export const ReportTableContainer: React.FC<ReportTableContainerProps> = ({
               fontWeight: 500,
             }}
           >
-            Mostrando <strong>{filasVisibles}</strong> de <strong>{totalFilas}</strong> {unidadRegistros}
+            Mostrando <strong>{filasVisibles}</strong> de <strong>{totalFilas}</strong> {unidadRegistros}{totalSumTexto && <> (<strong>{totalSumTexto}</strong>)</>}
           </span>
 
           {onOpenCrystalReport && (

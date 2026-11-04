@@ -14,6 +14,8 @@ export interface ReportBarChartProps {
   defaultTopCount?: number;
   height?: number | string;
   sortOrder?: 'desc' | 'asc' | 'none';
+  badgeUnit?: string;
+  showLegend?: boolean;
 }
 
 /**
@@ -30,6 +32,8 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
   emptyMessage = 'No hay datos disponibles para representar en el gráfico con los filtros seleccionados.',
   sortOrder = 'desc',
   height = 360,
+  badgeUnit,
+  showLegend = true,
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -66,6 +70,10 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
   const visibleData = sorted;
   const maxVal = Math.max(...visibleData.map((d) => (d.valor > 0 ? d.valor : 0)), 1);
 
+  const textoUnidadBadge = badgeUnit
+    ? `${visibleData.length} ${badgeUnit}`
+    : `${visibleData.length} ${visibleData.length === 1 ? 'estación' : 'estaciones'}`;
+
   return (
     <TsCard style={{ width: '100%', boxSizing: 'border-box', padding: 'clamp(1rem, 2vw, 1.25rem) clamp(0.75rem, 2vw, 1.5rem)', backgroundColor: '#ffffff', borderRadius: '8px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
@@ -81,60 +89,62 @@ export const ReportBarChart: React.FC<ReportBarChartProps> = ({
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <TsBadge variant="neutral" size="small">
-            {visibleData.length} {visibleData.length === 1 ? 'estación' : 'estaciones'}
+            {textoUnidadBadge}
           </TsBadge>
         </div>
       </div>
 
-      {/* Leyenda Oficial de Colores de Sociedad */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1.25rem',
-          padding: '0.45rem 0.85rem',
-          marginBottom: '0.85rem',
-          backgroundColor: '#f8fafc',
-          borderRadius: '6px',
-          border: '1px solid #e2e8f0',
-          fontSize: '0.8rem',
-          flexWrap: 'wrap',
-        }}
-      >
-        <span style={{ fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: '0.75rem' }}>
-          Leyenda:
-        </span>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-          <span
-            style={{
-              width: '12px',
-              height: '12px',
-              borderRadius: '2px',
-              backgroundColor: '#0046ad',
-              display: 'inline-block',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
-            }}
-          />
-          <span style={{ color: '#0b253b' }}>
-            <strong style={{ color: '#0046ad' }}>Azul:</strong> TÜV SÜD ATISAE (TSA)
+      {/* Leyenda Oficial de Colores de Sociedad (solo visible si showLegend = true) */}
+      {showLegend && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1.25rem',
+            padding: '0.45rem 0.85rem',
+            marginBottom: '0.85rem',
+            backgroundColor: '#f8fafc',
+            borderRadius: '6px',
+            border: '1px solid #e2e8f0',
+            fontSize: '0.8rem',
+            flexWrap: 'wrap',
+          }}
+        >
+          <span style={{ fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: '0.75rem' }}>
+            Leyenda:
           </span>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <span
+              style={{
+                width: '12px',
+                height: '12px',
+                borderRadius: '2px',
+                backgroundColor: '#0046ad',
+                display: 'inline-block',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
+              }}
+            />
+            <span style={{ color: '#0b253b' }}>
+              <strong style={{ color: '#0046ad' }}>Azul:</strong> TÜV SÜD ATISAE (TSA)
+            </span>
+          </div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <span
+              style={{
+                width: '12px',
+                height: '12px',
+                borderRadius: '2px',
+                backgroundColor: '#00875a',
+                display: 'inline-block',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
+              }}
+            />
+            <span style={{ color: '#0b253b' }}>
+              <strong style={{ color: '#00875a' }}>Verde:</strong> TÜV SÜD CAL (CAL)
+            </span>
+          </div>
         </div>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-          <span
-            style={{
-              width: '12px',
-              height: '12px',
-              borderRadius: '2px',
-              backgroundColor: '#00875a',
-              display: 'inline-block',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
-            }}
-          />
-          <span style={{ color: '#0b253b' }}>
-            <strong style={{ color: '#00875a' }}>Verde:</strong> TÜV SÜD CAL (CAL)
-          </span>
-        </div>
-      </div>
+      )}
 
       {/* Contenedor vertical continuo: #1, #2, #3... orden natural a todo el ancho con scroll visible */}
       <div

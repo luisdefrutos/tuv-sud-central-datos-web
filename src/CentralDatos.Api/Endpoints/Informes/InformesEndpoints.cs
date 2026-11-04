@@ -558,6 +558,76 @@ public static class InformesEndpoints
         .WithName("ObtenerElementosDefectos")
         .WithSummary("Obtiene los defectos de un bloque específico");
 
+        // 25. Consulta analítica de clientes por volumen de inspecciones (grandes cuentas / flotas)
+        group.MapPost("/clientes-volumen/consultar", async (
+            [FromBody] ClientesVolumenFiltroDto filtros,
+            [FromServices] IInformesClientesVolumenService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var resultado = await service.GenerarInformeClientesVolumenAsync(filtros, ct);
+                return Results.Ok(resultado);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .WithName("ConsultarClientesVolumen")
+        .WithSummary("Consulta el volumen de inspecciones por cliente/titular con umbral mínimo, proyectos comerciales y categorías MINER");
+
+        // 26. Exportación oficial a Excel de clientes por volumen (.xlsx multi-pestaña)
+        group.MapPost("/clientes-volumen/exportar-excel", async (
+            [FromBody] ClientesVolumenFiltroDto filtros,
+            [FromServices] IInformesClientesVolumenService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var archivoBytes = await service.ExportarExcelAsync(filtros, ct);
+                var nombreFichero = $"Clientes_Volumen_{filtros.FechaInicio:yyyyMMdd}_{filtros.FechaFin:yyyyMMdd}.xlsx";
+
+                return Results.File(
+                    archivoBytes,
+                    contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileDownloadName: nombreFichero);
+            }
+            catch (OperationCanceledException)
+            {
+                return Results.StatusCode(499);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .RequireRateLimiting("excel-export-policy")
+        .WithName("ExportarClientesVolumenExcel")
+        .WithSummary("Genera y descarga el libro Excel oficial de clientes por volumen de inspecciones");
+
+        // 27. Catálogo de proyectos comerciales activos
+        group.MapGet("/clientes-volumen/proyectos-comerciales", async (
+            [FromServices] IInformesClientesVolumenService service,
+            CancellationToken ct) =>
+        {
+            var proyectos = await service.ObtenerProyectosComercialesAsync(ct);
+            return Results.Ok(proyectos);
+        })
+        .WithName("ObtenerProyectosComerciales")
+        .WithSummary("Obtiene el listado de proyectos comerciales activos para filtrado de clientes");
+
+        // 28. Catálogo de tipos de vehículo (clasificación MINER)
+        group.MapGet("/clientes-volumen/tipos-vehiculo", async (
+            [FromServices] IInformesClientesVolumenService service,
+            CancellationToken ct) =>
+        {
+            var tipos = await service.ObtenerTiposVehiculoMinerAsync(ct);
+            return Results.Ok(tipos);
+        })
+        .WithName("ObtenerTiposVehiculoMiner")
+        .WithSummary("Obtiene las 9 categorías oficiales MINER de tipos de vehículo");
+
         return app;
     }
 }

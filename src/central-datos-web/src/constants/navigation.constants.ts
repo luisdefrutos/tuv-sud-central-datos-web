@@ -30,7 +30,7 @@ export interface MenuGroup {
 }
 
 /** Pantallas ya migradas a la web (resto muestran la ficha "en migración") */
-export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion', 'facturacion-excel', 'num-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'cupon-descuento', 'miner-datos-globales', 'control-obd-no-coincidentes', 'inspecciones-rango-horario', 'defectologia-volumen', 'volumen-defectos'] as const;
+export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion', 'facturacion-excel', 'num-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'cupon-descuento', 'miner-datos-globales', 'control-obd-no-coincidentes', 'inspecciones-rango-horario', 'defectologia-volumen', 'volumen-defectos', 'clientes-volumen'] as const;
 
 export const DESKTOP_MENUS: MenuGroup[] = [
   {
@@ -76,7 +76,14 @@ export const DESKTOP_MENUS: MenuGroup[] = [
       {
         id: 'info-clientes',
         label: 'Información Clientes',
-        children: [{ id: 'clientes-volumen', label: 'Clientes por volumen de inspecciones' }],
+        children: [
+          {
+            id: 'clientes-volumen',
+            label: 'Clientes por volumen de inspecciones',
+            icon: '👥',
+            descripcion: 'Identificación y análisis de fidelización de grandes cuentas, flotas comerciales y profesionales en la red ITV.',
+          },
+        ],
       },
       {
         id: 'miner-excel',

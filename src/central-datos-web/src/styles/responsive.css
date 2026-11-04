@@ -150,6 +150,20 @@
   background-color: #172e6c;
 }
 
+/* Tablas de datos corporativas con hover estándar de fila TÜV SÜD */
+.cd-data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cd-data-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.cd-data-table tbody tr:hover {
+  background-color: var(--ts-semantic-color-background-primary-subtle-hover, #edf5ff) !important;
+}
+
 /* ==========================================================================
  * Barra de menús tipo escritorio (réplica de MainMenu de mdiMain.vb)
  * IMPORTANTE: el contenedor NO debe tener overflow, o recortaría los desplegables.
@@ -380,4 +394,16 @@
   .cd-page-actions > * {
     width: 100% !important;
   }
+}
+
+/* Input de búsqueda unificado de alta visibilidad para todos los informes */
+.cd-report-search-input::placeholder {
+  color: #64748b !important;
+  opacity: 1 !important;
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+}
+
+.cd-report-search-input:focus {
+  outline: none !important;
 }

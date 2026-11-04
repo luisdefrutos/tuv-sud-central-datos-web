@@ -94,4 +94,18 @@ public interface IInformesRepository
     Task<IReadOnlyList<DTOs.CatalogoDefectoItemDto>> ObtenerElementosDefectosAsync(
         string bloque,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ClienteVolumenDato>> ObtenerClientesVolumenAsync(
+        DateTime fechaInicio,
+        DateTime fechaFin,
+        int limiteCuenta,
+        string? codEmpresa = null,
+        IReadOnlyList<string>? codEstaciones = null,
+        string? fase = null,
+        int? idProyecto = null,
+        IReadOnlyList<string>? tiposVehiculo = null,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<DTOs.ProyectoComercialDto>> ObtenerProyectosComercialesAsync(
+        CancellationToken cancellationToken = default);
 }

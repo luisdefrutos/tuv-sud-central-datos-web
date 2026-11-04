@@ -4,6 +4,53 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.22.1] - 04/11/2026 - *Refinamiento Visual UX/UI Informe Clientes Volumen (C8), Unificación Buscador y Estabilidad de Grid*
+
+### 🎨 Refinamiento de Usabilidad y Estándar Visual (TÜV SÜD Algorithm DS)
+* **Unificación de Buscador Global (`ReportTableContainer.tsx` & `responsive.css`)**:
+  * Implementación de un input de búsqueda corporativo con mayor contraste y legibilidad (`#64748b`, `opacity: 1`), icono de lupa `🔍` y botón de borrado inmediato `✕`.
+  * Homologación uniforme para todos los informes del sistema.
+* **Corrección de Gráfica Analítica (`ReportBarChart.tsx`)**:
+  * Eliminación del doble scrollbar vertical innecesario.
+  * Leyenda corporativa condicional (*Azul: ATISAE / Verde: CAL*): se oculta en la vista **"Top Clientes"** y se activa exclusivamente en **"Por Estación"**.
+  * Corrección tipográfica de espaciado en la insignia de conteo (`30 estaciones` / `10 clientes`).
+* **Optimización de Grid y Desacoplamiento de KPIs (`ClientesVolumenReportPage.tsx` & `useClientesVolumenReport.ts`)**:
+  * Tarjetas KPI ejecutivas convertidas en métricas informativas limpias (sin filtrados cruzados ni saltos de scroll confusos).
+  * Eliminación de enlaces y subrayados en celdas del grid (`cifTitular` a texto plano), respondiendo al criterio funcional del usuario.
+  * Estructura de anchos mínimos de tabla (`1740px`), padding amplio (`10px 12px`) y `whiteSpace: nowrap` en todas las cabeceras y celdas, previniendo saltos de línea ("Teléfono \n 2") y truncados de texto ("Resultad...").
+  * **Búsqueda Numérica en Grid**: Soporte para buscar directamente números de inspecciones (ej. "30") para filtrar de inmediato clientes que acumulen ese volumen.
+  * **Control de Límite Mínimo de Inspecciones Validado**: Campo numérico con validación estricta (`>= 1`, normalización a 1 en caso de error, emulando `frmCriterios.vb`), filtros rápidos por presets (`Todos`, `>= 5`, `>= 10`, `>= 20`), banner explicativo visual en el panel y auto-actualización reactiva debounced (250 ms) de los 4 KPIs ejecutivos, gráficas y grid con la cláusula `HAVING COUNT(*) >= :LimiteCuenta`.
+  * **Fila de Totales Filtrados (`<tfoot>`) y Hover Homologado**: Fila sticky al pie del grid que suma las inspecciones reales filtradas, resolviendo la discrepancia visual entre número de líneas (ej. 12 registros de desglose) y el volumen acumulado (30 inspecciones en el KPI). Clase `.cd-data-table` con hover `#edf5ff` homologado con toda la suite.
+  * **Ampliación del Buscador**: Ancho del contenedor del buscador ampliado a `580px` para visualizar íntegramente el texto del placeholder sin cortes.
+
+---
+
+## [2.22.0] - 04/11/2026 - *Nuevo Módulo Clientes por Volumen de Inspecciones (C8) y Cierre del Bloque de Informes Excel de Fase 2*
+
+### 👥 Nuevo Módulo Vertical: Clientes por Volumen de Inspecciones (`clientes-volumen`)
+* **Migración Oficial de `frmCriterios.vb` (`ExportacionClientesVolumenInspecciones` / `Cargar_Dataset_Exportacion_ClientesVolumen`) (Informe C8)**:
+  * Implementación vertical completa (.NET 10 Web API, ClosedXML y React 19 con TÜV SÜD Algorithm DS).
+  * **Hito de Proyecto**: Cierre definitivo de los 8 nuevos informes de la Etapa C planificados en `13_plan_siguientes_pasos_informes.md`.
+  * Análisis de fidelización de grandes cuentas, flotas de transporte y profesionales con mayor concurrencia en la red ITV.
+  * Diferenciación de **CIF Titular** (`CIFFACTURA`) y **CIF Factura** (`CIFFACTURAT`) para identificar flotas gestionadas por operadores o empresas de renting.
+  * Filtro opcional por **Proyectos Comerciales** activos (`CENTRALITV.PROYECTOS_COMERCIALES` / `CENTRALITV.PROYECTOS_CLIENTES`) y por las 9 categorías reglamentarias **MINER** (`MO`, `TP`, `TR`, `MP`, `MG`, `AU`, `RS`, `AG`, `OT`).
+* **Optimización Extrema de Base de Datos Oracle 19c**:
+  * **0 Llamadas PL/SQL**: Sustitución de `CENTRALITV.PERIODICA(...) = 'S'` por `INNER JOIN CENTRALITV.SERVICIOSPORTIPOINSPECCION s ON s.CodSepiva = i.CodSepiva AND s.CodEstacion = i.CodEstacion AND s.CodServicio = '01'`, eliminando el cuello de botella de cambios de contexto.
+  * **Eliminación del Popup Modal `InputBox`**: Sustitución del diálogo bloqueante de VB.NET por un selector numérico reactivo (`Mín. Inspecciones: 5`, `10`, `20`) en la barra de filtros de usuario.
+  * **Consulta Unificada vs. Bucle $N$**: Ejecución de 1 sola consulta SQL parametrizada con *bind variables* (`:FechaInicio`, `:FechaFin`, `:LimiteCuenta`) para toda la red de estaciones, reduciendo los roundtrips a base de datos de 30 a 1.
+* **Backend y Exportación Oficial ClosedXML (.NET 10)**:
+  * Repositorio `OracleInformesRepository.ClientesVolumen.cs` con reintento ante desconexión ORA-12570 y timeout de 120s.
+  * Servicio `InformesClientesVolumenService.cs` con cálculo de KPIs ejecutivos, rankings y exportación oficial a Excel.
+  * Libro Excel multi-pestaña con hoja `TOTAL_CLIENTES_CONSOLIDADO` y hojas individuales por estación `CLIENTES_VOLUMEN_{CodEstacion}` con sumatorios numéricos directos (sin fórmulas de texto propensas a errores de localización).
+  * Endpoint protegido con limitador de concurrencia `excel-export-policy` (HTTP 429 ante saturación).
+* **Frontend y Experiencia de Usuario (React 19 + TÜV SÜD Algorithm DS)**:
+  * Página `ClientesVolumenReportPage.tsx` con 4 KPIs ejecutivos interactivos (*Clientes con Flota*, *Inspecciones Totales*, *Cliente Mayor Demanda*, *Aprobados en Flotas*).
+  * Selector gráfico dual: *Top 10 Clientes por Volumen* y *Distribución por Estación* con colores corporativos (Azul `#0046ad` TSA y Verde `#00875a` CAL).
+  * Grid paginado con `ReportPaginationBar`, buscador en memoria, ordenación en todas las columnas y hover corporativo `#edf5ff`.
+  * Sincronización en URL (`#/modulo/clientes-volumen`) y persistencia F5 en `sessionStorage`.
+
+---
+
 ## [2.21.1] - 04/11/2026 — *Refinamiento UX Volumen de Defectos (C7), Paginación, Scroll de Estaciones, Corrección ORA-00979 y Homologación de KPIs*
 
 ### 🛠️ Correcciones de Base de Datos Oracle 19c

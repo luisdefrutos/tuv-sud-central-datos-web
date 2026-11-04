@@ -25,6 +25,7 @@ public static class DependencyInjection
         services.AddScoped<IInformesBastidoresObdService, InformesBastidoresObdService>();
         services.AddScoped<IInformesInspRangoHorarioService, InformesInspRangoHorarioService>();
         services.AddScoped<IInformesVolumenDefectosService, InformesVolumenDefectosService>();
+        services.AddScoped<IInformesClientesVolumenService, InformesClientesVolumenService>();
 
         return services;
     }

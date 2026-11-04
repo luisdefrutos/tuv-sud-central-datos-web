@@ -16,6 +16,7 @@ import { MinerReportPage } from './features/informes/pages/MinerReportPage';
 import { BastidoresObdReportPage } from './features/informes/pages/BastidoresObdReportPage';
 import { InspRangoHorarioReportPage } from './features/informes/pages/InspRangoHorarioReportPage';
 import { VolumenDefectosReportPage } from './features/informes/pages/VolumenDefectosReportPage';
+import { ClientesVolumenReportPage } from './features/informes/pages/ClientesVolumenReportPage';
 import { InformesHubPage } from './features/informes/pages/InformesHubPage';
 import { DESKTOP_MENUS, findMenuItem } from './constants/navigation.constants';
 import { UI_CONSTANTS } from './constants/ui.constants';
@@ -39,7 +40,7 @@ function AppContent() {
       if (itemId === 'volumen-defectos') itemId = 'defectologia-volumen';
       if (itemId) {
         const { group } = findMenuItem(itemId);
-        const autoGroup = group?.id || (['facturacion', 'facturacion-excel', 'num-inspecciones', 'numero-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'sin-inspector', 'cupon-descuento', 'miner-datos-globales', 'control-obd-no-coincidentes', 'bastidores-obd-no-coincidentes', 'inspecciones-rango-horario', 'rango-horario', 'defectologia-volumen', 'volumen-defectos', 'informes'].includes(itemId) ? 'informes' : 'aplicacion');
+        const autoGroup = group?.id || (['facturacion', 'facturacion-excel', 'num-inspecciones', 'numero-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'sin-inspector', 'cupon-descuento', 'miner-datos-globales', 'control-obd-no-coincidentes', 'bastidores-obd-no-coincidentes', 'inspecciones-rango-horario', 'rango-horario', 'defectologia-volumen', 'volumen-defectos', 'clientes-volumen', 'informes'].includes(itemId) ? 'informes' : 'aplicacion');
         return { itemId, groupId: autoGroup };
       }
     }
@@ -586,6 +587,19 @@ function AppContent() {
           </ErrorBoundary>
         )}
 
+        {/* CASO C.10: Módulo de Clientes por Volumen de Inspecciones */}
+        {activeItemId === 'clientes-volumen' && (
+          <ErrorBoundary fallbackTitle="Error en Clientes por Volumen">
+            <ClientesVolumenReportPage
+              onNavigateHome={handleGoHome}
+              onNavigateToInformes={() => {
+                setActiveGroupId('informes');
+                setActiveItemId('informes');
+              }}
+            />
+          </ErrorBoundary>
+        )}
+
         {/* CASO D: Catálogo / Hub de Informes */}
         {activeGroupId === 'informes' && (activeItemId === null || activeItemId === 'informes') && (
           <InformesHubPage
@@ -613,7 +627,8 @@ function AppContent() {
           activeItemId !== 'inspecciones-rango-horario' &&
           activeItemId !== 'rango-horario' &&
           activeItemId !== 'defectologia-volumen' &&
-          activeItemId !== 'volumen-defectos' && (
+          activeItemId !== 'volumen-defectos' &&
+          activeItemId !== 'clientes-volumen' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {/* Miga de Pan Correspondiente Interactiva */}
             <TsBreadcrumb>
