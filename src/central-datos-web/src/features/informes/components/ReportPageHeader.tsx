@@ -1,5 +1,5 @@
 import React from 'react';
-import { TsBreadcrumb, TsBreadcrumbItem, TsButton } from '@tuvsud/design-system/react';
+import { TsBreadcrumb, TsBreadcrumbItem, TsButton, TsIcon } from '@tuvsud/design-system/react';
 
 export interface ReportPageHeaderProps {
   title: string;
@@ -80,7 +80,11 @@ export const ReportPageHeader: React.FC<ReportPageHeaderProps> = ({
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {icon && <span style={{ fontSize: '1.75rem' }}>{icon}</span>}
+            {icon && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', color: '#0046ad', flexShrink: 0 }}>
+                <TsIcon name={icon} size={28} />
+              </span>
+            )}
             <h1
               style={{
                 margin: 0,

@@ -160,7 +160,9 @@
   transition: background-color 0.15s ease;
 }
 
-.cd-data-table tbody tr:hover {
+.cd-data-table tbody tr:hover td,
+.cd-table tbody tr:hover td,
+.ts-table tbody tr:hover td {
   background-color: var(--ts-semantic-color-background-primary-subtle-hover, #edf5ff) !important;
 }
 

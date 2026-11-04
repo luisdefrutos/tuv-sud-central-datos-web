@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TsButton, TsBadge, TsAlert } from '@tuvsud/design-system/react';
+import { TsButton, TsBadge, TsAlert, TsIcon } from '@tuvsud/design-system/react';
 import { AppTooltip } from '../../../components/common/AppTooltip';
 import { SortIndicator } from '../../../components/common/SortIndicator';
 import { ReportKpiCard } from '../../../components/common/ReportKpiCard';
@@ -76,7 +76,7 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
       <ReportPageHeader
         title="Informe de Inspecciones sin Inspector"
         subtitle="Control y auditoría técnica de inspecciones que no tienen asignado ningún inspector responsable en la red ITV"
-        icon="⚠️"
+        icon="warning"
         breadcrumbItemText="Inspecciones sin inspector"
         onNavigateHome={onNavigateHome}
         onNavigateToInformes={onNavigateToInformes}
@@ -93,7 +93,8 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
               disabled={isLoading || isExporting || !hayDatosParaExportar}
               style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-              {isExporting ? '⏳ Generando Excel...' : '📊 Exportar a Excel'}
+              <TsIcon slot="prefix" name={isExporting ? "hourglass_empty" : "download"} />
+            {isExporting ? 'Generando Excel...' : 'Exportar a Excel'}
             </TsButton>
           </span>
         </AppTooltip>
@@ -129,7 +130,7 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
           heading="Error de Consulta"
           style={{ fontSize: '0.88rem' }}
         >
-          <span>❌ {error}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="cancel" style={{ fontSize: '15px' }} /><span>{error}</span></span>
         </TsAlert>
       )}
 
@@ -140,7 +141,7 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
           heading="Error de Exportación"
           style={{ fontSize: '0.88rem' }}
         >
-          <span>❌ {exportError}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="cancel" style={{ fontSize: '15px' }} /><span>{exportError}</span></span>
         </TsAlert>
       )}
 
@@ -210,10 +211,10 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
           })
         ) : (
           [
-            { id: 'total-sin-inspector', title: 'Total Sin Inspector', value: isLoading ? '...' : '0', subtitle: 'Centros con incidencias', icon: '⚠️', variant: 'neutral' as const },
+            { id: 'total-sin-inspector', title: 'Total Sin Inspector', value: isLoading ? '...' : '0', subtitle: 'Centros con incidencias', icon: 'warning', variant: 'neutral' as const },
             { id: 'fase1-sin-inspector', title: 'Fase 1 (1ª Inspección)', value: isLoading ? '...' : '0', subtitle: '0,0% del total', icon: '1️⃣', variant: 'neutral' as const },
             { id: 'fase2-sin-inspector', title: 'Fase 2 (Segundas)', value: isLoading ? '...' : '0', subtitle: '0,0% del total', icon: '2️⃣', variant: 'neutral' as const },
-            { id: 'estaciones-afectadas', title: 'Estaciones Afectadas', value: isLoading ? '...' : '0', subtitle: 'Sin incidencias', icon: '🏢', variant: 'neutral' as const },
+            { id: 'estaciones-afectadas', title: 'Estaciones Afectadas', value: isLoading ? '...' : '0', subtitle: 'Sin incidencias', icon: 'apartment', variant: 'neutral' as const },
           ].map((kpi, index) => (
             <ReportKpiCard
               key={`${kpi.id}_${index}`}
@@ -247,9 +248,7 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 }}
-              >
-                📊 Barras (Ranking)
-              </button>
+              ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="bar_chart" style={{ fontSize: '15px' }} /><span>Barras (Ranking)</span></span></button>
               <button
                 type="button"
                 onClick={() => setChartMode('donut')}
@@ -264,9 +263,7 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 }}
-              >
-                🍩 Cuota por Estación
-              </button>
+              ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="pie_chart" style={{ fontSize: '15px' }} /><span>Cuota por Estación</span></span></button>
             </div>
           </div>
 
@@ -297,7 +294,7 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
                 color: '#15803d',
               }}
             >
-              <span style={{ fontSize: '1.75rem', display: 'block', marginBottom: '0.5rem' }}>✅</span>
+              <TsIcon name="check_circle" style={{ fontSize: '2rem', color: '#059669', display: 'block', margin: '0 auto 0.5rem auto' }} />
               <strong style={{ fontSize: '0.95rem' }}>No hay incidencias sin inspector registradas</strong>
               <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.84rem', color: '#64748b' }}>
                 Todas las inspecciones para los filtros indicados tienen inspectores técnicos formalmente asignados.
@@ -320,7 +317,7 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
         unidadRegistros="registros"
       >
         <div style={{ width: '100%', overflowX: 'auto' }}>
-          <table
+          <table className="cd-data-table"
             style={{
               width: '100%',
               minWidth: '1100px',
@@ -510,9 +507,7 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
                               fontWeight: 600,
                               fontSize: '0.75rem',
                             }}
-                          >
-                            🔍 Ficha
-                          </button>
+                          ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><TsIcon name="search" style={{ fontSize: '13px' }} /><span>Ficha</span></span></button>
                         </AppTooltip>
                       </td>
                     </tr>
@@ -566,7 +561,7 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.5rem' }}>📋</span>
+                <TsIcon name="assignment" style={{ fontSize: '1.5rem', color: '#0046ad' }} />
                 <h3 style={{ margin: 0, color: '#002b49', fontSize: '1.1rem', fontWeight: 800 }}>
                   Ficha de Inspección: {filaSeleccionada.matricula}
                 </h3>
@@ -582,9 +577,7 @@ export const SinInspectorReportPage: React.FC<SinInspectorReportPageProps> = ({
                   color: '#64748b',
                   fontWeight: 700,
                 }}
-              >
-                ✕
-              </button>
+              ><TsIcon name="close" style={{ fontSize: '16px' }} /></button>
             </div>
 
             <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', fontSize: '0.85rem' }}>

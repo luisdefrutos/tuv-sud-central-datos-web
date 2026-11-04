@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { TsBadge } from '@tuvsud/design-system/react';
+import { TsBadge, TsIcon } from '@tuvsud/design-system/react';
 import { UI_CONSTANTS } from '../../constants/ui.constants';
 import { TuvSudLogo } from '../common/TuvSudLogo';
 import { useAuth } from '../../features/auth/context/AuthContext';
@@ -93,7 +93,7 @@ export function Header() {
               maxWidth: '100%',
             }}
           >
-            <span style={{ opacity: 0.75 }}>👤</span>
+            <TsIcon name="person" style={{ fontSize: '18px', opacity: 0.85 }} />
             <span
               style={{
                 fontWeight: 600,

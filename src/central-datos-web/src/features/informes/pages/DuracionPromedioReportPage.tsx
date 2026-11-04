@@ -1,11 +1,5 @@
 ﻿import React from 'react';
-import {
-  TsButton,
-  TsAlert,
-  TsBreadcrumb,
-  TsBreadcrumbItem,
-  TsBadge,
-} from '@tuvsud/design-system/react';
+import { TsButton, TsAlert, TsBreadcrumb, TsBreadcrumbItem, TsBadge, TsIcon } from '@tuvsud/design-system/react';
 import { useDuracionPromedioReport } from '../hooks/useDuracionPromedioReport';
 import { ReportFiltersBar } from '../components/ReportFiltersBar';
 import { ReportKpiCard } from '../../../components/common/ReportKpiCard';
@@ -105,7 +99,7 @@ export const DuracionPromedioReportPage: React.FC<DuracionPromedioReportPageProp
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '1.75rem' }}>⏱️</span>
+            <TsIcon name="schedule" style={{ fontSize: '1.75rem', color: '#0046ad' }} />
             <h1
               style={{
                 margin: 0,
@@ -138,7 +132,8 @@ export const DuracionPromedioReportPage: React.FC<DuracionPromedioReportPageProp
             disabled={isLoading || estacionesFiltradas.length === 0}
             style={{ fontWeight: 600 }}
           >
-            🖨️ Imprimir (Crystal Report)
+            <TsIcon slot="prefix" name="print" />
+            Imprimir (Crystal Report)
           </TsButton>
           <TsButton
             variant="primary"
@@ -148,7 +143,8 @@ export const DuracionPromedioReportPage: React.FC<DuracionPromedioReportPageProp
             loading={isLoading}
             style={{ fontWeight: 700 }}
           >
-            🔄 Actualizar Datos
+            <TsIcon slot="prefix" name="refresh" />
+            Actualizar Datos
           </TsButton>
         </div>
       </div>
@@ -156,7 +152,7 @@ export const DuracionPromedioReportPage: React.FC<DuracionPromedioReportPageProp
       {/* 3. Alertas de Validación y Error */}
       {alertaRangoFechas && (
         <TsAlert variant="warning" open heading="Validación de Rango de Fechas">
-          <span>⚠️ {alertaRangoFechas}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="warning" style={{ fontSize: '15px' }} /><span>{alertaRangoFechas}</span></span>
         </TsAlert>
       )}
 
@@ -228,9 +224,7 @@ export const DuracionPromedioReportPage: React.FC<DuracionPromedioReportPageProp
                 backgroundColor: chartMode === 'estaciones' ? '#0046ad' : '#ffffff',
                 color: chartMode === 'estaciones' ? '#ffffff' : '#334155',
               }}
-            >
-              📊 Ranking Agilidad (Menor a Mayor)
-            </button>
+            ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="bar_chart" style={{ fontSize: '15px' }} /><span>Ranking Agilidad (Menor a Mayor)</span></span></button>
             <button
               type="button"
               className="cd-chart-mode-btn"
@@ -241,9 +235,7 @@ export const DuracionPromedioReportPage: React.FC<DuracionPromedioReportPageProp
                 backgroundColor: chartMode === 'tipos' ? '#0046ad' : '#ffffff',
                 color: chartMode === 'tipos' ? '#ffffff' : '#334155',
               }}
-            >
-              🚗 Por Tipo de Vehículo
-            </button>
+            ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="directions_car" style={{ fontSize: '15px' }} /><span>Por Tipo de Vehículo</span></span></button>
             <button
               type="button"
               className="cd-chart-mode-btn"
@@ -254,9 +246,7 @@ export const DuracionPromedioReportPage: React.FC<DuracionPromedioReportPageProp
                 backgroundColor: chartMode === 'donut-tipos' ? '#0046ad' : '#ffffff',
                 color: chartMode === 'donut-tipos' ? '#ffffff' : '#334155',
               }}
-            >
-              📊 Cuota por Tipo
-            </button>
+            ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="pie_chart" style={{ fontSize: '15px' }} /><span>Cuota por Tipo</span></span></button>
             <button
               type="button"
               className="cd-chart-mode-btn"
@@ -267,9 +257,7 @@ export const DuracionPromedioReportPage: React.FC<DuracionPromedioReportPageProp
                 backgroundColor: chartMode === 'donut-tramos' ? '#0046ad' : '#ffffff',
                 color: chartMode === 'donut-tramos' ? '#ffffff' : '#334155',
               }}
-            >
-              ⏱️ Tramos de Tiempo
-            </button>
+            ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="schedule" style={{ fontSize: '15px' }} /><span>Tramos de Tiempo</span></span></button>
           </div>
         </div>
 
@@ -338,7 +326,7 @@ export const DuracionPromedioReportPage: React.FC<DuracionPromedioReportPageProp
         isExporting={isExporting}
         exportDisabled={estacionesFiltradas.length === 0}
       >
-        <table
+        <table className="cd-data-table"
           style={{
             width: '100%',
             minWidth: '780px',
@@ -450,7 +438,7 @@ export const DuracionPromedioReportPage: React.FC<DuracionPromedioReportPageProp
                 <td colSpan={5} style={{ padding: '3.5rem', textAlign: 'center', color: '#64748b' }}>
                   {estacionesSeleccionadas.length === 0 ? (
                     <div>
-                      <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>ℹ️</div>
+                      <TsIcon name="info" style={{ fontSize: '2rem', color: '#0046ad', display: 'block', margin: '0 auto 0.5rem auto' }} />
                       <div style={{ fontWeight: 600, color: '#0b253b', marginBottom: '0.25rem' }}>
                         No hay estaciones seleccionadas en el filtro
                       </div>

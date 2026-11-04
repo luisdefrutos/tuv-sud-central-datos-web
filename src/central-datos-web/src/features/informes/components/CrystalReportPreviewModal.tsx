@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { TsButton } from '@tuvsud/design-system/react';
+import { TsButton, TsIcon } from '@tuvsud/design-system/react';
 import type { FilaFacturacion } from '../types/informes.types';
 
 export interface CrystalReportPreviewModalProps {
@@ -222,7 +222,7 @@ export const CrystalReportPreviewModal: React.FC<CrystalReportPreviewModalProps>
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '1.1rem' }}>📄</span>
+              <TsIcon name="description" style={{ fontSize: '20px' }} />
               <span style={{ fontWeight: 700, fontSize: '0.88rem', letterSpacing: '0.5px' }}>
                 SAP CRYSTAL REPORTS® - Resumen de facturación de inspecciones (A4 Apaisado)
               </span>
@@ -230,10 +230,12 @@ export const CrystalReportPreviewModal: React.FC<CrystalReportPreviewModalProps>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <TsButton variant="primary" size="small" onClick={handlePrint}>
-                🖨️ Imprimir / Guardar PDF (1 Hoja)
+                <TsIcon slot="prefix" name="print" />
+                Imprimir / Guardar PDF (1 Hoja)
               </TsButton>
               <TsButton variant="secondary" size="small" onClick={onClose}>
-                ✕ Cerrar
+                <TsIcon slot="prefix" name="close" />
+                Cerrar
               </TsButton>
             </div>
           </div>

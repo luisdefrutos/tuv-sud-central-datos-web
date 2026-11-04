@@ -27,6 +27,7 @@ import {
   TsCard,
   TsBadge,
   TsSpinner,
+  TsIcon,
 } from '@tuvsud/design-system/react';
 
 function AppContent() {
@@ -178,7 +179,7 @@ function AppContent() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>⚠️</span>
+            <TsIcon name="warning" style={{ fontSize: '18px', color: '#d97706' }} />
             <strong>Sin conexión con el servidor (Modo local activo).</strong>
             <span>La actividad de navegación se almacenará en su navegador y se sincronizará con Central Datos al recuperar la red.</span>
           </div>
@@ -196,7 +197,7 @@ function AppContent() {
               padding: 0,
             }}
           >
-            📥 Descargar diagnóstico técnico (.log)
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="download" style={{ fontSize: '15px' }} /><span>Descargar diagnóstico técnico (.log)</span></span>
           </button>
         </div>
       )}
@@ -230,9 +231,7 @@ function AppContent() {
                     fontSize: '2rem',
                     flexShrink: 0,
                   }}
-                >
-                  🖥️
-                </div>
+                ><TsIcon name="desktop_windows" size={36} style={{ color: '#0046ad' }} /></div>
                 <div>
                   <h1
                     style={{
@@ -286,7 +285,7 @@ function AppContent() {
                 >
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <span style={{ fontSize: '1.75rem' }}>📊</span>
+                      <TsIcon name="bar_chart" size={32} style={{ color: '#0046ad' }} />
                       <TsBadge variant="primary">Activo (30 ITV)</TsBadge>
                     </div>
                     <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0046ad', fontWeight: 700 }}>
@@ -318,7 +317,7 @@ function AppContent() {
                 >
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <span style={{ fontSize: '1.75rem' }}>💶</span>
+                      <TsIcon name="payments" size={32} style={{ color: '#00875a' }} />
                       <TsBadge variant="success">Disponible</TsBadge>
                     </div>
                     <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0046ad', fontWeight: 700 }}>
@@ -350,7 +349,7 @@ function AppContent() {
                 >
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <span style={{ fontSize: '1.75rem' }}>📈</span>
+                      <TsIcon name="trending_up" size={32} style={{ color: '#00875a' }} />
                       <TsBadge variant="success">Disponible</TsBadge>
                     </div>
                     <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0046ad', fontWeight: 700 }}>
@@ -382,7 +381,7 @@ function AppContent() {
                 >
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <span style={{ fontSize: '1.75rem' }}>⏱️</span>
+                      <TsIcon name="schedule" size={32} style={{ color: '#00875a' }} />
                       <TsBadge variant="success">Disponible</TsBadge>
                     </div>
                     <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0046ad', fontWeight: 700 }}>
@@ -405,7 +404,7 @@ function AppContent() {
                 <TsCard style={{ padding: '1.5rem', backgroundColor: '#ffffff', opacity: 0.9 }}>
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <span style={{ fontSize: '1.75rem' }}>🚗</span>
+                      <TsIcon name="directions_car" size={32} style={{ color: '#64748b' }} />
                       <TsBadge variant="neutral">Próximamente</TsBadge>
                     </div>
                     <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0b253b', fontWeight: 700 }}>
@@ -421,7 +420,7 @@ function AppContent() {
                 <TsCard style={{ padding: '1.5rem', backgroundColor: '#ffffff', opacity: 0.9 }}>
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <span style={{ fontSize: '1.75rem' }}>📱</span>
+                      <TsIcon name="chat" size={32} style={{ color: '#64748b' }} />
                       <TsBadge variant="neutral">Próximamente</TsBadge>
                     </div>
                     <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0b253b', fontWeight: 700 }}>
@@ -686,9 +685,7 @@ function AppContent() {
                   fontSize: '2rem',
                   margin: '0 auto 1.25rem auto',
                 }}
-              >
-                ⏳
-              </div>
+              ><TsIcon name="hourglass_empty" style={{ fontSize: '2rem', color: '#d97706' }} /></div>
 
               <div style={{ display: 'inline-block', marginBottom: '0.75rem' }}>
                 <TsBadge variant="warning">Pendiente de Implementar</TsBadge>
@@ -719,7 +716,8 @@ function AppContent() {
 
               <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                 <TsButton variant="secondary" onClick={handleGoHome}>
-                  🏠 Volver al Inicio
+                  <TsIcon slot="prefix" name="home" />
+                  Volver al Inicio
                 </TsButton>
                 {currentGroup?.id === 'informes' && (
                   <TsButton
@@ -729,14 +727,16 @@ function AppContent() {
                       setActiveItemId('informes');
                     }}
                   >
-                    📊 Catálogo de Informes
+                    <TsIcon slot="prefix" name="bar_chart" />
+                    Catálogo de Informes
                   </TsButton>
                 )}
                 <TsButton
                   variant="primary"
                   onClick={() => handleSelectItem('ultima-fecha', 'aplicacion')}
                 >
-                  📡 Ir a Últimos datos centralizados
+                  <TsIcon slot="prefix" name="sensors" />
+                  Ir a Últimos datos centralizados
                 </TsButton>
               </div>
             </TsCard>

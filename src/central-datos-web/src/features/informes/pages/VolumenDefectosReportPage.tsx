@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { TsButton, TsCard, TsBadge } from '@tuvsud/design-system/react';
+import { TsButton, TsCard, TsBadge, TsIcon } from '@tuvsud/design-system/react';
 import { ReportPageHeader } from '../components/ReportPageHeader';
 import { ReportFiltersBar } from '../components/ReportFiltersBar';
 import { ReportDateRangeAlert } from '../components/ReportDateRangeAlert';
@@ -186,7 +186,7 @@ export const VolumenDefectosReportPage: React.FC<VolumenDefectosReportPageProps>
       <ReportPageHeader
         title="Volumen de Defectos Detectados"
         subtitle="Auditoría técnica de tipología y frecuencia de defectos en inspecciones periódicas por grupo de vehículo y gravedad."
-        icon="⚠️"
+        icon="warning"
         breadcrumbItemText="Volumen de defectos"
         onNavigateHome={onNavigateHome}
         onNavigateToInformes={onNavigateToInformes}
@@ -205,7 +205,8 @@ export const VolumenDefectosReportPage: React.FC<VolumenDefectosReportPageProps>
               disabled={isLoading || isExporting || !hayDatosParaExportar}
               style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-              {isExporting ? '⏳ Generando Excel...' : '📊 Exportar a Excel'}
+              <TsIcon slot="prefix" name={isExporting ? "hourglass_empty" : "download"} />
+            {isExporting ? 'Generando Excel...' : 'Exportar a Excel'}
             </TsButton>
           </span>
         </AppTooltip>
@@ -422,9 +423,7 @@ export const VolumenDefectosReportPage: React.FC<VolumenDefectosReportPageProps>
                   transition: 'all 0.15s ease',
                   boxShadow: vistaGrafica === 'estaciones' ? '0 2px 6px rgba(0, 51, 102, 0.2)' : 'none',
                 }}
-              >
-                📊 Ranking por Estación
-              </button>
+              ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="bar_chart" style={{ fontSize: '15px' }} /><span>Ranking por Estación</span></span></button>
               <button
                 type="button"
                 onClick={() => setVistaGrafica('categorias')}
@@ -441,9 +440,7 @@ export const VolumenDefectosReportPage: React.FC<VolumenDefectosReportPageProps>
                   transition: 'all 0.15s ease',
                   boxShadow: vistaGrafica === 'categorias' ? '0 2px 6px rgba(0, 51, 102, 0.2)' : 'none',
                 }}
-              >
-                🍩 Reparto por Categoría de Vehículo
-              </button>
+              ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="pie_chart" style={{ fontSize: '15px' }} /><span>Reparto por Categoría</span></span></button>
             </div>
           </div>
 
@@ -486,7 +483,7 @@ export const VolumenDefectosReportPage: React.FC<VolumenDefectosReportPageProps>
             position: 'relative',
           }}
         >
-          <table
+          <table className="cd-data-table"
             style={{
               width: '100%',
               borderCollapse: 'collapse',
@@ -573,7 +570,7 @@ export const VolumenDefectosReportPage: React.FC<VolumenDefectosReportPageProps>
             {isLoading ? (
               <tr>
                 <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
-                  ⏳ Cargando datos de volumen de defectos...
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="hourglass_empty" style={{ fontSize: '14px' }} /><span>Cargando datos de volumen de defectos...</span></span>
                 </td>
               </tr>
             ) : filasPaginadas.length > 0 ? (

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TsButton, TsBadge, TsAlert } from '@tuvsud/design-system/react';
+import { TsButton, TsBadge, TsAlert, TsIcon } from '@tuvsud/design-system/react';
 import { AppTooltip } from '../../../components/common/AppTooltip';
 import { SortIndicator } from '../../../components/common/SortIndicator';
 import { ReportKpiCard } from '../../../components/common/ReportKpiCard';
@@ -76,7 +76,7 @@ export const CuponDescuentoReportPage: React.FC<CuponDescuentoReportPageProps> =
       <ReportPageHeader
         title="Informe de Inspecciones con Cupón Descuento"
         subtitle="Auditoría técnica y control de liquidación de promociones y cupones de descuento aplicados en la red ITV"
-        icon="🎟️"
+        icon="confirmation_number"
         breadcrumbItemText="Cupones descuento"
         onNavigateHome={onNavigateHome}
         onNavigateToInformes={onNavigateToInformes}
@@ -93,7 +93,8 @@ export const CuponDescuentoReportPage: React.FC<CuponDescuentoReportPageProps> =
               disabled={isLoading || isExporting || !hayDatosParaExportar}
               style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-              {isExporting ? '⏳ Generando Excel...' : '📊 Exportar a Excel'}
+              <TsIcon slot="prefix" name={isExporting ? "hourglass_empty" : "download"} />
+            {isExporting ? 'Generando Excel...' : 'Exportar a Excel'}
             </TsButton>
           </span>
         </AppTooltip>
@@ -129,7 +130,7 @@ export const CuponDescuentoReportPage: React.FC<CuponDescuentoReportPageProps> =
           heading="Error de Consulta"
           style={{ fontSize: '0.88rem' }}
         >
-          <span>❌ {error}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="cancel" style={{ fontSize: '15px' }} /><span>{error}</span></span>
         </TsAlert>
       )}
 
@@ -140,7 +141,7 @@ export const CuponDescuentoReportPage: React.FC<CuponDescuentoReportPageProps> =
           heading="Error de Exportación"
           style={{ fontSize: '0.88rem' }}
         >
-          <span>❌ {exportError}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="cancel" style={{ fontSize: '15px' }} /><span>{exportError}</span></span>
         </TsAlert>
       )}
 
@@ -166,10 +167,10 @@ export const CuponDescuentoReportPage: React.FC<CuponDescuentoReportPageProps> =
           ))
         ) : (
           [
-            { id: 'total-cupones', title: 'Inspecciones con Cupón', value: isLoading ? '...' : '0', subtitle: 'Centros con promociones', icon: '🎟️', variant: 'neutral' as const },
-            { id: 'total-descuento', title: 'Total Descuento Aplicado', value: isLoading ? '...' : '0,00 €', subtitle: 'Importe bonificado', icon: '💰', variant: 'neutral' as const },
-            { id: 'total-abonado', title: 'Importe Abonado en Caja', value: isLoading ? '...' : '0,00 €', subtitle: 'Ingreso neto percibido', icon: '💳', variant: 'neutral' as const },
-            { id: 'campana-lider', title: 'Campaña Más Utilizada', value: isLoading ? '...' : 'Sin datos', subtitle: 'Volumen promocional', icon: '🏷️', variant: 'neutral' as const },
+            { id: 'total-cupones', title: 'Inspecciones con Cupón', value: isLoading ? '...' : '0', subtitle: 'Centros con promociones', icon: 'confirmation_number', variant: 'neutral' as const },
+            { id: 'total-descuento', title: 'Total Descuento Aplicado', value: isLoading ? '...' : '0,00 €', subtitle: 'Importe bonificado', icon: 'payments', variant: 'neutral' as const },
+            { id: 'total-abonado', title: 'Importe Abonado en Caja', value: isLoading ? '...' : '0,00 €', subtitle: 'Ingreso neto percibido', icon: 'payments', variant: 'neutral' as const },
+            { id: 'campana-lider', title: 'Campaña Más Utilizada', value: isLoading ? '...' : 'Sin datos', subtitle: 'Volumen promocional', icon: 'confirmation_number', variant: 'neutral' as const },
           ].map((kpi, index) => (
             <ReportKpiCard
               key={`${kpi.id}_${index}`}
@@ -203,9 +204,7 @@ export const CuponDescuentoReportPage: React.FC<CuponDescuentoReportPageProps> =
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 }}
-              >
-                📊 Barras (Ranking por Estación)
-              </button>
+              ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="bar_chart" style={{ fontSize: '15px' }} /><span>Barras (Ranking por Estación)</span></span></button>
               <button
                 type="button"
                 onClick={() => setChartMode('donut')}
@@ -220,9 +219,7 @@ export const CuponDescuentoReportPage: React.FC<CuponDescuentoReportPageProps> =
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 }}
-              >
-                🍩 Cuota por Campaña de Promoción
-              </button>
+              ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="pie_chart" style={{ fontSize: '15px' }} /><span>Cuota por Campaña de Promoción</span></span></button>
             </div>
           </div>
 
@@ -257,7 +254,7 @@ export const CuponDescuentoReportPage: React.FC<CuponDescuentoReportPageProps> =
         unidadRegistros="registros"
       >
         <div style={{ width: '100%', overflowX: 'auto' }}>
-          <table
+          <table className="cd-data-table"
             style={{
               width: '100%',
               minWidth: '1180px',
@@ -420,9 +417,7 @@ export const CuponDescuentoReportPage: React.FC<CuponDescuentoReportPageProps> =
                               fontWeight: 600,
                               fontSize: '0.75rem',
                             }}
-                          >
-                            🔍 Ficha
-                          </button>
+                          ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><TsIcon name="search" style={{ fontSize: '13px' }} /><span>Ficha</span></span></button>
                         </AppTooltip>
                       </td>
                     </tr>
@@ -474,7 +469,7 @@ export const CuponDescuentoReportPage: React.FC<CuponDescuentoReportPageProps> =
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.4rem' }}>🎟️</span>
+                <TsIcon name="confirmation_number" style={{ fontSize: '1.4rem', color: '#0046ad' }} />
                 <h3 style={{ margin: 0, color: '#0b253b', fontSize: '1.1rem', fontWeight: 800 }}>
                   Ficha de Inspección: {filaSeleccionada.matricula}
                 </h3>
@@ -490,9 +485,7 @@ export const CuponDescuentoReportPage: React.FC<CuponDescuentoReportPageProps> =
                   color: '#64748b',
                   fontWeight: 700,
                 }}
-              >
-                ✕
-              </button>
+              ><TsIcon name="close" style={{ fontSize: '16px' }} /></button>
             </div>
 
             <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', fontSize: '0.85rem' }}>

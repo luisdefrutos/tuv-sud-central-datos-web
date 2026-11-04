@@ -1,12 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {
-  TsBreadcrumb,
-  TsBreadcrumbItem,
-  TsButton,
-  TsBadge,
-  TsAlert,
-  TsSpinner,
-} from '@tuvsud/design-system/react';
+import { TsBreadcrumb, TsBreadcrumbItem, TsButton, TsBadge, TsAlert, TsSpinner, TsIcon } from '@tuvsud/design-system/react';
 import {
   ReportFiltersBar,
   ReportBarChart,
@@ -177,7 +170,7 @@ export const FacturacionReportPage: React.FC<FacturacionReportPageProps> = ({
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '1.75rem' }}>💶</span>
+            <TsIcon name="payments" style={{ fontSize: '1.75rem', color: '#0046ad' }} />
             <h1
               style={{
                 margin: 0,
@@ -210,7 +203,8 @@ export const FacturacionReportPage: React.FC<FacturacionReportPageProps> = ({
             disabled={isLoading || filasFiltradas.length === 0}
             style={{ fontWeight: 600 }}
           >
-            🖨️ Imprimir (Crystal Report)
+            <TsIcon slot="prefix" name="print" />
+            Imprimir (Crystal Report)
           </TsButton>
           <TsButton
             variant="secondary"
@@ -219,7 +213,8 @@ export const FacturacionReportPage: React.FC<FacturacionReportPageProps> = ({
             disabled={isLoading}
             loading={isLoading}
           >
-            🔄 Actualizar Datos
+            <TsIcon slot="prefix" name="refresh" />
+            Actualizar Datos
           </TsButton>
         </div>
       </div>
@@ -227,7 +222,7 @@ export const FacturacionReportPage: React.FC<FacturacionReportPageProps> = ({
       {/* 3. Alertas de Validación y Error */}
       {alertaRangoFechas && (
         <TsAlert variant="warning" open heading="Validación de Rango de Fechas">
-          <span>⚠️ {alertaRangoFechas}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="warning" style={{ fontSize: '15px' }} /><span>{alertaRangoFechas}</span></span>
         </TsAlert>
       )}
 
@@ -250,7 +245,7 @@ export const FacturacionReportPage: React.FC<FacturacionReportPageProps> = ({
           onTsAfterHide={() => setExportError(null)}
           heading="Exportación no disponible"
         >
-          <span>⚠️ {exportError}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="warning" style={{ fontSize: '15px' }} /><span>{exportError}</span></span>
         </TsAlert>
       )}
 
@@ -291,28 +286,28 @@ export const FacturacionReportPage: React.FC<FacturacionReportPageProps> = ({
               value={totalesVisibles.totalFacturacionFormatted}
               subtitle={`${totalesVisibles.totalEstaciones} estaciones ${sociedad === 'TODAS' ? 'analizadas' : `(${sociedad})`}`}
               variant="primary"
-              icon="💰"
+              icon="payments"
             />
             <ReportKpiCard
               title="Total Inspecciones"
               value={totalesVisibles.totalInspecciones.toLocaleString('es-ES')}
               subtitle="Inspecciones válidas no anuladas"
               variant="neutral"
-              icon="🚗"
+              icon="directions_car"
             />
             <ReportKpiCard
               title="Ticket Medio / Inspección"
               value={totalesVisibles.ticketMedioGlobalFormatted}
               subtitle="Promedio en estaciones visibles"
               variant="neutral"
-              icon="📊"
+              icon="bar_chart"
             />
             <ReportKpiCard
               title="Estación Mayor Facturación"
               value={estacionTop ? estacionTop.desEstacion.replace('I.T.V. - ', '') : 'Sin datos'}
               subtitle={estacionTop ? estacionTop.totalIngresosFormatted : '0,00 €'}
               variant="success"
-              icon="🏆"
+              icon="trophy"
             />
           </>
         )}
@@ -336,9 +331,7 @@ export const FacturacionReportPage: React.FC<FacturacionReportPageProps> = ({
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
               }}
-            >
-              📊 Barras (Ranking)
-            </button>
+            ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="bar_chart" style={{ fontSize: '15px' }} /><span>Barras (Ranking)</span></span></button>
             <button
               type="button"
               onClick={() => setChartMode('donut')}
@@ -353,9 +346,7 @@ export const FacturacionReportPage: React.FC<FacturacionReportPageProps> = ({
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
               }}
-            >
-              🍩 Circular (Cuota %)
-            </button>
+            ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="pie_chart" style={{ fontSize: '15px' }} /><span>Circular (Cuota %)</span></span></button>
           </div>
         </div>
 
@@ -402,7 +393,7 @@ export const FacturacionReportPage: React.FC<FacturacionReportPageProps> = ({
         isExporting={isExporting}
         exportDisabled={filasFiltradas.length === 0}
       >
-        <table
+        <table className="cd-data-table"
           style={{
             width: '100%',
             minWidth: '780px',
@@ -441,7 +432,7 @@ export const FacturacionReportPage: React.FC<FacturacionReportPageProps> = ({
             ) : filasFiltradas.length === 0 ? (
               <tr>
                 <td colSpan={6} style={{ padding: '3.5rem', textAlign: 'center', color: '#64748b' }}>
-                  <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>🔍</div>
+                  <TsIcon name="search" style={{ fontSize: '2rem', color: '#64748b', display: 'block', margin: '0 auto 8px auto' }} />
                   <div style={{ fontWeight: 700, color: '#0b253b', fontSize: '1rem' }}>
                     No se encontraron registros de facturación
                   </div>

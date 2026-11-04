@@ -1,3 +1,4 @@
+import { TsIcon } from '@tuvsud/design-system/react';
 import { useState, useEffect, useRef } from 'react';
 import type { MenuGroup, MenuItem } from '../../constants/navigation.constants';
 
@@ -97,7 +98,17 @@ export function Navbar({
           aria-expanded={mobileMenuOpen}
           aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
         >
-          {mobileMenuOpen ? '✕ Cerrar' : '☰ Menú'}
+          {mobileMenuOpen ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <TsIcon name="close" style={{ fontSize: '16px' }} />
+              <span>Cerrar</span>
+            </span>
+          ) : (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <TsIcon name="menu" style={{ fontSize: '16px' }} />
+              <span>Menú</span>
+            </span>
+          )}
         </button>
       </div>
 

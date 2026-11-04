@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { TsButton, TsBadge } from '@tuvsud/design-system/react';
+import { TsButton, TsBadge, TsIcon } from '@tuvsud/design-system/react';
 import { AppTooltip } from '../../../components/common/AppTooltip';
 import { SortIndicator } from '../../../components/common/SortIndicator';
 import { ReportKpiCard } from '../../../components/common/ReportKpiCard';
@@ -147,7 +147,7 @@ export const FacturacionComparativaReportPage: React.FC<FacturacionComparativaRe
       <ReportPageHeader
         title="Excel Facturación de Inspecciones (TSA / CAL)"
         subtitle="Análisis comparativo de ingresos e inspecciones entre dos periodos por sociedad y estación ITV"
-        icon="📈"
+        icon="trending_up"
         breadcrumbItemText="Facturación comparativa"
         onNavigateHome={onNavigateHome}
         onNavigateToInformes={onNavigateToInformes}
@@ -164,7 +164,8 @@ export const FacturacionComparativaReportPage: React.FC<FacturacionComparativaRe
               disabled={isLoading || isExporting || !hayDatosParaExportar}
               style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-              {isExporting ? '⏳ Generando Excel...' : '📊 Exportar a Excel'}
+              <TsIcon slot="prefix" name={isExporting ? "hourglass_empty" : "download"} />
+            {isExporting ? 'Generando Excel...' : 'Exportar a Excel'}
             </TsButton>
           </span>
         </AppTooltip>
@@ -184,7 +185,7 @@ export const FacturacionComparativaReportPage: React.FC<FacturacionComparativaRe
           {/* Rango 1 (Referencia) */}
           <div style={{ flex: '1 1 240px', padding: '0.65rem 0.75rem', backgroundColor: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
             <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#0046ad', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-              📅 Rango 1 (Referencia / Año Ant.)
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="calendar_today" style={{ fontSize: '14px' }} /><span>Rango 1 (Referencia / Año Ant.)</span></span>
             </label>
             <div style={{ display: 'flex', gap: '6px' }}>
               <input
@@ -207,7 +208,7 @@ export const FacturacionComparativaReportPage: React.FC<FacturacionComparativaRe
           {/* Rango 2 (Actual) */}
           <div style={{ flex: '1 1 240px', padding: '0.65rem 0.75rem', backgroundColor: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
             <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#0046ad', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-              📅 Rango 2 (Actual / Comparado)
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="calendar_today" style={{ fontSize: '14px' }} /><span>Rango 2 (Actual / Comparado)</span></span>
             </label>
             <div style={{ display: 'flex', gap: '6px' }}>
               <input
@@ -236,7 +237,7 @@ export const FacturacionComparativaReportPage: React.FC<FacturacionComparativaRe
               disabled={isLoading}
               style={{ height: '36px', padding: '0 16px', fontSize: '0.82rem', whiteSpace: 'nowrap' }}
             >
-              {isLoading ? 'Calculando...' : '🔄 Actualizar'}
+              {isLoading ? 'Calculando...' : <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="refresh" style={{ fontSize: '15px' }} /><span>Actualizar</span></span>}
             </TsButton>
           </div>
         </div>
@@ -245,12 +246,12 @@ export const FacturacionComparativaReportPage: React.FC<FacturacionComparativaRe
       {/* Errores de exportación o consulta */}
       {error && (
         <div style={{ padding: '0.75rem 1rem', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', color: '#991b1b', fontSize: '0.85rem' }}>
-          ⚠️ {error}
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="warning" style={{ fontSize: '15px' }} /><span>{error}</span></span>
         </div>
       )}
       {exportError && (
         <div style={{ padding: '0.75rem 1rem', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', color: '#991b1b', fontSize: '0.85rem' }}>
-          ⚠️ Error al exportar: {exportError}
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="warning" style={{ fontSize: '15px' }} /><span>Error al exportar: {exportError}</span></span>
         </div>
       )}
 
@@ -430,7 +431,7 @@ export const FacturacionComparativaReportPage: React.FC<FacturacionComparativaRe
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid #dbeafe', paddingBottom: '0.5rem' }}>
                 <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0046ad', letterSpacing: '0.03em' }}>
-                  🌐 TOTAL RED (TSA + CAL)
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="apartment" style={{ fontSize: '14px' }} /><span>TOTAL RED (TSA + CAL)</span></span>
                 </span>
                 <span
                   style={{
@@ -513,7 +514,7 @@ export const FacturacionComparativaReportPage: React.FC<FacturacionComparativaRe
                       cursor: 'pointer',
                     }}
                   >
-                    💶 Ingresos {anyoR2}
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="payments" style={{ fontSize: '14px' }} /><span>Ingresos {anyoR2}</span></span>
                   </button>
                   <button
                     type="button"
@@ -529,7 +530,7 @@ export const FacturacionComparativaReportPage: React.FC<FacturacionComparativaRe
                       cursor: 'pointer',
                     }}
                   >
-                    🚗 Insp. {anyoR2}
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="directions_car" style={{ fontSize: '14px' }} /><span>Insp. {anyoR2}</span></span>
                   </button>
                   <button
                     type="button"
@@ -545,7 +546,7 @@ export const FacturacionComparativaReportPage: React.FC<FacturacionComparativaRe
                       cursor: 'pointer',
                     }}
                   >
-                    📈 Crecimiento %
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="trending_up" style={{ fontSize: '14px' }} /><span>Crecimiento %</span></span>
                   </button>
                 </div>
               )}
@@ -565,7 +566,11 @@ export const FacturacionComparativaReportPage: React.FC<FacturacionComparativaRe
                   cursor: 'pointer',
                 }}
               >
-                {mostrarGrafico ? '👁️ Ocultar Gráfico' : '📊 Mostrar Gráfico'}
+                {mostrarGrafico ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="visibility" style={{ fontSize: '15px' }} /><span>Ocultar Gráfico</span></span>
+            ) : (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="bar_chart" style={{ fontSize: '15px' }} /><span>Mostrar Gráfico</span></span>
+            )}
               </button>
             </div>
           </div>
@@ -598,7 +603,7 @@ export const FacturacionComparativaReportPage: React.FC<FacturacionComparativaRe
         unidadRegistros="centros"
       >
         <div style={{ overflowX: 'auto', width: '100%' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+          <table className="cd-data-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
             <colgroup>
               <col style={{ width: '220px' }} />
               <col style={{ width: '90px' }} />

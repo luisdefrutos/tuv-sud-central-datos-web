@@ -212,7 +212,7 @@ export function useDuracionPromedioReport() {
           valor: '0 min',
           subtitulo: '0 estaciones seleccionadas',
           variant: 'neutral',
-          icon: '⏱️',
+          icon: 'schedule',
         },
         {
           id: 'kpi-total-inspecciones',
@@ -220,7 +220,7 @@ export function useDuracionPromedioReport() {
           valor: '0',
           subtitulo: 'Sin datos visibles',
           variant: 'neutral',
-          icon: '🚗',
+          icon: 'directions_car',
         },
         {
           id: 'kpi-estacion-agil',
@@ -228,7 +228,7 @@ export function useDuracionPromedioReport() {
           valor: 'Sin datos',
           subtitulo: '0 min',
           variant: 'neutral',
-          icon: '⚡',
+          icon: 'timer',
         },
         {
           id: 'kpi-tipo-rapido',
@@ -236,7 +236,7 @@ export function useDuracionPromedioReport() {
           valor: 'Sin datos',
           subtitulo: '0 min',
           variant: 'neutral',
-          icon: '🏎️',
+          icon: 'directions_car',
         },
       ];
     }
@@ -261,7 +261,7 @@ export function useDuracionPromedioReport() {
         valor: formatearMinutos(mediaPonderada),
         subtitulo: `Promedio ponderado en ${estacionesFiltradas.length} estaciones`,
         variant: mediaPonderada > 30 ? 'warning' : 'primary',
-        icon: '⏱️',
+        icon: 'schedule',
       },
       {
         id: 'kpi-total-inspecciones',
@@ -269,7 +269,7 @@ export function useDuracionPromedioReport() {
         valor: totalInsp.toLocaleString('es-ES'),
         subtitulo: 'Inspecciones periódicas válidas',
         variant: 'neutral',
-        icon: '🚗',
+        icon: 'directions_car',
       },
       {
         id: 'kpi-estacion-agil',
@@ -277,7 +277,7 @@ export function useDuracionPromedioReport() {
         valor: masAgil ? masAgil.desEstacion.replace('I.T.V. - ', '') : 'Sin datos',
         subtitulo: masAgil ? `${masAgil.duracionFormateada} (${masAgil.totalInspecciones.toLocaleString('es-ES')} insp.)` : '0 min',
         variant: 'success',
-        icon: '⚡',
+        icon: 'timer',
       },
       {
         id: 'kpi-tipo-rapido',
@@ -285,7 +285,7 @@ export function useDuracionPromedioReport() {
         valor: tipoRapido,
         subtitulo: durTipoRapido,
         variant: 'neutral',
-        icon: '🏎️',
+        icon: 'directions_car',
       },
     ];
   }, [estacionesFiltradas, data?.tipoVehiculoMasRapido, data?.duracionTipoVehiculoMasRapido]);

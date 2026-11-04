@@ -18,7 +18,7 @@ export const UI_CONSTANTS = {
     DESCRIPCION: 'Consulta del último registro de inspección recibido por estación ITV en la red centralizada de TÜV SÜD.',
     SPINNER_TITULO: 'Consultando Central Datos',
     SPINNER_SUBTITULO: 'Recuperando las últimas fechas y horas de inspección para las estaciones ITV. Por favor, espere...',
-    BOTON_ACTUALIZAR: '🔄 Actualizar Datos',
+    BOTON_ACTUALIZAR: 'Actualizar Datos',
     CARD_TOTAL_ESTACIONES: 'Total Estaciones ITV',
     CARD_TOTAL_TSA: 'TÜV SÜD ATISAE (TSA)',
     CARD_TOTAL_CAL: 'TÜV SÜD CAL',

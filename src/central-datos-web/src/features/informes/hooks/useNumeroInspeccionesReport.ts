@@ -223,7 +223,7 @@ export function useNumeroInspeccionesReport() {
           valor: '0',
           subtitulo: '0 estaciones seleccionadas',
           variant: 'neutral',
-          icon: '🚗',
+          icon: 'directions_car',
         },
         {
           id: 'kpi-fase-1',
@@ -247,7 +247,7 @@ export function useNumeroInspeccionesReport() {
           valor: '0,00 %',
           subtitulo: '0 inspecciones rechazadas',
           variant: 'neutral',
-          icon: '📉',
+          icon: 'trending_down',
         },
       ];
     }
@@ -273,7 +273,7 @@ export function useNumeroInspeccionesReport() {
         valor: totalInsp.toLocaleString('es-ES'),
         subtitulo: `${numEstaciones} estación${numEstaciones === 1 ? '' : 'es'} analizada${numEstaciones === 1 ? '' : 's'}`,
         variant: 'primary',
-        icon: '🚗',
+        icon: 'directions_car',
       },
       {
         id: 'kpi-fase-1',
@@ -297,7 +297,7 @@ export function useNumeroInspeccionesReport() {
         valor: `${pctRechGlobal.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} %`,
         subtitulo: `${totalRech.toLocaleString('es-ES')} rechazadas en total`,
         variant: pctRechGlobal > 20 ? 'danger' : 'warning',
-        icon: '📉',
+        icon: 'trending_down',
       },
     ];
   }, [filasFiltradasYOrdenadas]);

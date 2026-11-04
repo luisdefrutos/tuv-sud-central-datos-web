@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TsButton, TsAlert, TsBreadcrumb, TsBreadcrumbItem, TsBadge } from '@tuvsud/design-system/react';
+import { TsButton, TsAlert, TsBreadcrumb, TsBreadcrumbItem, TsBadge, TsIcon } from '@tuvsud/design-system/react';
 import { useNumeroInspeccionesReport, type SortableNumeroInspeccionesColumn } from '../hooks/useNumeroInspeccionesReport';
 import { ReportFiltersBar } from '../components/ReportFiltersBar';
 import { ReportKpiCard } from '../../../components/common/ReportKpiCard';
@@ -166,7 +166,7 @@ export const NumeroInspeccionesReportPage: React.FC<NumeroInspeccionesReportPage
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '1.75rem' }}>📋</span>
+            <TsIcon name="assignment" style={{ fontSize: '1.75rem', color: '#0046ad' }} />
             <h1
               style={{
                 margin: 0,
@@ -198,9 +198,7 @@ export const NumeroInspeccionesReportPage: React.FC<NumeroInspeccionesReportPage
             onClick={() => setIsCrystalReportOpen(true)}
             disabled={isLoading || !hayDatosParaExportar}
             style={{ fontWeight: 600 }}
-          >
-            🖨️ Imprimir (Crystal Report)
-          </TsButton>
+          ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="print" style={{ fontSize: '15px' }} /><span>Imprimir (Crystal Report)</span></span></TsButton>
           <TsButton
             variant="success"
             size="medium"
@@ -209,7 +207,8 @@ export const NumeroInspeccionesReportPage: React.FC<NumeroInspeccionesReportPage
             loading={isExporting}
             style={{ fontWeight: 600 }}
           >
-            {isExporting ? 'Exportando...' : '📥 Exportar a Excel'}
+            <TsIcon slot="prefix" name={isExporting ? "hourglass_empty" : "download"} />
+            {isExporting ? 'Generando Excel...' : 'Exportar a Excel'}
           </TsButton>
           <TsButton
             variant="secondary"
@@ -217,16 +216,14 @@ export const NumeroInspeccionesReportPage: React.FC<NumeroInspeccionesReportPage
             onClick={cargarInforme}
             disabled={isLoading}
             loading={isLoading}
-          >
-            🔄 Actualizar Datos
-          </TsButton>
+          ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="refresh" style={{ fontSize: '15px' }} /><span>Actualizar Datos</span></span></TsButton>
         </div>
       </div>
 
       {/* 3. Alertas de Validación y Error */}
       {alertaRangoFechas && (
         <TsAlert variant="warning" open heading="Validación de Rango de Fechas">
-          <span>⚠️ {alertaRangoFechas}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="warning" style={{ fontSize: '15px' }} /><span>{alertaRangoFechas}</span></span>
         </TsAlert>
       )}
 
@@ -249,7 +246,7 @@ export const NumeroInspeccionesReportPage: React.FC<NumeroInspeccionesReportPage
           onTsAfterHide={() => {}}
           heading="Exportación no disponible"
         >
-          <span>⚠️ {exportError}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="warning" style={{ fontSize: '15px' }} /><span>{exportError}</span></span>
         </TsAlert>
       )}
 
@@ -316,9 +313,7 @@ export const NumeroInspeccionesReportPage: React.FC<NumeroInspeccionesReportPage
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
               }}
-            >
-              📊 Barras (Ranking)
-            </button>
+            ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="bar_chart" style={{ fontSize: '15px' }} /><span>Barras (Ranking)</span></span></button>
             <button
               type="button"
               onClick={() => setChartMode('donut')}
@@ -333,9 +328,7 @@ export const NumeroInspeccionesReportPage: React.FC<NumeroInspeccionesReportPage
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
               }}
-            >
-              📊 Cuota por Estación
-            </button>
+            ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="pie_chart" style={{ fontSize: '15px' }} /><span>Cuota por Estación</span></span></button>
           </div>
         </div>
 
@@ -373,7 +366,7 @@ export const NumeroInspeccionesReportPage: React.FC<NumeroInspeccionesReportPage
         exportDisabled={!hayDatosParaExportar}
       >
         <div style={{ overflowX: 'auto', width: '100%' }}>
-          <table
+          <table className="cd-data-table"
             style={{
               width: '100%',
               minWidth: '980px',
@@ -469,7 +462,7 @@ export const NumeroInspeccionesReportPage: React.FC<NumeroInspeccionesReportPage
                     {isLoading
                       ? 'Cargando datos de inspección...'
                       : estacionesSeleccionadas.length === 0
-                      ? '⚠️ No hay ninguna estación seleccionada. Por favor, marque al menos una estación en el selector de filtros para visualizar el informe.'
+                      ? 'No hay ninguna estación seleccionada. Por favor, marque al menos una estación en el selector de filtros para visualizar el informe.'
                       : 'No se encontraron inspecciones coincidentes con los filtros seleccionados.'}
                   </td>
                 </tr>
@@ -481,8 +474,8 @@ export const NumeroInspeccionesReportPage: React.FC<NumeroInspeccionesReportPage
                       borderBottom: '1px solid #e2e8f0',
                       transition: 'background-color 0.15s ease',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                    
+                    
                   >
                     <td style={{ padding: '8px 10px', textAlign: 'left', borderRight: '1px solid #e2e8f0' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

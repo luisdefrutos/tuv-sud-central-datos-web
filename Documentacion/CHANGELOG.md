@@ -4,6 +4,35 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.23.0] - 04/11/2026 - *Migración Integral a Iconos Oficiales TÜV SÜD Algorithm Design System y Preservación Estricta de Estética*
+
+### 🎨 Adopción Integral de Iconos Oficiales TÜV SÜD Algorithm Design System (`@tuvsud/design-system`)
+* **Eliminación Total y Exhaustiva de Emojis Unicode (187 ocurrencias migradas a 0)**:
+  * Sustitución en todos los componentes globales: `Navbar.tsx` (menú burger y cierre), `Header.tsx` (avatar y perfil de usuario), `ErrorBoundary.tsx` (aviso de excepción, reintentar y volver al inicio), `LoginPage.tsx` (descarga de logs diagnósticos) y `App.tsx` (tarjetas de módulos, indicadores y estados).
+  * Sustitución en los 8 informes core y 12 páginas de reporte: botones de acción (`Consultar`, `Exportar a Excel`, `Imprimir`, `Actualizar`, `Ver Ficha`), selectores de pestañas (`Barras`, `Donut`, `Ranking`, `Top Clientes`, `Por Estación`, `Por Tipo de Vehículo`), inputs buscadores con lupa y borrado, banners de alerta (`warning`, `cancel`, `info`, `lightbulb`) y tablas agregadas MINER (`check`, `close`).
+  * Desacoplamiento de tarjetas KPI ejecutivas en `ReportKpiCard.tsx`: renderizado dinámico vectorial con `<TsIcon>` y mapeador centralizado de tokens, **preservando al 100% los colores de texto y borde originales de cada variante** (naranja `#d97706` en warning, rojo `#dc2626` en danger, verde `#059669` en success, azul `#0046ad` en primary y azul marino `#0b253b` en neutral), así como los estilos corporativos de las insignias (badges) y subtítulos.
+  * Migración de catálogos y menús en `navigation.constants.ts`, `InformesHubPage.tsx` y hooks de informes.
+* **Preservación Rigurosa de Estética Corporativa TÜV SÜD y Resolución Visual**:
+  * **Barra de Navegación (`Navbar.tsx` & `responsive.css`)**: Restauración total de los estilos corporativos de menú tipo Windows Forms (`.cd-menubar`, `.cd-menubar-title`, `.cd-nav-container-desktop`, desplegables hover-switch y versión móvil), solucionando cualquier desmaquetación.
+  * **Dimensionamiento Nativo de Iconos (`size` prop)**: Configuración de la propiedad oficial `size={32}` y `size={36}` en tarjetas de módulos de `App.tsx`, `size={28}` en cabeceras de informes (`ReportPageHeader.tsx`), `size={26}` en catálogo de informes (`InformesHubPage.tsx`) y `size={18}` en KPI cards, eliminando problemas de iconos colapsados o diminutos.
+  * **Soporte Local y Dev Server (`public/icons/`)**: Distribución directa de los 53 SVGs oficiales en `public/icons/material-symbols/rounded/` garantizando resolución inmediata `200 OK` en Vite dev (`localhost:5173`) sin depender del bundling de producción.
+  * **Modales**: Restauradas al 100% las cabeceras corporativas azul marino (`#003366`), textos en blanco, tarjetas con bordes `#e2e8f0` y botones de cierre con `<TsIcon name="close" />`.
+  * **Botones**: Respetadas estrictamente las variantes nativas (`primary`, `secondary`, `success`) con icono inyectado vía `slot="prefix"`, manteniendo los botones verdes de exportación a Excel, azules de acción principal y grises de soporte.
+  * **Grids y Tablas**: Homologación exhaustiva con `.cd-data-table`, `.cd-table` y `.ts-table`, garantizando el hover reactivo corporativo `var(--ts-semantic-color-background-primary-subtle-hover, #edf5ff) !important` en cada fila de datos de toda la aplicación, sin contaminar tarjetas u otros contenedores.
+* **Integración del Plugin de Vite (`designSystemIconsVitePlugin`)**:
+  * Configuración de extracción y minificación de 53 iconos vectoriales oficiales Rounded de `@material-symbols/svg-400`.
+  * Emisión en `dist/icons/material-symbols/rounded/` (<0.5 KB gzipped por icono) sin dependencias ni llamadas CDN externas.
+  * Registro global en `main.tsx` vía `registerGoogleMaterial()`.
+* **Guía de Despliegue en Servidor**:
+  * Documentada la configuración obligatoria para Microsoft IIS (`web.config` con MIME types `.svg` y `.woff2`), Nginx y despliegues bajo subdirectorio virtual.
+
+### 📋 Hoja de Ruta e Informes Pendientes
+* **Documentación Técnica Creada**:
+  * `25_guia_despliegue_servidor_iconos_y_plan_informes_sms_mail.md`: Arquitectura del informe operativo de Envíos Recordatorios SMS/Email (`Envios_Sms_Mail`), consultas SQL sobre `INSPECCION_SMS` e `INSPECCION_EMAIL`, tablas de plantillas y propuesta de diseño con Algorithm DS.
+  * Actualización del índice maestro `00_INDICE_DOCUMENTACION_MODERNIZACION.md`.
+
+---
+
 ## [2.22.1] - 04/11/2026 - *Refinamiento Visual UX/UI Informe Clientes Volumen (C8), Unificación Buscador y Estabilidad de Grid*
 
 ### 🎨 Refinamiento de Usabilidad y Estándar Visual (TÜV SÜD Algorithm DS)

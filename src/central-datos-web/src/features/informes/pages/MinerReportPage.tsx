@@ -1,12 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-  TsButton,
-  TsAlert,
-  TsBreadcrumb,
-  TsBreadcrumbItem,
-  TsBadge,
-  TsCard,
-} from '@tuvsud/design-system/react';
+import { TsButton, TsAlert, TsBreadcrumb, TsBreadcrumbItem, TsBadge, TsCard, TsIcon } from '@tuvsud/design-system/react';
 import { useMinerReport } from '../hooks/useMinerReport';
 import { ReportFiltersBar } from '../components/ReportFiltersBar';
 import { ReportDateRangeAlert } from '../components/ReportDateRangeAlert';
@@ -169,18 +162,8 @@ export const MinerReportPage: React.FC<MinerReportPageProps> = ({
             disabled={isLoading || isExporting}
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
           >
-            {isExporting ? (
-              <>⏳ Exportando...</>
-            ) : (
-              <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                Exportar Excel Oficial (.xlsx)
-              </>
-            )}
+            <TsIcon slot="prefix" name={isExporting ? "hourglass_empty" : "download"} />
+            {isExporting ? 'Exportando...' : 'Exportar Excel Oficial (.xlsx)'}
           </TsButton>
 
           <TsButton
@@ -189,11 +172,7 @@ export const MinerReportPage: React.FC<MinerReportPageProps> = ({
             disabled={isLoading || isExporting}
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M23 4v6h-6" />
-              <path d="M1 20v-6h6" />
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-            </svg>
+            <TsIcon slot="prefix" name="refresh" />
             Actualizar
           </TsButton>
         </div>
@@ -388,7 +367,7 @@ export const MinerReportPage: React.FC<MinerReportPageProps> = ({
         >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '1.3rem' }}>📊</span>
+              <TsIcon name="bar_chart" style={{ fontSize: '1.3rem', color: '#0046ad' }} />
               <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: '#0c2340' }}>
                 Estadística Oficial de Inspecciones Periódicas (Hoja PERIODICAS)
               </h3>
@@ -408,14 +387,14 @@ export const MinerReportPage: React.FC<MinerReportPageProps> = ({
               onClick={handleExportExcel}
               disabled={isLoading || isExporting}
             >
-              📥 Descargar .xlsx
+              <TsIcon slot="prefix" name="download" />Descargar .xlsx
             </TsButton>
           </div>
         </div>
 
         <div style={{ overflowX: 'auto' }}>
           <table
-            className="ts-table"
+            className="ts-table cd-data-table"
             style={{
               width: '100%',
               borderCollapse: 'collapse',
@@ -649,7 +628,7 @@ export const MinerReportPage: React.FC<MinerReportPageProps> = ({
                     <td style={{ padding: '0.45rem 0.75rem', textAlign: 'left', fontWeight: 600, color: '#166534' }}>
                       1ª INSPECC. - FAVORABLES
                     </td>
-                    <td style={{ padding: '0.45rem', textAlign: 'center', color: '#166534', fontWeight: 700 }}>✓</td>
+                    <td style={{ padding: '0.45rem', textAlign: 'center', color: '#166534', fontWeight: 700 }}><TsIcon name="check" style={{ fontSize: '16px' }} /></td>
                     <td style={{ padding: '0.45rem' }}>{data.primeraInspeccion.grupo01MoFav.toLocaleString('es-ES')}</td>
                     <td style={{ padding: '0.45rem' }}>{data.primeraInspeccion.grupo02TpFav.toLocaleString('es-ES')}</td>
                     <td style={{ padding: '0.45rem' }}>{data.primeraInspeccion.grupo03TrFav.toLocaleString('es-ES')}</td>
@@ -669,7 +648,7 @@ export const MinerReportPage: React.FC<MinerReportPageProps> = ({
                     <td style={{ padding: '0.45rem 0.75rem', textAlign: 'left', fontWeight: 600, color: '#991b1b' }}>
                       1ª INSPECC. - RECHAZADOS
                     </td>
-                    <td style={{ padding: '0.45rem', textAlign: 'center', color: '#991b1b', fontWeight: 700 }}>✕</td>
+                    <td style={{ padding: '0.45rem', textAlign: 'center', color: '#991b1b', fontWeight: 700 }}><TsIcon name="close" style={{ fontSize: '16px' }} /></td>
                     <td style={{ padding: '0.45rem' }}>{data.primeraInspeccion.grupo01MoDesfav.toLocaleString('es-ES')}</td>
                     <td style={{ padding: '0.45rem' }}>{data.primeraInspeccion.grupo02TpDesfav.toLocaleString('es-ES')}</td>
                     <td style={{ padding: '0.45rem' }}>{data.primeraInspeccion.grupo03TrDesfav.toLocaleString('es-ES')}</td>
@@ -729,7 +708,7 @@ export const MinerReportPage: React.FC<MinerReportPageProps> = ({
                     <td style={{ padding: '0.45rem 0.75rem', textAlign: 'left', fontWeight: 600, color: '#166534' }}>
                       OTRAS INSPECC. - FAVORABLES
                     </td>
-                    <td style={{ padding: '0.45rem', textAlign: 'center', color: '#166534', fontWeight: 700 }}>✓</td>
+                    <td style={{ padding: '0.45rem', textAlign: 'center', color: '#166534', fontWeight: 700 }}><TsIcon name="check" style={{ fontSize: '16px' }} /></td>
                     <td style={{ padding: '0.45rem' }}>{data.segundaInspeccion.grupo01MoFav.toLocaleString('es-ES')}</td>
                     <td style={{ padding: '0.45rem' }}>{data.segundaInspeccion.grupo02TpFav.toLocaleString('es-ES')}</td>
                     <td style={{ padding: '0.45rem' }}>{data.segundaInspeccion.grupo03TrFav.toLocaleString('es-ES')}</td>
@@ -749,7 +728,7 @@ export const MinerReportPage: React.FC<MinerReportPageProps> = ({
                     <td style={{ padding: '0.45rem 0.75rem', textAlign: 'left', fontWeight: 600, color: '#991b1b' }}>
                       OTRAS INSPECC. - RECHAZADOS
                     </td>
-                    <td style={{ padding: '0.45rem', textAlign: 'center', color: '#991b1b', fontWeight: 700 }}>✕</td>
+                    <td style={{ padding: '0.45rem', textAlign: 'center', color: '#991b1b', fontWeight: 700 }}><TsIcon name="close" style={{ fontSize: '16px' }} /></td>
                     <td style={{ padding: '0.45rem' }}>{data.segundaInspeccion.grupo01MoDesfav.toLocaleString('es-ES')}</td>
                     <td style={{ padding: '0.45rem' }}>{data.segundaInspeccion.grupo02TpDesfav.toLocaleString('es-ES')}</td>
                     <td style={{ padding: '0.45rem' }}>{data.segundaInspeccion.grupo03TrDesfav.toLocaleString('es-ES')}</td>

@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  TsButton,
-  TsAlert,
-  TsBreadcrumb,
-  TsBreadcrumbItem,
-  TsBadge,
-} from '@tuvsud/design-system/react';
+import { TsButton, TsAlert, TsBreadcrumb, TsBreadcrumbItem, TsBadge, TsIcon } from '@tuvsud/design-system/react';
 import { useDefectoObdReport } from '../hooks/useDefectoObdReport';
 import { ReportFiltersBar } from '../components/ReportFiltersBar';
 import { ReportKpiCard } from '../../../components/common/ReportKpiCard';
@@ -126,7 +120,7 @@ export const DefectoObdReportPage: React.FC<DefectoObdReportPageProps> = ({
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '1.75rem' }}>🔌</span>
+            <TsIcon name="cable" style={{ fontSize: '1.75rem', color: '#0046ad' }} />
             <h1
               style={{
                 margin: 0,
@@ -161,7 +155,8 @@ export const DefectoObdReportPage: React.FC<DefectoObdReportPageProps> = ({
                 disabled={isLoading || isExporting || !data || data.filas.length === 0}
                 style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
               >
-                {isExporting ? '⏳ Generando Excel...' : '📊 Exportar a Excel'}
+                <TsIcon slot="prefix" name={isExporting ? "hourglass_empty" : "download"} />
+            {isExporting ? 'Generando Excel...' : 'Exportar a Excel'}
               </TsButton>
             </span>
           </AppTooltip>
@@ -193,7 +188,7 @@ export const DefectoObdReportPage: React.FC<DefectoObdReportPageProps> = ({
           style={{ fontSize: '0.88rem' }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '12px', flexWrap: 'wrap' }}>
-            <span>⚠️ {alertaRangoFechas}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="warning" style={{ fontSize: '15px' }} /><span>{alertaRangoFechas}</span></span>
             <button
               type="button"
               onClick={ajustarAUnAno}
@@ -221,7 +216,7 @@ export const DefectoObdReportPage: React.FC<DefectoObdReportPageProps> = ({
           heading="Error de Consulta"
           style={{ fontSize: '0.88rem' }}
         >
-          <span>❌ {error}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="cancel" style={{ fontSize: '15px' }} /><span>{error}</span></span>
         </TsAlert>
       )}
 
@@ -232,7 +227,7 @@ export const DefectoObdReportPage: React.FC<DefectoObdReportPageProps> = ({
           heading="Error de Exportación"
           style={{ fontSize: '0.88rem' }}
         >
-          <span>❌ {exportError}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="cancel" style={{ fontSize: '15px' }} /><span>{exportError}</span></span>
         </TsAlert>
       )}
 
@@ -277,9 +272,7 @@ export const DefectoObdReportPage: React.FC<DefectoObdReportPageProps> = ({
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 }}
-              >
-                📊 Ranking por Estación
-              </button>
+              ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="bar_chart" style={{ fontSize: '15px' }} /><span>Ranking por Estación</span></span></button>
               <button
                 type="button"
                 onClick={() => setChartMode('tipologia')}
@@ -294,9 +287,7 @@ export const DefectoObdReportPage: React.FC<DefectoObdReportPageProps> = ({
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 }}
-              >
-                🍩 Tipología de Defecto OBD
-              </button>
+              ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="pie_chart" style={{ fontSize: '15px' }} /><span>Tipología de Defecto OBD</span></span></button>
               <button
                 type="button"
                 onClick={() => setChartMode('combustible')}
@@ -311,9 +302,7 @@ export const DefectoObdReportPage: React.FC<DefectoObdReportPageProps> = ({
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 }}
-              >
-                ⛽ Distribución Combustible
-              </button>
+              ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="local_gas_station" style={{ fontSize: '15px' }} /><span>Distribución Combustible</span></span></button>
             </div>
           </div>
 
@@ -360,7 +349,7 @@ export const DefectoObdReportPage: React.FC<DefectoObdReportPageProps> = ({
       >
         <div style={{ overflowX: 'auto', width: '100%' }}>
           <table
-            className="cd-table"
+            className="cd-table cd-data-table"
             style={{
               width: '100%',
               minWidth: '1210px',
@@ -579,9 +568,7 @@ export const DefectoObdReportPage: React.FC<DefectoObdReportPageProps> = ({
                             fontWeight: 600,
                             fontSize: '0.75rem',
                           }}
-                        >
-                          🔍 Ficha
-                        </button>
+                        ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><TsIcon name="search" style={{ fontSize: '13px' }} /><span>Ficha</span></span></button>
                       </AppTooltip>
                     </td>
                   </tr>
@@ -656,9 +643,7 @@ export const DefectoObdReportPage: React.FC<DefectoObdReportPageProps> = ({
                   color: '#64748b',
                   lineHeight: 1,
                 }}
-              >
-                ✕
-              </button>
+              ><TsIcon name="close" style={{ fontSize: '16px' }} /></button>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', fontSize: '0.85rem' }}>

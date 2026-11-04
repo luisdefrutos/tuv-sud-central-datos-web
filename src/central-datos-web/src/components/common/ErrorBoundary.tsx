@@ -1,5 +1,5 @@
 import React, { Component, type ErrorInfo, type ReactNode } from 'react';
-import { TsButton, TsCard, TsAlert } from '@tuvsud/design-system/react';
+import { TsButton, TsCard, TsAlert, TsIcon } from '@tuvsud/design-system/react';
 
 export interface ErrorBoundaryProps {
   children: ReactNode;
@@ -60,7 +60,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
-              <span style={{ fontSize: '2.5rem' }}>⚠️</span>
+              <TsIcon name="warning" style={{ fontSize: '2.5rem', color: '#dc2626' }} />
               <div>
                 <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#0b253b', fontWeight: 700 }}>
                   {this.props.fallbackTitle || 'Incidencia en la Carga del Módulo'}
@@ -98,10 +98,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
             <div style={{ display: 'flex', gap: '10px', marginTop: '1.5rem', flexWrap: 'wrap' }}>
               <TsButton variant="primary" size="medium" onClick={this.handleReset}>
-                🔄 Reintentar Carga
+                <TsIcon slot="prefix" name="refresh" />
+                Reintentar Carga
               </TsButton>
               <TsButton variant="secondary" size="medium" onClick={this.handleReload}>
-                🔃 Recargar Aplicación
+                <TsIcon slot="prefix" name="refresh" />
+                Recargar Aplicación
               </TsButton>
               <TsButton
                 variant="secondary"
@@ -111,7 +113,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   window.location.reload();
                 }}
               >
-                🏠 Ir al Inicio
+                <TsIcon slot="prefix" name="home" />
+                Ir al Inicio
               </TsButton>
             </div>
           </TsCard>

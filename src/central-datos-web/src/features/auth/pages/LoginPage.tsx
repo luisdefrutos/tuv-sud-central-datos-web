@@ -4,6 +4,7 @@ import {
   TsButton,
   TsCard,
   TsInput,
+  TsIcon,
 } from '@tuvsud/design-system/react';
 import { TuvSudLogo } from '../../../components/common/TuvSudLogo';
 import { useAuth } from '../context/AuthContext';
@@ -286,7 +287,7 @@ export const LoginPage: React.FC = () => {
                           cursor: 'pointer',
                         }}
                       >
-                        📥 Descargar informe de diagnóstico (.log) para soporte técnico
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="download" style={{ fontSize: '15px' }} /><span>Descargar informe de diagnóstico (.log) para soporte técnico</span></span>
                       </button>
                     </div>
                   )}

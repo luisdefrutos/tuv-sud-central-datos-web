@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { TsButton } from '@tuvsud/design-system/react';
+import { TsButton, TsIcon } from '@tuvsud/design-system/react';
 import type { FilaDuracionPromedio, ResumenEstacionDuracion } from '../types/informes.types';
 
 export interface CrystalReportDuracionPromedioModalProps {
@@ -198,7 +198,7 @@ export const CrystalReportDuracionPromedioModal: React.FC<CrystalReportDuracionP
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '1.2rem' }}>🖨️</span>
+            <TsIcon name="print" style={{ fontSize: '20px' }} />
             <span style={{ fontWeight: 700, fontSize: '0.98rem', letterSpacing: '0.3px' }}>
               Vista Clásica Crystal Reports — Duración Promedio Inspecciones (rptDuracionPromedio)
             </span>
@@ -216,6 +216,7 @@ export const CrystalReportDuracionPromedioModal: React.FC<CrystalReportDuracionP
                 border: 'none',
               }}
             >
+              <TsIcon slot="prefix" name="print" />
               Imprimir Documento Oficial
             </TsButton>
             <TsButton
@@ -229,7 +230,8 @@ export const CrystalReportDuracionPromedioModal: React.FC<CrystalReportDuracionP
                 fontSize: '0.82rem',
               }}
             >
-              ✕ Cerrar
+              <TsIcon slot="prefix" name="close" />
+              Cerrar
             </TsButton>
           </div>
         </div>

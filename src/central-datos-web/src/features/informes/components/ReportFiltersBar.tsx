@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { TsButton, TsBadge } from '@tuvsud/design-system/react';
+import { TsButton, TsBadge, TsIcon } from '@tuvsud/design-system/react';
 import { AppTooltip } from '../../../components/common/AppTooltip';
 import type { FiltroSociedad } from '../../estaciones/types/estaciones.types';
 import { ESTACIONES_OFICIALES } from '../../../constants/estaciones.constants';
@@ -224,7 +224,7 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
                     border: '1px solid #e2e8f0',
                   }}
                 >
-                  <span style={{ fontSize: '0.75rem' }}>ℹ️</span> Rango máx. 1 año
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><TsIcon name="info" style={{ fontSize: '13px' }} /><span>Rango máx. 1 año</span></span>
                 </span>
               </AppTooltip>
             )}
@@ -405,7 +405,7 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
                         padding: '2px 4px',
                       }}
                     >
-                      ☑ Marcar todas ({estacionesDisponibles.length})
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><TsIcon name="check_box" style={{ fontSize: '14px' }} /><span>Marcar todas ({estacionesDisponibles.length})</span></span>
                     </button>
                     <button
                       type="button"
@@ -420,7 +420,7 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
                         padding: '2px 4px',
                       }}
                     >
-                      ☐ Desmarcar todas
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><TsIcon name="check_box_outline_blank" style={{ fontSize: '14px' }} /><span>Desmarcar todas</span></span>
                     </button>
                   </div>
                 </div>
@@ -495,7 +495,14 @@ export const ReportFiltersBar: React.FC<ReportFiltersBarProps> = ({
               whiteSpace: 'nowrap',
             }}
           >
-            {loading ? 'Consultando...' : '🔍 Consultar'}
+            {loading ? (
+              'Consultando...'
+            ) : (
+              <>
+                <TsIcon slot="prefix" name="search" />
+                Consultar
+              </>
+            )}
           </TsButton>
         </div>
       </div>

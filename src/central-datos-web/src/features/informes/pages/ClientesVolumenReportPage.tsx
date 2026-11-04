@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { TsButton, TsCard, TsBadge } from '@tuvsud/design-system/react';
+import { TsButton, TsCard, TsBadge, TsIcon } from '@tuvsud/design-system/react';
 import { ReportPageHeader } from '../components/ReportPageHeader';
 import { ReportFiltersBar } from '../components/ReportFiltersBar';
 import { ReportDateRangeAlert } from '../components/ReportDateRangeAlert';
@@ -189,7 +189,7 @@ export const ClientesVolumenReportPage: React.FC<ClientesVolumenReportPageProps>
       <ReportPageHeader
         title="Clientes por Volumen de Inspecciones"
         subtitle="Identificación y análisis de fidelización de grandes cuentas, flotas comerciales y profesionales en la red ITV."
-        icon="👥"
+        icon="groups"
         breadcrumbItemText="Clientes por volumen"
         onNavigateHome={onNavigateHome}
         onNavigateToInformes={onNavigateToInformes}
@@ -206,7 +206,8 @@ export const ClientesVolumenReportPage: React.FC<ClientesVolumenReportPageProps>
               onClick={exportarExcel}
               disabled={!hayDatosParaExportar || isExporting}
             >
-              📥 Exportar a Excel
+              <TsIcon slot="prefix" name={isExporting ? "hourglass_empty" : "download"} />
+              {isExporting ? 'Generando Excel...' : 'Exportar a Excel'}
             </TsButton>
           </span>
         </AppTooltip>
@@ -273,7 +274,7 @@ export const ClientesVolumenReportPage: React.FC<ClientesVolumenReportPageProps>
                 subtitle="Equivalente al diálogo de la aplicación de escritorio"
                 content="Solo incluye en el informe y en el grid a clientes cuyo volumen de inspecciones en la estación sea mayor o igual a este número. Por defecto 1 (todos los clientes). Introduzca 5, 10 o 20 para aislar grandes flotas y empresas de renting."
               >
-                <span style={{ cursor: 'help', fontSize: '12px', color: '#0046ad' }}>ℹ️</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', cursor: 'help' }}><TsIcon name="info" style={{ fontSize: '14px', color: '#0046ad' }} /></span>
               </AppTooltip>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -401,7 +402,7 @@ export const ClientesVolumenReportPage: React.FC<ClientesVolumenReportPageProps>
                 backgroundColor: '#ffffff',
               }}
             >
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px' }}>
+              <table className="cd-data-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px' }}>
                 <thead style={{ position: 'sticky', top: 0, backgroundColor: '#94a3b8', color: '#ffffff', zIndex: 1 }}>
                   <tr>
                     <th style={{ padding: '4px 8px', textAlign: 'left', width: '45px', fontWeight: 600 }}>Cod.</th>
@@ -461,7 +462,7 @@ export const ClientesVolumenReportPage: React.FC<ClientesVolumenReportPageProps>
             color: '#1e3a8a',
           }}
         >
-          <span style={{ fontSize: '18px', lineHeight: 1 }}>💡</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center' }}><TsIcon name="lightbulb" style={{ fontSize: '18px', color: '#f59e0b' }} /></span>
           <div>
             <strong>Comportamiento del Límite de Inspecciones:</strong> Con límite <strong>1</strong> (por defecto) el informe incluye a <em>todos</em> los clientes particulares y autónomos de la red. Al seleccionar <strong>&gt;= 5</strong>, <strong>&gt;= 10</strong> o <strong>&gt;= 20</strong>, se descartan los particulares y se aíslan exclusivamente las <em>grandes cuentas comerciales, empresas de renting y flotas de transporte</em>. <strong>Al cambiar este valor, los 4 KPIs ejecutivos, las gráficas comparativas y la tabla se recalculan y actualizan automáticamente en tiempo real</strong> para reflejar los datos consolidados de ese umbral sobre la base de datos Oracle.
           </div>
@@ -471,7 +472,7 @@ export const ClientesVolumenReportPage: React.FC<ClientesVolumenReportPageProps>
       {/* 5. Alerta de Error si ocurre */}
       {error && (
         <TsCard style={{ padding: '16px', borderLeft: '4px solid #d32f2f', backgroundColor: '#fef2f2' }}>
-          <div style={{ color: '#b91c1c', fontWeight: 600 }}>⚠️ {error}</div>
+          <div style={{ color: '#b91c1c', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="warning" style={{ fontSize: '16px' }} /><span>{error}</span></div>
         </TsCard>
       )}
 
@@ -511,35 +512,40 @@ export const ClientesVolumenReportPage: React.FC<ClientesVolumenReportPageProps>
                     {kpi.subtitulo}
                   </div>
                 </div>
-                <span style={{ fontSize: '26px' }}>{kpi.icon}</span>
+                <span style={{ fontSize: '26px', color: '#0046ad', display: 'flex', alignItems: 'center' }}>
+                  <TsIcon name={kpi.icon || 'bar_chart'} style={{ fontSize: '26px' }} />
+                </span>
               </div>
             </TsCard>
-          </AppTooltip>
-        ))}
-      </div>
+            </AppTooltip>
+          ))}
+        </div>
 
-      {/* 7. Gráficos Analíticos (Sin Doble Scroll y Leyenda Solo en Estaciones) */}
-      {hayDatosParaExportar && (
-        <TsCard style={{ padding: '20px', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#1e293b' }}>
-              {vistaGrafica === 'clientes'
-                ? '🏆 Top 10 Clientes con Mayor Volumen'
-                : '🏢 Distribución de Inspecciones por Estación'}
-            </h3>
+        {/* 7. Gráficos Analíticos (Sin Doble Scroll y Leyenda Solo en Estaciones) */}
+        {hayDatosParaExportar && (
+          <TsCard style={{ padding: '20px', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {vistaGrafica === 'clientes' ? (
+                  <TsIcon name="trophy" style={{ fontSize: '18px', color: '#0046ad' }} />
+                ) : (
+                  <TsIcon name="apartment" style={{ fontSize: '18px', color: '#0046ad' }} />
+                )}
+                <span>
+                  {vistaGrafica === 'clientes'
+                    ? 'Top 10 Clientes con Mayor Volumen'
+                    : 'Distribución de Inspecciones por Estación'}
+                </span>
+              </h3>
             <div style={{ display: 'flex', gap: '8px' }}>
               <TsButton
                 variant={vistaGrafica === 'clientes' ? 'primary' : 'secondary'}
                 onClick={() => setVistaGrafica('clientes')}
-              >
-                🏆 Top Clientes
-              </TsButton>
+              ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="trophy" style={{ fontSize: '15px' }} /><span>Top Clientes</span></span></TsButton>
               <TsButton
                 variant={vistaGrafica === 'estaciones' ? 'primary' : 'secondary'}
                 onClick={() => setVistaGrafica('estaciones')}
-              >
-                🏢 Por Estación
-              </TsButton>
+              ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="apartment" style={{ fontSize: '15px' }} /><span>Por Estación</span></span></TsButton>
             </div>
           </div>
 
@@ -909,7 +915,7 @@ export const ClientesVolumenReportPage: React.FC<ClientesVolumenReportPageProps>
       {/* 11. Modal o Alerta de Error de Exportación */}
       {exportError && (
         <TsCard style={{ padding: '16px', borderLeft: '4px solid #d32f2f', backgroundColor: '#fef2f2' }}>
-          <div style={{ color: '#b91c1c', fontWeight: 600 }}>⚠️ {exportError}</div>
+          <div style={{ color: '#b91c1c', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="warning" style={{ fontSize: '16px' }} /><span>{exportError}</span></div>
         </TsCard>
       )}
     </div>

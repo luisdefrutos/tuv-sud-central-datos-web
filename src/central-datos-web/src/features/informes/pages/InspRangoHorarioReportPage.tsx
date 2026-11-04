@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { TsButton, TsAlert } from '@tuvsud/design-system/react';
+import { TsButton, TsAlert, TsIcon } from '@tuvsud/design-system/react';
 import { useInspRangoHorarioReport } from '../hooks/useInspRangoHorarioReport';
 import { ReportPageHeader } from '../components/ReportPageHeader';
 import { ReportFiltersBar } from '../components/ReportFiltersBar';
@@ -159,7 +159,7 @@ export const InspRangoHorarioReportPage: React.FC<InspRangoHorarioReportPageProp
       <ReportPageHeader
         title="Inspecciones por Rango Horario"
         subtitle="Análisis de distribución de afluencia e inspecciones realizadas por franja horaria (06:00 a 21:00 h) y mapa térmico semanal."
-        icon="⏰"
+        icon="schedule"
         breadcrumbItemText="Inspecciones por rango horario"
         onNavigateHome={onNavigateHome}
         onNavigateToInformes={onNavigateToInformes}
@@ -178,7 +178,8 @@ export const InspRangoHorarioReportPage: React.FC<InspRangoHorarioReportPageProp
               disabled={isLoading || isExporting || !hayDatosParaExportar}
               style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-              {isExporting ? '⏳ Generando Excel...' : '📊 Exportar a Excel'}
+              <TsIcon slot="prefix" name={isExporting ? "hourglass_empty" : "download"} />
+            {isExporting ? 'Generando Excel...' : 'Exportar a Excel'}
             </TsButton>
           </span>
         </AppTooltip>
@@ -255,7 +256,7 @@ export const InspRangoHorarioReportPage: React.FC<InspRangoHorarioReportPageProp
           heading="Error de Consulta"
           style={{ fontSize: '0.88rem' }}
         >
-          <span>❌ {error}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="cancel" style={{ fontSize: '15px' }} /><span>{error}</span></span>
         </TsAlert>
       )}
 
@@ -266,7 +267,7 @@ export const InspRangoHorarioReportPage: React.FC<InspRangoHorarioReportPageProp
           heading="Error de Exportación"
           style={{ fontSize: '0.88rem' }}
         >
-          <span>❌ {exportError}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="cancel" style={{ fontSize: '15px' }} /><span>{exportError}</span></span>
         </TsAlert>
       )}
 
@@ -348,10 +349,10 @@ export const InspRangoHorarioReportPage: React.FC<InspRangoHorarioReportPageProp
           })
         ) : (
           [
-            { id: 'total-inspecciones', title: 'Total Inspecciones', value: isLoading ? '...' : '0', subtitle: 'Jornadas analizadas', icon: '📊', variant: 'neutral' as const },
-            { id: 'hora-punta', title: 'Hora Punta de Demanda', value: isLoading ? '...' : '-', subtitle: 'Cálculo en curso', icon: '⏰', variant: 'warning' as const },
-            { id: 'dia-pico', title: 'Día con Mayor Afluencia', value: isLoading ? '...' : '-', subtitle: 'Cálculo en curso', icon: '📅', variant: 'neutral' as const },
-            { id: 'promedio-hora', title: 'Promedio Insp. / Hora', value: isLoading ? '...' : '0', subtitle: 'Por hora activa', icon: '⚡', variant: 'success' as const },
+            { id: 'total-inspecciones', title: 'Total Inspecciones', value: isLoading ? '...' : '0', subtitle: 'Jornadas analizadas', icon: 'bar_chart', variant: 'neutral' as const },
+            { id: 'hora-punta', title: 'Hora Punta de Demanda', value: isLoading ? '...' : '-', subtitle: 'Cálculo en curso', icon: 'schedule', variant: 'warning' as const },
+            { id: 'dia-pico', title: 'Día con Mayor Afluencia', value: isLoading ? '...' : '-', subtitle: 'Cálculo en curso', icon: 'calendar_today', variant: 'neutral' as const },
+            { id: 'promedio-hora', title: 'Promedio Insp. / Hora', value: isLoading ? '...' : '0', subtitle: 'Por hora activa', icon: 'timer', variant: 'success' as const },
           ].map((kpi, index) => (
             <ReportKpiCard
               key={`${kpi.id}_${index}`}
@@ -399,7 +400,7 @@ export const InspRangoHorarioReportPage: React.FC<InspRangoHorarioReportPageProp
                     boxShadow: vistaGrafica === 'heatmap' ? '0 2px 6px rgba(0, 51, 102, 0.2)' : 'none',
                   }}
                 >
-                  📅 Matriz Térmica Horaria (Heatmap)
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="calendar_today" style={{ fontSize: '14px' }} /><span>Matriz Térmica Horaria (Heatmap)</span></span>
                 </button>
                 <button
                   type="button"
@@ -418,7 +419,7 @@ export const InspRangoHorarioReportPage: React.FC<InspRangoHorarioReportPageProp
                     boxShadow: vistaGrafica === 'estaciones' ? '0 2px 6px rgba(0, 51, 102, 0.2)' : 'none',
                   }}
                 >
-                  📊 Distribución por Estaciones ({data.graficoEstaciones?.length})
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="bar_chart" style={{ fontSize: '14px' }} /><span>Distribución por Estaciones</span></span> ({data.graficoEstaciones?.length})
                 </button>
               </div>
 
@@ -437,9 +438,7 @@ export const InspRangoHorarioReportPage: React.FC<InspRangoHorarioReportPageProp
                       color: subModoEstaciones === 'bar' ? '#ffffff' : '#475569',
                       cursor: 'pointer',
                     }}
-                  >
-                    📊 Barras
-                  </button>
+                  ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="bar_chart" style={{ fontSize: '15px' }} /><span>Barras</span></span></button>
                   <button
                     type="button"
                     onClick={() => setSubModoEstaciones('donut')}
@@ -453,9 +452,7 @@ export const InspRangoHorarioReportPage: React.FC<InspRangoHorarioReportPageProp
                       color: subModoEstaciones === 'donut' ? '#ffffff' : '#475569',
                       cursor: 'pointer',
                     }}
-                  >
-                    🍩 Donut
-                  </button>
+                  ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="pie_chart" style={{ fontSize: '15px' }} /><span>Donut</span></span></button>
                 </div>
               )}
             </div>
@@ -502,7 +499,7 @@ export const InspRangoHorarioReportPage: React.FC<InspRangoHorarioReportPageProp
         exportDisabled={isLoading || !hayDatosParaExportar}
         unidadRegistros="días analizados"
       >
-        <table
+        <table className="cd-data-table"
           style={{
             width: '100%',
             borderCollapse: 'collapse',
@@ -575,7 +572,7 @@ export const InspRangoHorarioReportPage: React.FC<InspRangoHorarioReportPageProp
             {isLoading ? (
               <tr>
                 <td colSpan={19} style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
-                  ⏳ Cargando datos de inspecciones por rango horario...
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="hourglass_empty" style={{ fontSize: '14px' }} /><span>Cargando datos de inspecciones por rango horario...</span></span>
                 </td>
               </tr>
             ) : filasPaginadas.length > 0 ? (

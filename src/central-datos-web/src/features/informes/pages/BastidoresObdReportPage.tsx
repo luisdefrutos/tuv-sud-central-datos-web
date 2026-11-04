@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TsButton, TsBadge, TsAlert } from '@tuvsud/design-system/react';
+import { TsButton, TsBadge, TsAlert, TsIcon } from '@tuvsud/design-system/react';
 import { AppTooltip } from '../../../components/common/AppTooltip';
 import { SortIndicator } from '../../../components/common/SortIndicator';
 import { ReportKpiCard } from '../../../components/common/ReportKpiCard';
@@ -183,7 +183,7 @@ export const BastidoresObdReportPage: React.FC<BastidoresObdReportPageProps> = (
       <ReportPageHeader
         title="Informe de Bastidores OBD No Coincidentes"
         subtitle="Control de calidad antifraude: discrepancias entre el bastidor de ficha/inspección y la lectura electrónica OBD"
-        icon="🔌"
+        icon="cable"
         breadcrumbItemText="Bastidores OBD no coincidentes"
         onNavigateHome={onNavigateHome}
         onNavigateToInformes={onNavigateToInformes}
@@ -200,7 +200,8 @@ export const BastidoresObdReportPage: React.FC<BastidoresObdReportPageProps> = (
               disabled={isLoading || isExporting || !hayDatosParaExportar}
               style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-              {isExporting ? '⏳ Generando Excel...' : '📊 Exportar a Excel'}
+              <TsIcon slot="prefix" name={isExporting ? "hourglass_empty" : "download"} />
+            {isExporting ? 'Generando Excel...' : 'Exportar a Excel'}
             </TsButton>
           </span>
         </AppTooltip>
@@ -234,7 +235,7 @@ export const BastidoresObdReportPage: React.FC<BastidoresObdReportPageProps> = (
           heading="Error de Consulta"
           style={{ fontSize: '0.88rem' }}
         >
-          <span>❌ {error}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="cancel" style={{ fontSize: '15px' }} /><span>{error}</span></span>
         </TsAlert>
       )}
 
@@ -245,7 +246,7 @@ export const BastidoresObdReportPage: React.FC<BastidoresObdReportPageProps> = (
           heading="Error de Exportación"
           style={{ fontSize: '0.88rem' }}
         >
-          <span>❌ {exportError}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="cancel" style={{ fontSize: '15px' }} /><span>{exportError}</span></span>
         </TsAlert>
       )}
 
@@ -336,10 +337,10 @@ export const BastidoresObdReportPage: React.FC<BastidoresObdReportPageProps> = (
           })
         ) : (
           [
-            { id: 'total-discordancias', title: 'Total Discordancias', value: isLoading ? '...' : '0', subtitle: 'Discrepancias detectadas', icon: '⚠️', variant: 'neutral' as const },
-            { id: 'estaciones-afectadas', title: 'Estaciones Afectadas', value: isLoading ? '...' : '0', subtitle: 'Sin incidencias', icon: '🏢', variant: 'neutral' as const },
-            { id: 'estacion-maxima', title: 'Estación con Más Casos', value: isLoading ? '...' : '-', subtitle: 'N/D', icon: '📍', variant: 'neutral' as const },
-            { id: 'equipo-obd-top', title: 'Equipo OBD con Más Casos', value: isLoading ? '...' : '-', subtitle: 'N/D', icon: '🔌', variant: 'neutral' as const },
+            { id: 'total-discordancias', title: 'Total Discordancias', value: isLoading ? '...' : '0', subtitle: 'Discrepancias detectadas', icon: 'warning', variant: 'neutral' as const },
+            { id: 'estaciones-afectadas', title: 'Estaciones Afectadas', value: isLoading ? '...' : '0', subtitle: 'Sin incidencias', icon: 'apartment', variant: 'neutral' as const },
+            { id: 'estacion-maxima', title: 'Estación con Más Casos', value: isLoading ? '...' : '-', subtitle: 'N/D', icon: 'apartment', variant: 'neutral' as const },
+            { id: 'equipo-obd-top', title: 'Equipo OBD con Más Casos', value: isLoading ? '...' : '-', subtitle: 'N/D', icon: 'cable', variant: 'neutral' as const },
           ].map((kpi, index) => (
             <ReportKpiCard
               key={`${kpi.id}_${index}`}
@@ -372,9 +373,7 @@ export const BastidoresObdReportPage: React.FC<BastidoresObdReportPageProps> = (
                   backgroundColor: chartMode === 'bar' ? '#003366' : '#f8fafc',
                   color: chartMode === 'bar' ? '#ffffff' : '#475569',
                 }}
-              >
-                📊 Por Estación
-              </button>
+              ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="bar_chart" style={{ fontSize: "15px" }} /><span>Por Estación</span></span></button>
               <button
                 type="button"
                 onClick={() => setChartMode('donut')}
@@ -388,9 +387,7 @@ export const BastidoresObdReportPage: React.FC<BastidoresObdReportPageProps> = (
                   backgroundColor: chartMode === 'donut' ? '#003366' : '#f8fafc',
                   color: chartMode === 'donut' ? '#ffffff' : '#475569',
                 }}
-              >
-                🍩 Por Categoría
-              </button>
+              ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="pie_chart" style={{ fontSize: '15px' }} /><span>Por Categoría</span></span></button>
             </div>
           </div>
 
@@ -433,12 +430,12 @@ export const BastidoresObdReportPage: React.FC<BastidoresObdReportPageProps> = (
         unidadRegistros="discordancias"
       >
         <div style={{ backgroundColor: '#eff6ff', padding: '6px 12px', fontSize: '0.8rem', color: '#1e40af', borderBottom: '1px solid #bfdbfe', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span>💡</span>
-          <span><strong>Ficha Técnica Comparativa:</strong> Haga clic en cualquier fila, en el botón 🔍 o en la matrícula para ver el desglose carácter por carácter del bastidor documental vs. bastidor OBD.</span>
+          <TsIcon name="lightbulb" style={{ fontSize: '18px', color: '#f59e0b' }} />
+          <span><strong>Ficha Técnica Comparativa:</strong> Haga clic en cualquier fila, en el botón de ficha o en la matrícula para ver el desglose carácter por carácter del bastidor documental vs. bastidor OBD.</span>
         </div>
 
         <div style={{ overflowX: 'auto' }}>
-          <table
+          <table className="cd-data-table"
             style={{
               width: '100%',
               borderCollapse: 'collapse',
@@ -616,9 +613,7 @@ export const BastidoresObdReportPage: React.FC<BastidoresObdReportPageProps> = (
                           fontSize: '0.75rem',
                           fontWeight: 600,
                         }}
-                      >
-                        🔍 Ver
-                      </button>
+                      ><span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><TsIcon name="search" style={{ fontSize: '13px' }} /><span>Ver</span></span></button>
                     </td>
                     <td style={{ padding: '8px 12px', fontFamily: 'monospace', color: '#64748b' }}>
                       {fila.codInspeccion}
@@ -838,9 +833,12 @@ export const BastidoresObdReportPage: React.FC<BastidoresObdReportPageProps> = (
               }}
             >
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600 }}>
-                  🔍 Comparativa de Bastidor — {filaSeleccionada.matricula}
-                </h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <TsIcon name="search" style={{ fontSize: '1.25rem' }} />
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600 }}>
+                    Comparativa de Bastidor — {filaSeleccionada.matricula}
+                  </h3>
+                </div>
                 <span style={{ fontSize: '0.82rem', opacity: 0.9 }}>
                   Inspección Nº {filaSeleccionada.codInspeccion} · {filaSeleccionada.desEstacion} ({filaSeleccionada.codEstacion})
                 </span>
@@ -857,9 +855,7 @@ export const BastidoresObdReportPage: React.FC<BastidoresObdReportPageProps> = (
                   lineHeight: 1,
                   padding: '4px 8px',
                 }}
-              >
-                ✕
-              </button>
+              ><TsIcon name="close" style={{ fontSize: '16px' }} /></button>
             </div>
 
             {/* Cuerpo del modal */}

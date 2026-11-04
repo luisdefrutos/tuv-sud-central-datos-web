@@ -1,5 +1,5 @@
 import React from 'react';
-import { TsAlert } from '@tuvsud/design-system/react';
+import { TsAlert, TsIcon } from '@tuvsud/design-system/react';
 
 export interface ReportDateRangeAlertProps {
   mensaje: string | null;
@@ -35,7 +35,7 @@ export const ReportDateRangeAlert: React.FC<ReportDateRangeAlertProps> = ({
           flexWrap: 'wrap',
         }}
       >
-        <span>⚠️ {mensaje}</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="warning" style={{ fontSize: '16px' }} /><span>{mensaje}</span></span>
         {onAjustarAUnAno && (
           <button
             type="button"

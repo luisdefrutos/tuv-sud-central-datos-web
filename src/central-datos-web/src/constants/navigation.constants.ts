@@ -65,14 +65,14 @@ export const DESKTOP_MENUS: MenuGroup[] = [
           {
             id: 'facturacion-excel',
             label: 'Excel facturación de inspecciones',
-            icon: '📈',
+            icon: 'trending_up',
             descripcion: 'Análisis comparativo de ingresos e inspecciones entre dos periodos (TSA / CAL) con exportación a libro Excel oficial.',
           },
         ],
       },
       { id: 'defecto-obd', label: 'Informe inspecciones con defecto OBD', descripcion: 'Auditoría técnica y control de lecturas de emisiones OBD anómalas por estación ITV.' },
       { id: 'duracion-promedio', label: 'Informe duración promedio' },
-      { id: 'cupon-descuento', label: 'Inspecciones con cupón descuento', icon: '🎟️', descripcion: 'Auditoría técnica y control de liquidación de promociones y cupones de descuento aplicados en la red ITV.' },
+      { id: 'cupon-descuento', label: 'Inspecciones con cupón descuento', icon: 'confirmation_number', descripcion: 'Auditoría técnica y control de liquidación de promociones y cupones de descuento aplicados en la red ITV.' },
       {
         id: 'info-clientes',
         label: 'Información Clientes',
@@ -80,7 +80,7 @@ export const DESKTOP_MENUS: MenuGroup[] = [
           {
             id: 'clientes-volumen',
             label: 'Clientes por volumen de inspecciones',
-            icon: '👥',
+            icon: 'groups',
             descripcion: 'Identificación y análisis de fidelización de grandes cuentas, flotas comerciales y profesionales en la red ITV.',
           },
         ],
@@ -88,14 +88,14 @@ export const DESKTOP_MENUS: MenuGroup[] = [
       {
         id: 'miner-excel',
         label: 'Estadística "MINER" Excel',
-        children: [{ id: 'miner-datos-globales', label: 'Datos Globales', icon: '📊', descripcion: 'Estadística regulatoria oficial MINER de defectos e inspecciones en 9 categorías de vehículos (Industria.xls).' }],
+        children: [{ id: 'miner-datos-globales', label: 'Datos Globales', icon: 'bar_chart', descripcion: 'Estadística regulatoria oficial MINER de defectos e inspecciones en 9 categorías de vehículos (Industria.xls).' }],
       },
       {
         id: 'informes-control',
         label: 'Informes de control',
         children: [
-          { id: 'control-sin-inspector', label: 'Inspecciones sin inspector', icon: '⚠️', descripcion: 'Control y auditoría técnica de inspecciones que no tienen asignado ningún inspector responsable.' },
-          { id: 'control-obd-no-coincidentes', label: 'Informe bastidores OBD no coincidentes', icon: '🔌', descripcion: 'Auditoría técnica antifraude de discrepancias entre bastidor de ficha e inspección electrónica OBD.' },
+          { id: 'control-sin-inspector', label: 'Inspecciones sin inspector', icon: 'warning', descripcion: 'Control y auditoría técnica de inspecciones que no tienen asignado ningún inspector responsable.' },
+          { id: 'control-obd-no-coincidentes', label: 'Informe bastidores OBD no coincidentes', icon: 'cable', descripcion: 'Auditoría técnica antifraude de discrepancias entre bastidor de ficha e inspección electrónica OBD.' },
         ],
       },
       {
@@ -110,7 +110,7 @@ export const DESKTOP_MENUS: MenuGroup[] = [
       {
         id: 'informes-defectologia',
         label: 'Informes defectología',
-        children: [{ id: 'defectologia-volumen', label: 'Volumen de defectos detectados', icon: '⚠️', descripcion: 'Análisis de concentración y frecuencia de defectos por grupo de vehículo, capítulo y gravedad.' }],
+        children: [{ id: 'defectologia-volumen', label: 'Volumen de defectos detectados', icon: 'warning', descripcion: 'Análisis de concentración y frecuencia de defectos por grupo de vehículo, capítulo y gravedad.' }],
       },
     ],
   },

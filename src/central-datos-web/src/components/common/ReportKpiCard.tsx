@@ -1,6 +1,51 @@
 import React from 'react';
-import { TsCard, TsSpinner } from '@tuvsud/design-system/react';
+import { TsCard, TsSpinner, TsIcon } from '@tuvsud/design-system/react';
 import { AppTooltip } from './AppTooltip';
+
+export function getMaterialIconName(iconOrEmoji?: string): string {
+  if (!iconOrEmoji) return 'info';
+  const map: Record<string, string> = {
+    '⚠️': 'warning',
+    '🏢': 'apartment',
+    '🚗': 'directions_car',
+    '⏱️': 'schedule',
+    '🕒': 'schedule',
+    '🏆': 'trophy',
+    '📋': 'assignment',
+    '📄': 'description',
+    '📊': 'bar_chart',
+    '📈': 'trending_up',
+    '📉': 'trending_down',
+    '✅': 'check_circle',
+    '❌': 'cancel',
+    'ℹ️': 'info',
+    '💡': 'lightbulb',
+    '🎟️': 'confirmation_number',
+    '🔌': 'cable',
+    '👤': 'person',
+    '👥': 'groups',
+    '🔍': 'search',
+    '🖨️': 'print',
+    '📥': 'download',
+    '🔄': 'refresh',
+    '🔃': 'refresh',
+    '💶': 'payments',
+    '💰': 'payments',
+    '💳': 'payments',
+    '🏷️': 'confirmation_number',
+    '⛽': 'local_gas_station',
+    '📱': 'chat',
+    '📍': 'apartment',
+    '⏳': 'hourglass_empty',
+    '🍩': 'pie_chart',
+    '🏠': 'home',
+    '📡': 'sensors',
+    '🖥️': 'desktop_windows',
+    '1️⃣': 'filter_1',
+    '2️⃣': 'filter_2',
+  };
+  return map[iconOrEmoji] || iconOrEmoji;
+}
 
 export interface ReportKpiCardProps {
   id?: string;
@@ -25,7 +70,7 @@ const BORDER_COLORS: Record<string, string> = {
 
 /**
  * Tarjeta KPI corporativa para los cuadros de mando de Central Datos Web.
- * Integrada con AppTooltip unificado (sin tooltips nativos del navegador).
+ * Integrada con AppTooltip unificado y TsIcon oficial del TÜV SÜD Algorithm Design System.
  */
 export const ReportKpiCard: React.FC<ReportKpiCardProps> = ({
   title,
@@ -89,10 +134,11 @@ export const ReportKpiCard: React.FC<ReportKpiCardProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'help',
+                color: activeBorderColor,
               }}
               aria-hidden="true"
             >
-              {icon}
+              <TsIcon name={getMaterialIconName(icon)} size={18} />
             </span>
           </AppTooltip>
         )}

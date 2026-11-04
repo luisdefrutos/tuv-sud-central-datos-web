@@ -7,6 +7,7 @@ import {
   TsCard,
   TsInput,
   TsSpinner,
+  TsIcon,
 } from '@tuvsud/design-system/react';
 import { useUltimosDatos } from '../hooks/useUltimosDatos';
 import type { ColumnaOrden } from '../types/estaciones.types';
@@ -377,7 +378,7 @@ export function UltimosDatosCentralizados({ onNavigateHome }: UltimosDatosCentra
               }
               style={{ whiteSpace: 'nowrap' }}
             >
-              📥 Exportar a Excel
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="download" style={{ fontSize: '16px' }} /><span>Exportar a Excel</span></span>
             </TsButton>
           </div>
         </div>

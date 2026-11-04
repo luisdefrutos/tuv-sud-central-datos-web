@@ -5,6 +5,7 @@ import {
   TsButton,
   TsCard,
   TsBadge,
+  TsIcon,
 } from '@tuvsud/design-system/react';
 import { DESKTOP_MENUS, IMPLEMENTED_SCREENS } from '../../../constants/navigation.constants';
 
@@ -63,7 +64,7 @@ export const InformesHubPage: React.FC<InformesHubPageProps> = ({
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '1.75rem' }}>📑</span>
+            <TsIcon name="description" size={28} style={{ color: '#0046ad' }} />
             <h1
               style={{
                 margin: 0,
@@ -138,7 +139,7 @@ export const InformesHubPage: React.FC<InformesHubPageProps> = ({
             >
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
-                  <span style={{ fontSize: '1.6rem' }}>{item.icon ?? '📊'}</span>
+                  <TsIcon name={item.icon || 'bar_chart'} size={26} style={{ color: isAvailable ? '#00875a' : '#64748b' }} />
                   {isAvailable ? (
                     <TsBadge variant="success">Disponible</TsBadge>
                   ) : (

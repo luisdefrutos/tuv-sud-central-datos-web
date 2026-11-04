@@ -1,5 +1,5 @@
 import React from 'react';
-import { TsCard, TsInput, TsButton } from '@tuvsud/design-system/react';
+import { TsCard, TsInput, TsButton, TsIcon } from '@tuvsud/design-system/react';
 import { AppTooltip } from '../../../components/common/AppTooltip';
 
 export interface ReportTableContainerProps {
@@ -87,8 +87,8 @@ export const ReportTableContainer: React.FC<ReportTableContainerProps> = ({
                 boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
               }}
             >
-              <span style={{ fontSize: '14px', color: '#64748b', marginRight: '8px', userSelect: 'none' }}>
-                🔍
+              <span style={{ color: '#64748b', marginRight: '8px', userSelect: 'none', display: 'flex', alignItems: 'center' }}>
+                <TsIcon name="search" style={{ fontSize: '16px' }} />
               </span>
               <input
                 id="report-search-input"
@@ -117,8 +117,6 @@ export const ReportTableContainer: React.FC<ReportTableContainerProps> = ({
                     background: 'none',
                     border: 'none',
                     color: '#94a3b8',
-                    fontSize: '14px',
-                    fontWeight: 700,
                     cursor: 'pointer',
                     padding: '2px 4px',
                     display: 'flex',
@@ -131,7 +129,7 @@ export const ReportTableContainer: React.FC<ReportTableContainerProps> = ({
                   onMouseEnter={(e) => (e.currentTarget.style.color = '#0046ad')}
                   onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
                 >
-                  ✕
+                  <TsIcon name="close" style={{ fontSize: '14px' }} />
                 </button>
               )}
             </div>
@@ -168,7 +166,8 @@ export const ReportTableContainer: React.FC<ReportTableContainerProps> = ({
                 fontSize: '0.84rem',
               }}
             >
-              🖨️ Imprimir (Crystal Report)
+              <TsIcon slot="prefix" name="print" />
+              Imprimir (Crystal Report)
             </TsButton>
           )}
 
@@ -183,7 +182,8 @@ export const ReportTableContainer: React.FC<ReportTableContainerProps> = ({
               fontSize: '0.84rem',
             }}
           >
-            {isExporting ? 'Generando...' : '📥 Exportar a Excel'}
+            <TsIcon slot="prefix" name="download" />
+            {isExporting ? 'Generando...' : 'Exportar a Excel'}
           </TsButton>
         </div>
       </div>
