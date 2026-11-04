@@ -628,6 +628,65 @@ public static class InformesEndpoints
         .WithName("ObtenerTiposVehiculoMiner")
         .WithSummary("Obtiene las 9 categorías oficiales MINER de tipos de vehículo");
 
+        // 29. Catálogo de plantillas de texto de recordatorios (SMS / Email)
+        group.MapGet("/envios-recordatorios/plantillas", async (
+            [FromServices] IInformesEnviosRecordatoriosService service,
+            CancellationToken ct) =>
+        {
+            var plantillas = await service.ObtenerPlantillasAsync(ct);
+            return Results.Ok(plantillas);
+        })
+        .WithName("ObtenerPlantillasEnviosRecordatorios")
+        .WithSummary("Obtiene el catálogo oficial de plantillas de SMS y Email de recordatorio");
+
+        // 30. Consulta analítica de envíos de recordatorios (SMS / Email)
+        group.MapPost("/envios-recordatorios/consultar", async (
+            [FromBody] FiltrosEnviosRecordatoriosRequestDto filtros,
+            [FromServices] IInformesEnviosRecordatoriosService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var resultado = await service.ConsultarEnviosRecordatoriosAsync(filtros, ct);
+                return Results.Ok(resultado);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .WithName("ConsultarEnviosRecordatorios")
+        .WithSummary("Consulta resumen agrupado y detalle individual de envíos de recordatorios SMS y Email");
+
+        // 31. Exportación oficial multi-hoja a Excel de envíos de recordatorios
+        group.MapPost("/envios-recordatorios/exportar-excel", async (
+            [FromBody] FiltrosEnviosRecordatoriosRequestDto filtros,
+            [FromServices] IInformesEnviosRecordatoriosService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var archivoBytes = await service.ExportarExcelAsync(filtros, ct);
+                var nombreFichero = $"Envios_Recordatorios_{filtros.FechaInicio:yyyyMMdd}_{filtros.FechaFin:yyyyMMdd}.xlsx";
+
+                return Results.File(
+                    archivoBytes,
+                    contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileDownloadName: nombreFichero);
+            }
+            catch (OperationCanceledException)
+            {
+                return Results.StatusCode(499);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .RequireRateLimiting("excel-export-policy")
+        .WithName("ExportarEnviosRecordatoriosExcel")
+        .WithSummary("Genera y descarga el libro Excel multi-pestaña (RESUMEN_GLOBAL, ENVIOS_SMS, ENVIOS_EMAIL) de recordatorios");
+
         return app;
     }
 }

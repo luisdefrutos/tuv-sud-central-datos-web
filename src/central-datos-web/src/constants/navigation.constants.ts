@@ -30,7 +30,7 @@ export interface MenuGroup {
 }
 
 /** Pantallas ya migradas a la web (resto muestran la ficha "en migración") */
-export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion', 'facturacion-excel', 'num-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'cupon-descuento', 'miner-datos-globales', 'control-obd-no-coincidentes', 'inspecciones-rango-horario', 'defectologia-volumen', 'volumen-defectos', 'clientes-volumen'] as const;
+export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion', 'facturacion-excel', 'num-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'cupon-descuento', 'miner-datos-globales', 'control-obd-no-coincidentes', 'inspecciones-rango-horario', 'defectologia-volumen', 'volumen-defectos', 'clientes-volumen', 'recordatorios-enviados', 'recordatorios-totales', 'envios-recordatorios'] as const;
 
 export const DESKTOP_MENUS: MenuGroup[] = [
   {
@@ -102,8 +102,8 @@ export const DESKTOP_MENUS: MenuGroup[] = [
         id: 'informes-recordatorios',
         label: 'Informes envíos recordatorios',
         children: [
-          { id: 'recordatorios-enviados', label: 'SMSs/EMAILs enviados' },
-          { id: 'recordatorios-totales', label: 'SMSs/EMAILs - Nº envíos totales' },
+          { id: 'recordatorios-enviados', label: 'SMSs/EMAILs enviados', icon: 'sms', descripcion: 'Detalle trazable de notificaciones y recordatorios emitidos por estación a clientes (SMS y Email).' },
+          { id: 'recordatorios-totales', label: 'SMSs/EMAILs - Nº envíos totales', icon: 'leaderboard', descripcion: 'Resumen consolidado de envíos agrupados por estación, canal, plantilla y periodo.' },
         ],
       },
       { id: 'inspecciones-rango-horario', label: 'Inspecciones por rango horario' },

@@ -17,6 +17,7 @@ import { BastidoresObdReportPage } from './features/informes/pages/BastidoresObd
 import { InspRangoHorarioReportPage } from './features/informes/pages/InspRangoHorarioReportPage';
 import { VolumenDefectosReportPage } from './features/informes/pages/VolumenDefectosReportPage';
 import { ClientesVolumenReportPage } from './features/informes/pages/ClientesVolumenReportPage';
+import { EnviosRecordatoriosReportPage } from './features/informes/pages/EnviosRecordatoriosReportPage';
 import { InformesHubPage } from './features/informes/pages/InformesHubPage';
 import { DESKTOP_MENUS, findMenuItem } from './constants/navigation.constants';
 import { UI_CONSTANTS } from './constants/ui.constants';
@@ -41,7 +42,7 @@ function AppContent() {
       if (itemId === 'volumen-defectos') itemId = 'defectologia-volumen';
       if (itemId) {
         const { group } = findMenuItem(itemId);
-        const autoGroup = group?.id || (['facturacion', 'facturacion-excel', 'num-inspecciones', 'numero-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'sin-inspector', 'cupon-descuento', 'miner-datos-globales', 'control-obd-no-coincidentes', 'bastidores-obd-no-coincidentes', 'inspecciones-rango-horario', 'rango-horario', 'defectologia-volumen', 'volumen-defectos', 'clientes-volumen', 'informes'].includes(itemId) ? 'informes' : 'aplicacion');
+        const autoGroup = group?.id || (['facturacion', 'facturacion-excel', 'num-inspecciones', 'numero-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'sin-inspector', 'cupon-descuento', 'miner-datos-globales', 'control-obd-no-coincidentes', 'bastidores-obd-no-coincidentes', 'inspecciones-rango-horario', 'rango-horario', 'defectologia-volumen', 'volumen-defectos', 'clientes-volumen', 'recordatorios-enviados', 'recordatorios-totales', 'envios-recordatorios', 'informes'].includes(itemId) ? 'informes' : 'aplicacion');
         return { itemId, groupId: autoGroup };
       }
     }
@@ -599,6 +600,22 @@ function AppContent() {
           </ErrorBoundary>
         )}
 
+        {/* CASO C.11: Módulo de Envíos de Recordatorios (SMS y Email) */}
+        {(activeItemId === 'recordatorios-enviados' ||
+          activeItemId === 'recordatorios-totales' ||
+          activeItemId === 'envios-recordatorios') && (
+          <ErrorBoundary fallbackTitle="Error en Envíos de Recordatorios">
+            <EnviosRecordatoriosReportPage
+              initialModo={activeItemId === 'recordatorios-enviados' ? 'detalle' : 'resumen'}
+              onNavigateHome={handleGoHome}
+              onNavigateToInformes={() => {
+                setActiveGroupId('informes');
+                setActiveItemId('informes');
+              }}
+            />
+          </ErrorBoundary>
+        )}
+
         {/* CASO D: Catálogo / Hub de Informes */}
         {activeGroupId === 'informes' && (activeItemId === null || activeItemId === 'informes') && (
           <InformesHubPage
@@ -627,7 +644,10 @@ function AppContent() {
           activeItemId !== 'rango-horario' &&
           activeItemId !== 'defectologia-volumen' &&
           activeItemId !== 'volumen-defectos' &&
-          activeItemId !== 'clientes-volumen' && (
+          activeItemId !== 'clientes-volumen' &&
+          activeItemId !== 'recordatorios-enviados' &&
+          activeItemId !== 'recordatorios-totales' &&
+          activeItemId !== 'envios-recordatorios' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {/* Miga de Pan Correspondiente Interactiva */}
             <TsBreadcrumb>

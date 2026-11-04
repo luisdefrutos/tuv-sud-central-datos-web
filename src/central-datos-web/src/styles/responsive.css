@@ -3,6 +3,18 @@
  * Optimizado para Escritorio (PC), Portátiles, Tabletas y Dispositivos Móviles
  */
 
+/* Contenedores de navegación: por defecto desktop horizontal, barra móvil oculta */
+.cd-nav-mobile-bar {
+  display: none !important;
+}
+
+.cd-nav-container-desktop {
+  display: flex !important;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: nowrap;
+}
+
 /* Breakpoint Móvil / Tablet estrecha (< 768px) */
 @media (max-width: 768px) {
   .cd-hide-mobile {
@@ -409,3 +421,20 @@
 .cd-report-search-input:focus {
   outline: none !important;
 }
+
+/* Garantizar dimensionamiento inmediato de TsIcon según atributo size */
+ts-icon {
+  display: inline-flex;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+ts-icon[size="14"] { --ts-icon-size: 14px; width: 14px; height: 14px; }
+ts-icon[size="16"] { --ts-icon-size: 16px; width: 16px; height: 16px; }
+ts-icon[size="18"] { --ts-icon-size: 18px; width: 18px; height: 18px; }
+ts-icon[size="20"] { --ts-icon-size: 20px; width: 20px; height: 20px; }
+ts-icon[size="24"] { --ts-icon-size: 24px; width: 24px; height: 24px; }
+ts-icon[size="28"] { --ts-icon-size: 28px; width: 28px; height: 28px; }
+ts-icon[size="32"] { --ts-icon-size: 32px; width: 32px; height: 32px; }
+ts-icon[size="36"] { --ts-icon-size: 36px; width: 36px; height: 36px; }
+ts-icon[size="40"] { --ts-icon-size: 40px; width: 40px; height: 40px; }
+ts-icon[size="48"] { --ts-icon-size: 48px; width: 48px; height: 48px; }

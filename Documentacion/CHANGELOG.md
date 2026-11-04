@@ -4,6 +4,38 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.24.0] - 04/11/2026 - *Módulo de Informes de Envíos de Recordatorios (SMS y Email), Conexión Real Oracle Producción y Reactividad Integral*
+
+### 🚀 Implementación Integral del Módulo de Envíos Recordatorios (SMS y Email)
+* **Naturaleza 100% de Solo Lectura y Auditoría**:
+  * El módulo es estrictamente consultivo sobre los registros históricos de `CENTRALITV.INSPECCION_SMS` y `CENTRALITV.INSPECCION_EMAIL`. No invoca pasarelas externas de mensajería ni servidores SMTP, ni ejecuta `INSERT`/`UPDATE`/`DELETE`.
+* **Resolución Definitiva del Acceso a Datos en Oracle Producción (`10.108.206.3:1521` - `orclpr`)**:
+  * **Corrección de vinculación de parámetros**: Incorporación obligatoria de `cmd.BindByName = true` en `OracleCommand` para evitar el error `ORA-01008` provocado por la vinculación posicional por defecto en consultas con `UNION ALL`.
+  * **Alineación con el catálogo físico real de Oracle**: Corrección del identificador de nombre de estación a `DESESTACION` (en lugar de `NOMBRE_CORTO`), eliminación de columnas inexistentes en `INSPECCION_SMS` / `INSPECCION_EMAIL` e incorporación del `INNER JOIN` con `CENTRALITV.INSPECCION` (`MATRICULA`, `NOMBRE`, `APELLIDOS`, `TELEFONO`, `EMAIL`, `FECHACADUCIDAD`).
+  * **Normalización de códigos de sociedad y estaciones**: Mapeo automático de `'TSA'` a `'01'` y `'CAL'` a `'03'` sobre `e.COD_EMPRESA` y soporte dual para códigos de estación con y sin cero a la izquierda (`902` / `0902`).
+  * **Verificación de volumen en Producción**: Acceso exitoso a **1.357.813 registros reales** en `INSPECCION_EMAIL` de estaciones como Tres Cantos (2811), Alcobendas (2814), Villalba (2813), Villasante de Montija (0905), Miranda de Ebro (0902) y Belorado (0906), suprimiendo la activación involuntaria del fallback con nombres mock ("ITV Cornellà").
+* **Visualización Gráfica Completa (Sin Ranking Truncado) y Terminología Corporativa**:
+  * Se eliminó el límite restringido en `InformesEnviosRecordatoriosService.cs` y en el frontend, mostrando **todas las estaciones** con envíos sin truncar en un ranking.
+  * Incorporación del componente de barras [`ReportBarChart`](file:///c:/Project/tuv-sud-central-datos-web/src/central-datos-web/src/features/informes/components/ReportBarChart.tsx) con scroll vertical continuo (`.cd-touch-scroll`), diferenciación de sociedad (TSA azul `#0046ad` y CAL verde `#00875a`) y desglose porcentual.
+  * Incorporación del componente circular [`ReportDonutChart`](file:///c:/Project/tuv-sud-central-datos-web/src/central-datos-web/src/features/informes/components/ReportDonutChart.tsx) para análisis de cuotas por **Plantilla de Recordatorio** y por **Canal de Notificación** (SMS vs Email).
+  * Eliminación total de la palabra informal "donut/donuts" en la interfaz de usuario, utilizando exclusivamente las etiquetas corporativas: **"Dividida (Barras + Circular)"**, **"Todas las Estaciones (Barras con Scroll)"**, **"Circular por Plantilla"** y **"Circular por Canal"**.
+* **Reactividad Completa de Filtros (Estaciones, Sociedad, Canal y Plantilla)**:
+  * Sincronización bidireccional en `useEnviosRecordatoriosReport.ts` mediante `onFetchReport` y `autoFetchOnFilterChange: true` con debounce automático de 250ms: al marcar, desmarcar o filtrar estaciones o sociedad, se actualizan de forma inmediata los 4 KPIs ejecutivos, los gráficos de barras y circulares, los contadores de pestañas y el grid paginado de datos.
+* **Resolución Definitiva del Bug Histórico de la App de Escritorio (`frmCriterios.vb`)**:
+  * En la aplicación de escritorio (`frmCriterios.vb:2355`), la exportación de SMS fallaba y no generaba datos debido a una condición duplicada errónea (`If bMail Then` evaluada dos veces en lugar de `If bSMS Then`), y `cmdMostrarPantalla.Visible = False` impedía previsualizar en pantalla.
+  * En Central Datos Web se ha implementado la segregación correcta e independiente para SMS y Email, ofreciendo tanto visualización analítica completa en pantalla como exportación multi-hoja a Excel.
+* **Backend .NET 10 (Clean Architecture & Minimal APIs)**:
+  * **DTOs Especializados (`EnviosRecordatoriosDtos.cs`)**: `FiltrosEnviosRecordatoriosRequestDto`, `FilaResumenEnviosRecordatoriosDto`, `FilaDetalleEnviosRecordatoriosDto`, `KpiEnviosRecordatoriosDto`, `PlantillaRecordatorioCatalogoDto`, `PuntoGraficoEnviosDto` e `InformeEnviosRecordatoriosResponseDto`.
+  * **Servicio de Aplicación (`InformesEnviosRecordatoriosService.cs`)**: Cálculo en memoria de KPIs consolidados y generador de libro Excel ClosedXML con 3 pestañas corporativas (`RESUMEN_GLOBAL`, `ENVIOS_SMS` y `ENVIOS_EMAIL`).
+  * **Endpoints REST Minimal API (`InformesEndpoints.cs`)**: `GET /api/v1/informes/envios-recordatorios/plantillas`, `POST /api/v1/informes/envios-recordatorios/consultar` y `POST /api/v1/informes/envios-recordatorios/exportar-excel`.
+* **Frontend React 19 & TÜV SÜD Algorithm Design System**:
+  * **Vista Unificada (`EnviosRecordatoriosReportPage.tsx`)**: Selector de vista segmentada (**"Resumen Totales"** vs **"Destinatarios Enviados"**), 4 tarjetas de KPIs corporativas (`ReportKpiCard`) con iconos oficiales vectoriales `<TsIcon>` (`sms`, `chat`, `mail`, `description`), tabla analítica `.cd-data-table` con ordenación y búsqueda, y modal de ficha individual del envío.
+* **Restauración Visual del Navbar Desktop y Documentación MCP Oracle**:
+  * Reincorporación de la pestaña "Inicio" con icono corporativo en `Navbar.tsx` y blindaje de las reglas CSS en `responsive.css` (`.cd-nav-mobile-bar { display: none !important }` y `.cd-nav-container-desktop { display: flex !important }`).
+  * Creación de la guía técnica `27_guia_creacion_y_configuracion_mcp_oracle.md` documentando el servidor MCP de Oracle `central-datos-db`.
+
+---
+
 ## [2.23.0] - 04/11/2026 - *Migración Integral a Iconos Oficiales TÜV SÜD Algorithm Design System y Preservación Estricta de Estética*
 
 ### 🎨 Adopción Integral de Iconos Oficiales TÜV SÜD Algorithm Design System (`@tuvsud/design-system`)

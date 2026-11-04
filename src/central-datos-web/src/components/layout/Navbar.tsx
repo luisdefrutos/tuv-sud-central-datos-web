@@ -117,6 +117,24 @@ export function Navbar({
         className={`cd-nav-container-desktop ${mobileMenuOpen ? 'cd-nav-open-mobile' : ''}`}
         role="menubar"
       >
+        {/* Botón Inicio Corporativo TÜV SÜD */}
+        <div className="cd-nav-group-wrapper" style={{ position: 'relative' }}>
+          <button
+            type="button"
+            role="menuitem"
+            className={`cd-menubar-title ${isHomeActive ? 'cd-menubar-title-active' : ''}`}
+            onClick={() => {
+              closeAll();
+              onGoHome();
+            }}
+            title="Pantalla principal de inicio"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          >
+            <TsIcon name="home" size={18} />
+            <span>Inicio</span>
+          </button>
+        </div>
+
         {menus.map((group) => {
           const isOpen = openGroupId === group.id;
           const isGroupActive = activeGroupId === group.id && activeItemId !== null;

@@ -108,4 +108,15 @@ public interface IInformesRepository
 
     Task<IReadOnlyList<DTOs.ProyectoComercialDto>> ObtenerProyectosComercialesAsync(
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<DTOs.PlantillaRecordatorioCatalogoDto>> ObtenerPlantillasRecordatorioAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<DTOs.FilaResumenEnviosRecordatoriosDto>> ObtenerResumenEnviosRecordatoriosAsync(
+        DTOs.FiltrosEnviosRecordatoriosRequestDto filtros,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<DTOs.FilaDetalleEnviosRecordatoriosDto>> ObtenerDetalleEnviosRecordatoriosAsync(
+        DTOs.FiltrosEnviosRecordatoriosRequestDto filtros,
+        CancellationToken cancellationToken = default);
 }
