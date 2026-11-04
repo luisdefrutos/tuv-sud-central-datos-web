@@ -39,6 +39,19 @@ export const EnviosRecordatoriosReportPage: React.FC<EnviosRecordatoriosReportPa
     setModoVista,
     busqueda,
     setBusqueda,
+    filtroCodInspeccion,
+    setFiltroCodInspeccion,
+    filtroTelefono,
+    setFiltroTelefono,
+    filtroMatricula,
+    setFiltroMatricula,
+    filtroFechaCaducidad,
+    setFiltroFechaCaducidad,
+    filtroCliente,
+    setFiltroCliente,
+    filtroFechaEnvio,
+    setFiltroFechaEnvio,
+    limpiarFiltrosGranulares,
     plantillas,
     data,
     isLoading,
@@ -101,6 +114,17 @@ export const EnviosRecordatoriosReportPage: React.FC<EnviosRecordatoriosReportPa
       color: p.label === 'SMS' ? '#00875a' : '#0046ad',
     }));
   }, [data?.graficoPorCanal]);
+
+  // Desglose de plantillas activas con volumen para el tooltip interactivo del KPI
+  const tooltipItemsPlantillas = React.useMemo(() => {
+    if (!data?.graficoPorPlantilla || data.graficoPorPlantilla.length === 0) return undefined;
+    return data.graficoPorPlantilla
+      .map((p) => ({
+        nombre: p.label,
+        valor: `${p.total.toLocaleString('es-ES')} envíos`,
+      }))
+      .sort((a, b) => b.valor.localeCompare(a.valor, undefined, { numeric: true }));
+  }, [data?.graficoPorPlantilla]);
 
   const kpis = data?.kpis;
   const hayDatosParaExportar = (data?.filasResumen && data.filasResumen.length > 0) || (data?.filasDetalle && data.filasDetalle.length > 0);
@@ -400,6 +424,8 @@ export const EnviosRecordatoriosReportPage: React.FC<EnviosRecordatoriosReportPa
           subtitle={`${kpis?.totalPlantillas ?? 0} plantillas activas`}
           icon="description"
           variant="warning"
+          tooltipSubtitle="Número de plantillas diferentes que han emitido mensajes en las fechas seleccionadas:"
+          tooltipItems={tooltipItemsPlantillas}
         />
       </div>
 
@@ -596,6 +622,212 @@ export const EnviosRecordatoriosReportPage: React.FC<EnviosRecordatoriosReportPa
 
       {/* 7. Tabla Analítica con Soporte de Hover y Paginación */}
       <TsCard style={{ padding: '1.25rem', backgroundColor: '#ffffff' }}>
+        {/* Banda de Filtros Rápidos Granulares Estilo frmSMSEnviado (Solo activa en modo Destinatarios Enviados) */}
+        {modoVista === 'detalle' && (
+          <div
+            style={{
+              marginBottom: '1.25rem',
+              padding: '12px 16px',
+              backgroundColor: '#f8fafc',
+              border: '1px solid #cbd5e1',
+              borderRadius: '8px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+              <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#0046ad', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <TsIcon name="tune" size={16} />
+                Búsqueda Rápida de Destinatarios (Filtros de frmSMSEnviado)
+              </span>
+              <span style={{ fontSize: '0.78rem', color: '#64748b', fontStyle: 'italic' }}>
+                Recuerde que puede utilizar caracteres comodín (*) para la búsqueda por matrícula, teléfono o cliente
+              </span>
+            </div>
+
+            {/* Fila de Inputs de Filtro */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                gap: '8px',
+                alignItems: 'flex-end',
+              }}
+            >
+              <div>
+                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 600, color: '#475569', marginBottom: '3px' }}>
+                  COD. INSP.
+                </label>
+                <input
+                  type="text"
+                  value={filtroCodInspeccion}
+                  onChange={(e) => {
+                    setFiltroCodInspeccion(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="Ej: 1234"
+                  style={{
+                    width: '100%',
+                    height: '32px',
+                    padding: '0 8px',
+                    fontSize: '0.82rem',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '4px',
+                    backgroundColor: '#ffffff',
+                    color: '#1e293b',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 600, color: '#475569', marginBottom: '3px' }}>
+                  TELÉFONO
+                </label>
+                <input
+                  type="text"
+                  value={filtroTelefono}
+                  onChange={(e) => {
+                    setFiltroTelefono(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="Ej: 600*"
+                  style={{
+                    width: '100%',
+                    height: '32px',
+                    padding: '0 8px',
+                    fontSize: '0.82rem',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '4px',
+                    backgroundColor: '#ffffff',
+                    color: '#1e293b',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 600, color: '#475569', marginBottom: '3px' }}>
+                  MATRÍCULA (*)
+                </label>
+                <input
+                  type="text"
+                  value={filtroMatricula}
+                  onChange={(e) => {
+                    setFiltroMatricula(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="Ej: *1234* o 5678*"
+                  style={{
+                    width: '100%',
+                    height: '32px',
+                    padding: '0 8px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '4px',
+                    backgroundColor: '#ffffff',
+                    color: '#0046ad',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 600, color: '#475569', marginBottom: '3px' }}>
+                  FECHA VTO.
+                </label>
+                <input
+                  type="text"
+                  value={filtroFechaCaducidad}
+                  onChange={(e) => {
+                    setFiltroFechaCaducidad(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="dd/mm/aaaa"
+                  style={{
+                    width: '100%',
+                    height: '32px',
+                    padding: '0 8px',
+                    fontSize: '0.82rem',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '4px',
+                    backgroundColor: '#ffffff',
+                    color: '#1e293b',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 600, color: '#475569', marginBottom: '3px' }}>
+                  CLIENTE
+                </label>
+                <input
+                  type="text"
+                  value={filtroCliente}
+                  onChange={(e) => {
+                    setFiltroCliente(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="Ej: Perez*"
+                  style={{
+                    width: '100%',
+                    height: '32px',
+                    padding: '0 8px',
+                    fontSize: '0.82rem',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '4px',
+                    backgroundColor: '#ffffff',
+                    color: '#1e293b',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 600, color: '#475569', marginBottom: '3px' }}>
+                  FECHA ENVÍO
+                </label>
+                <input
+                  type="text"
+                  value={filtroFechaEnvio}
+                  onChange={(e) => {
+                    setFiltroFechaEnvio(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="dd/mm/aaaa"
+                  style={{
+                    width: '100%',
+                    height: '32px',
+                    padding: '0 8px',
+                    fontSize: '0.82rem',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '4px',
+                    backgroundColor: '#ffffff',
+                    color: '#1e293b',
+                  }}
+                />
+              </div>
+
+              {/* Botones de acción directa estilo desktop */}
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <TsButton
+                  variant="primary"
+                  size="small"
+                  onClick={() => setPage(1)}
+                  style={{ height: '32px' }}
+                >
+                  <TsIcon slot="prefix" name="search" />
+                  Filtrar
+                </TsButton>
+                <TsButton
+                  variant="secondary"
+                  size="small"
+                  onClick={limpiarFiltrosGranulares}
+                  style={{ height: '32px' }}
+                >
+                  <TsIcon slot="prefix" name="close" />
+                  Limpiar
+                </TsButton>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Barra superior de la tabla */}
         <div
           style={{
@@ -632,7 +864,7 @@ export const EnviosRecordatoriosReportPage: React.FC<EnviosRecordatoriosReportPa
                 placeholder={
                   modoVista === 'resumen'
                     ? 'Buscar por estación o plantilla...'
-                    : 'Buscar por matrícula, destinatario, nombre...'
+                    : 'Búsqueda general en destinatarios...'
                 }
                 className="cd-report-search-input"
                 style={{

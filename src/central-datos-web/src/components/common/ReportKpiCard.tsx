@@ -1,6 +1,7 @@
 import React from 'react';
 import { TsCard, TsSpinner, TsIcon } from '@tuvsud/design-system/react';
 import { AppTooltip } from './AppTooltip';
+import type { DetalleElementoTooltip } from '../../features/informes/types/informes.types';
 
 export function getMaterialIconName(iconOrEmoji?: string): string {
   if (!iconOrEmoji) return 'info';
@@ -58,6 +59,8 @@ export interface ReportKpiCardProps {
   style?: React.CSSProperties;
   badge?: string;
   textColor?: string;
+  tooltipItems?: DetalleElementoTooltip[];
+  tooltipSubtitle?: string;
 }
 
 const BORDER_COLORS: Record<string, string> = {
@@ -82,6 +85,8 @@ export const ReportKpiCard: React.FC<ReportKpiCardProps> = ({
   style,
   badge,
   textColor,
+  tooltipItems,
+  tooltipSubtitle,
 }) => {
   const activeBorderColor = BORDER_COLORS[variant] || BORDER_COLORS.neutral;
 
@@ -119,7 +124,8 @@ export const ReportKpiCard: React.FC<ReportKpiCardProps> = ({
             badge={String(value)}
             badgeColor={activeBorderColor}
             accentColor={activeBorderColor}
-            subtitle={subtitle}
+            subtitle={tooltipSubtitle ?? subtitle}
+            items={tooltipItems}
             position="top"
           >
             <span
@@ -150,19 +156,35 @@ export const ReportKpiCard: React.FC<ReportKpiCardProps> = ({
             <TsSpinner size="small" />
           </div>
         ) : (
-          <div
-            style={{
-              fontSize: 'clamp(1.4rem, 2.2vw, 1.85rem)',
-              fontWeight: 800,
-              color: textColor ?? (variant === 'primary' || variant === 'neutral'
-                ? 'var(--ts-semantic-color-surface-inverted-default, #0b253b)'
-                : activeBorderColor),
-              letterSpacing: '-0.5px',
-              lineHeight: 1.15,
-            }}
-          >
-            {value}
-          </div>
+          (() => {
+            const strVal = String(value ?? '');
+            // Detectar si es un valor descriptivo o texto largo (no un número o código corto)
+            const isTextualLong = strVal.length > 15 || !/^[0-9.,%\s—–-]+$/.test(strVal);
+
+            return (
+              <div
+                title={strVal}
+                style={{
+                  fontSize: isTextualLong ? '0.98rem' : 'clamp(1.4rem, 2.2vw, 1.85rem)',
+                  fontWeight: isTextualLong ? 700 : 800,
+                  color: textColor ?? (variant === 'primary' || variant === 'neutral'
+                    ? 'var(--ts-semantic-color-surface-inverted-default, #0b253b)'
+                    : activeBorderColor),
+                  letterSpacing: isTextualLong ? 'normal' : '-0.5px',
+                  lineHeight: isTextualLong ? 1.3 : 1.15,
+                  minHeight: isTextualLong ? '2.5rem' : 'auto',
+                  display: isTextualLong ? '-webkit-box' : 'block',
+                  WebkitLineClamp: isTextualLong ? 2 : 'unset',
+                  WebkitBoxOrient: isTextualLong ? 'vertical' : 'unset',
+                  overflow: isTextualLong ? 'hidden' : 'visible',
+                  wordBreak: 'break-word',
+                  textTransform: isTextualLong ? 'none' : 'uppercase',
+                }}
+              >
+                {value}
+              </div>
+            );
+          })()
         )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
@@ -182,15 +204,45 @@ export const ReportKpiCard: React.FC<ReportKpiCardProps> = ({
             </span>
           )}
           {subtitle && (
-            <div
-              style={{
-                fontSize: '0.78rem',
-                color: 'var(--ts-semantic-color-text-subtle, #64748b)',
-                lineHeight: 1.25,
-              }}
-            >
-              {subtitle}
-            </div>
+            tooltipItems && tooltipItems.length > 0 ? (
+              <AppTooltip
+                title={title}
+                subtitle={tooltipSubtitle ?? 'Desglose detallado:'}
+                badge={`${tooltipItems.length} tipos`}
+                badgeColor={activeBorderColor}
+                accentColor={activeBorderColor}
+                items={tooltipItems}
+                position="top"
+              >
+                <div
+                  style={{
+                    fontSize: '0.78rem',
+                    color: 'var(--ts-semantic-color-text-subtle, #0046ad)',
+                    fontWeight: 600,
+                    lineHeight: 1.25,
+                    cursor: 'help',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    textDecoration: 'underline',
+                    textDecorationStyle: 'dotted',
+                  }}
+                >
+                  <span>{subtitle}</span>
+                  <TsIcon name="info" size={14} style={{ color: activeBorderColor }} />
+                </div>
+              </AppTooltip>
+            ) : (
+              <div
+                style={{
+                  fontSize: '0.78rem',
+                  color: 'var(--ts-semantic-color-text-subtle, #64748b)',
+                  lineHeight: 1.25,
+                }}
+              >
+                {subtitle}
+              </div>
+            )
           )}
         </div>
       </div>

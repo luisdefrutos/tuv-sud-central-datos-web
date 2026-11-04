@@ -11,14 +11,25 @@ public sealed partial class OracleInformesRepository
     public async Task<IReadOnlyList<PlantillaRecordatorioCatalogoDto>> ObtenerPlantillasRecordatorioAsync(
         CancellationToken cancellationToken = default)
     {
+        // 1. Plantillas de Email desde CENTRALITV.TIPO_TEXTO_RECORDATORIO
+        // 2. Plantillas de SMS desde CENTRALITV.ENVIOS_CLIENTE_SMS (tabla real de producción)
         const string sql = @"
             SELECT 
-                IDTIPO, 
-                DESCRIPCION, 
-                CASE WHEN IDTIPORECORDATORIO = '2' THEN 'SMS' ELSE 'EMAIL' END AS CANAL, 
-                ACTIVO
-            FROM CENTRALITV.TIPO_TEXTO_RECORDATORIO
-            ORDER BY IDTIPORECORDATORIO, IDTIPO";
+                t.IDTIPO, 
+                t.DESCRIPCION, 
+                'EMAIL' AS CANAL, 
+                t.ACTIVO
+            FROM CENTRALITV.TIPO_TEXTO_RECORDATORIO t
+            WHERE t.IDTIPORECORDATORIO = '3'
+            UNION ALL
+            SELECT DISTINCT
+                NVL(p.IDTIPO_ENVIO, 1) AS IDTIPO,
+                NVL(p.NOMBRE_ENVIO, 'SMS Recordatorio') AS DESCRIPCION,
+                'SMS' AS CANAL,
+                -1 AS ACTIVO
+            FROM CENTRALITV.ENVIOS_CLIENTE_SMS p
+            WHERE p.NOMBRE_ENVIO IS NOT NULL
+            ORDER BY CANAL, IDTIPO";
 
         try
         {
@@ -84,20 +95,20 @@ public sealed partial class OracleInformesRepository
 
         var sb = new StringBuilder();
 
-        void ConstruirSubquery(string tabla, string colIdTipo, string canalLiteral, string tipoRecordatorioId)
+        void ConstruirSubqueryEmail()
         {
-            sb.AppendLine($"SELECT ");
-            sb.AppendLine($"    LPAD(TRIM(x.CODESTACION), 4, '0') AS CodigoEstacion,");
-            sb.AppendLine($"    NVL(e.DESESTACION, 'ITV ' || x.CODESTACION) AS NombreEstacion,");
-            sb.AppendLine($"    '{canalLiteral}' AS Canal,");
-            sb.AppendLine($"    x.{colIdTipo} AS IdPlantilla,");
-            sb.AppendLine($"    NVL(t.DESCRIPCION, '{canalLiteral} Tipo ' || TO_CHAR(x.{colIdTipo})) AS DescripcionPlantilla,");
-            sb.AppendLine($"    TRUNC(x.FECHAENVIO) AS FechaEnvio,");
-            sb.AppendLine($"    COUNT(*) AS TotalEnviados");
-            sb.AppendLine($"FROM CENTRALITV.{tabla} x");
-            sb.AppendLine($"LEFT JOIN CENTRALITV.ESTACIONES e ON e.CODESTACION = x.CODESTACION");
-            sb.AppendLine($"LEFT JOIN CENTRALITV.TIPO_TEXTO_RECORDATORIO t ON t.IDTIPO = x.{colIdTipo} AND t.IDTIPORECORDATORIO = '{tipoRecordatorioId}'");
-            sb.AppendLine($"WHERE x.FECHAENVIO >= :p_FechaInicio AND x.FECHAENVIO <= :p_FechaFin");
+            sb.AppendLine(@"SELECT 
+                LPAD(TRIM(x.CODESTACION), 4, '0') AS CodigoEstacion,
+                NVL(e.DESESTACION, 'ITV ' || x.CODESTACION) AS NombreEstacion,
+                'EMAIL' AS Canal,
+                x.IDTIPO_EMAIL AS IdPlantilla,
+                NVL(t.DESCRIPCION, 'Email Tipo ' || TO_CHAR(x.IDTIPO_EMAIL)) AS DescripcionPlantilla,
+                TRUNC(x.FECHAENVIO) AS FechaEnvio,
+                COUNT(*) AS TotalEnviados
+            FROM CENTRALITV.INSPECCION_EMAIL x
+            LEFT JOIN CENTRALITV.ESTACIONES e ON e.CODESTACION = x.CODESTACION
+            LEFT JOIN CENTRALITV.TIPO_TEXTO_RECORDATORIO t ON t.IDTIPO = x.IDTIPO_EMAIL AND t.IDTIPORECORDATORIO = '3'
+            WHERE x.FECHAENVIO >= :p_FechaInicio AND x.FECHAENVIO <= :p_FechaFin");
 
             if (!string.IsNullOrWhiteSpace(filtros.CodEmpresa) &&
                 !string.Equals(filtros.CodEmpresa, "TODAS", StringComparison.OrdinalIgnoreCase) &&
@@ -116,46 +127,89 @@ public sealed partial class OracleInformesRepository
                 .Where(c => !string.IsNullOrWhiteSpace(c) && !string.Equals(c, "TODAS", StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
-            if (codsFiltrados != null)
+            if (codsFiltrados != null && codsFiltrados.Count > 0)
             {
-                if (codsFiltrados.Count == 0)
-                {
-                    sb.AppendLine("  AND 1 = 0");
-                }
-                else
-                {
-                    var codsQuotes = codsFiltrados
-                        .SelectMany(c => new[] { $"'{c.Trim()}'", $"'{c.Trim().TrimStart('0')}'", $"'{c.Trim().PadLeft(4, '0')}'" })
-                        .Distinct()
-                        .ToList();
+                var codsQuotes = codsFiltrados
+                    .SelectMany(c => new[] { $"'{c.Trim()}'", $"'{c.Trim().TrimStart('0')}'", $"'{c.Trim().PadLeft(4, '0')}'" })
+                    .Distinct()
+                    .ToList();
 
-                    sb.AppendLine($"  AND (TRIM(x.CODESTACION) IN ({string.Join(", ", codsQuotes)}) OR LPAD(TRIM(x.CODESTACION), 4, '0') IN ({string.Join(", ", codsQuotes)}))");
-                }
+                sb.AppendLine($"  AND (TRIM(x.CODESTACION) IN ({string.Join(", ", codsQuotes)}) OR LPAD(TRIM(x.CODESTACION), 4, '0') IN ({string.Join(", ", codsQuotes)}))");
             }
 
             if (filtros.IdPlantilla.HasValue && filtros.IdPlantilla.Value > 0)
             {
-                sb.AppendLine($"  AND x.{colIdTipo} = {filtros.IdPlantilla.Value}");
+                sb.AppendLine($"  AND x.IDTIPO_EMAIL = {filtros.IdPlantilla.Value}");
             }
 
-            sb.AppendLine($"GROUP BY LPAD(TRIM(x.CODESTACION), 4, '0'), NVL(e.DESESTACION, 'ITV ' || x.CODESTACION), x.{colIdTipo}, t.DESCRIPCION, TRUNC(x.FECHAENVIO)");
+            sb.AppendLine("GROUP BY LPAD(TRIM(x.CODESTACION), 4, '0'), NVL(e.DESESTACION, 'ITV ' || x.CODESTACION), x.IDTIPO_EMAIL, t.DESCRIPCION, TRUNC(x.FECHAENVIO)");
+        }
+
+        void ConstruirSubquerySmsReal()
+        {
+            sb.AppendLine(@"SELECT 
+                LPAD(TRIM(s.CODESTACION), 4, '0') AS CodigoEstacion,
+                NVL(e.DESESTACION, 'ITV ' || s.CODESTACION) AS NombreEstacion,
+                'SMS' AS Canal,
+                NVL(p.IDTIPO_ENVIO, 1) AS IdPlantilla,
+                NVL(p.NOMBRE_ENVIO, 'SMS Recordatorio') AS DescripcionPlantilla,
+                TRUNC(s.FECHA_ENVIO) AS FechaEnvio,
+                COUNT(*) AS TotalEnviados
+            FROM CENTRALITV.ENVIOS_CLIENTE_SMS_DETALLE s
+            LEFT JOIN CENTRALITV.ENVIOS_CLIENTE_SMS p ON p.IDPAQUETE = s.IDPAQUETE
+            LEFT JOIN CENTRALITV.ESTACIONES e ON e.CODESTACION = s.CODESTACION
+            WHERE s.FECHA_ENVIO >= :p_FechaInicio AND s.FECHA_ENVIO <= :p_FechaFin");
+
+            if (!string.IsNullOrWhiteSpace(filtros.CodEmpresa) &&
+                !string.Equals(filtros.CodEmpresa, "TODAS", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(filtros.CodEmpresa, "ALL", StringComparison.OrdinalIgnoreCase))
+            {
+                var codEmpNorm = filtros.CodEmpresa.Trim().ToUpperInvariant() switch
+                {
+                    "TSA" => "01",
+                    "CAL" => "03",
+                    _ => filtros.CodEmpresa.Trim()
+                };
+                sb.AppendLine($"  AND e.COD_EMPRESA = '{codEmpNorm}'");
+            }
+
+            var codsFiltrados = filtros.CodEstaciones?
+                .Where(c => !string.IsNullOrWhiteSpace(c) && !string.Equals(c, "TODAS", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (codsFiltrados != null && codsFiltrados.Count > 0)
+            {
+                var codsQuotes = codsFiltrados
+                    .SelectMany(c => new[] { $"'{c.Trim()}'", $"'{c.Trim().TrimStart('0')}'", $"'{c.Trim().PadLeft(4, '0')}'" })
+                    .Distinct()
+                    .ToList();
+
+                sb.AppendLine($"  AND (TRIM(s.CODESTACION) IN ({string.Join(", ", codsQuotes)}) OR LPAD(TRIM(s.CODESTACION), 4, '0') IN ({string.Join(", ", codsQuotes)}))");
+            }
+
+            if (filtros.IdPlantilla.HasValue && filtros.IdPlantilla.Value > 0)
+            {
+                sb.AppendLine($"  AND p.IDTIPO_ENVIO = {filtros.IdPlantilla.Value}");
+            }
+
+            sb.AppendLine("GROUP BY LPAD(TRIM(s.CODESTACION), 4, '0'), NVL(e.DESESTACION, 'ITV ' || s.CODESTACION), NVL(p.IDTIPO_ENVIO, 1), NVL(p.NOMBRE_ENVIO, 'SMS Recordatorio'), TRUNC(s.FECHA_ENVIO)");
         }
 
         if (includeSms && includeMail)
         {
-            ConstruirSubquery("INSPECCION_SMS", "IDTIPO_SMS", "SMS", "2");
+            ConstruirSubquerySmsReal();
             sb.AppendLine("UNION ALL");
-            ConstruirSubquery("INSPECCION_EMAIL", "IDTIPO_EMAIL", "EMAIL", "3");
+            ConstruirSubqueryEmail();
             sb.AppendLine("ORDER BY Canal, CodigoEstacion, FechaEnvio DESC");
         }
         else if (includeSms)
         {
-            ConstruirSubquery("INSPECCION_SMS", "IDTIPO_SMS", "SMS", "2");
+            ConstruirSubquerySmsReal();
             sb.AppendLine("ORDER BY CodigoEstacion, FechaEnvio DESC");
         }
         else if (includeMail)
         {
-            ConstruirSubquery("INSPECCION_EMAIL", "IDTIPO_EMAIL", "EMAIL", "3");
+            ConstruirSubqueryEmail();
             sb.AppendLine("ORDER BY CodigoEstacion, FechaEnvio DESC");
         }
         else
@@ -224,28 +278,28 @@ public sealed partial class OracleInformesRepository
 
         var sb = new StringBuilder();
 
-        void ConstruirSubqueryDetalle(string tabla, string colIdTipo, string exprDestinatario, string canalLiteral, string tipoRecordatorioId)
+        void ConstruirSubqueryDetalleEmail()
         {
-            sb.AppendLine($"SELECT ");
-            sb.AppendLine($"    '{canalLiteral}' AS Canal,");
-            sb.AppendLine($"    LPAD(TRIM(x.CODESTACION), 4, '0') AS CodigoEstacion,");
-            sb.AppendLine($"    NVL(e.DESESTACION, 'ITV ' || x.CODESTACION) AS NombreEstacion,");
-            sb.AppendLine($"    x.FECHAENVIO AS FechaEnvio,");
-            sb.AppendLine($"    TO_NUMBER(NVL(REGEXP_SUBSTR(x.CODINSPECCION, '^[0-9]+'), '0')) AS NumeroInspeccion,");
-            sb.AppendLine($"    TO_NUMBER(TO_CHAR(x.FECHAENVIO, 'YYYY')) AS AnioInspeccion,");
-            sb.AppendLine($"    NVL(i.MATRICULA, '-') AS Matricula,");
-            sb.AppendLine($"    x.{colIdTipo} AS IdPlantilla,");
-            sb.AppendLine($"    NVL(t.DESCRIPCION, '{canalLiteral} Tipo ' || TO_CHAR(x.{colIdTipo})) AS DescripcionPlantilla,");
-            sb.AppendLine($"    {exprDestinatario} AS Destinatario,");
-            sb.AppendLine($"    NVL(i.NOMBRE, '') AS Nombre,");
-            sb.AppendLine($"    NVL(i.APELLIDOS, '') AS Apellidos,");
-            sb.AppendLine($"    'ENVIADO' AS EstadoEnvio,");
-            sb.AppendLine($"    i.FECHACADUCIDAD AS FechaCaducidad");
-            sb.AppendLine($"FROM CENTRALITV.{tabla} x");
-            sb.AppendLine($"INNER JOIN CENTRALITV.INSPECCION i ON i.CODESTACION = x.CODESTACION AND i.CODINSPECCION = x.CODINSPECCION");
-            sb.AppendLine($"LEFT JOIN CENTRALITV.ESTACIONES e ON e.CODESTACION = x.CODESTACION");
-            sb.AppendLine($"LEFT JOIN CENTRALITV.TIPO_TEXTO_RECORDATORIO t ON t.IDTIPO = x.{colIdTipo} AND t.IDTIPORECORDATORIO = '{tipoRecordatorioId}'");
-            sb.AppendLine($"WHERE x.FECHAENVIO >= :p_FechaInicio AND x.FECHAENVIO <= :p_FechaFin");
+            sb.AppendLine(@"SELECT 
+                'EMAIL' AS Canal,
+                LPAD(TRIM(x.CODESTACION), 4, '0') AS CodigoEstacion,
+                NVL(e.DESESTACION, 'ITV ' || x.CODESTACION) AS NombreEstacion,
+                x.FECHAENVIO AS FechaEnvio,
+                TO_NUMBER(NVL(REGEXP_SUBSTR(x.CODINSPECCION, '^[0-9]+'), '0')) AS NumeroInspeccion,
+                TO_NUMBER(TO_CHAR(x.FECHAENVIO, 'YYYY')) AS AnioInspeccion,
+                NVL(i.MATRICULA, '-') AS Matricula,
+                x.IDTIPO_EMAIL AS IdPlantilla,
+                NVL(t.DESCRIPCION, 'Email Tipo ' || TO_CHAR(x.IDTIPO_EMAIL)) AS DescripcionPlantilla,
+                NVL(i.EMAIL, '-') AS Destinatario,
+                NVL(i.NOMBRE, '') AS Nombre,
+                NVL(i.APELLIDOS, '') AS Apellidos,
+                'ENVIADO' AS EstadoEnvio,
+                i.FECHACADUCIDAD AS FechaCaducidad
+            FROM CENTRALITV.INSPECCION_EMAIL x
+            INNER JOIN CENTRALITV.INSPECCION i ON i.CODESTACION = x.CODESTACION AND i.CODINSPECCION = x.CODINSPECCION
+            LEFT JOIN CENTRALITV.ESTACIONES e ON e.CODESTACION = x.CODESTACION
+            LEFT JOIN CENTRALITV.TIPO_TEXTO_RECORDATORIO t ON t.IDTIPO = x.IDTIPO_EMAIL AND t.IDTIPORECORDATORIO = '3'
+            WHERE x.FECHAENVIO >= :p_FechaInicio AND x.FECHAENVIO <= :p_FechaFin");
 
             if (!string.IsNullOrWhiteSpace(filtros.CodEmpresa) &&
                 !string.Equals(filtros.CodEmpresa, "TODAS", StringComparison.OrdinalIgnoreCase) &&
@@ -264,54 +318,225 @@ public sealed partial class OracleInformesRepository
                 .Where(c => !string.IsNullOrWhiteSpace(c) && !string.Equals(c, "TODAS", StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
-            if (codsFiltrados != null)
+            if (codsFiltrados != null && codsFiltrados.Count > 0)
             {
-                if (codsFiltrados.Count == 0)
-                {
-                    sb.AppendLine("  AND 1 = 0");
-                }
-                else
-                {
-                    var codsQuotes = codsFiltrados
-                        .SelectMany(c => new[] { $"'{c.Trim()}'", $"'{c.Trim().TrimStart('0')}'", $"'{c.Trim().PadLeft(4, '0')}'" })
-                        .Distinct()
-                        .ToList();
+                var codsQuotes = codsFiltrados
+                    .SelectMany(c => new[] { $"'{c.Trim()}'", $"'{c.Trim().TrimStart('0')}'", $"'{c.Trim().PadLeft(4, '0')}'" })
+                    .Distinct()
+                    .ToList();
 
-                    sb.AppendLine($"  AND (TRIM(x.CODESTACION) IN ({string.Join(", ", codsQuotes)}) OR LPAD(TRIM(x.CODESTACION), 4, '0') IN ({string.Join(", ", codsQuotes)}))");
-                }
+                sb.AppendLine($"  AND (TRIM(x.CODESTACION) IN ({string.Join(", ", codsQuotes)}) OR LPAD(TRIM(x.CODESTACION), 4, '0') IN ({string.Join(", ", codsQuotes)}))");
             }
 
             if (filtros.IdPlantilla.HasValue && filtros.IdPlantilla.Value > 0)
             {
-                sb.AppendLine($"  AND x.{colIdTipo} = {filtros.IdPlantilla.Value}");
+                sb.AppendLine($"  AND x.IDTIPO_EMAIL = {filtros.IdPlantilla.Value}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtros.CodInspeccion))
+            {
+                var q = filtros.CodInspeccion.Trim();
+                sb.AppendLine($"  AND (x.CODINSPECCION LIKE '%{q}%')");
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtros.Telefono))
+            {
+                var q = filtros.Telefono.Trim().ToUpperInvariant();
+                if (q.Contains('*'))
+                {
+                    var sqlPat = q.Replace('*', '%');
+                    sb.AppendLine($"  AND (UPPER(i.EMAIL) LIKE '{sqlPat}' OR UPPER(i.TELEFONO) LIKE '{sqlPat}')");
+                }
+                else
+                {
+                    sb.AppendLine($"  AND (UPPER(i.EMAIL) LIKE '%{q}%' OR UPPER(i.TELEFONO) LIKE '%{q}%')");
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtros.Matricula))
+            {
+                var q = filtros.Matricula.Trim().ToUpperInvariant();
+                if (q.Contains('*'))
+                {
+                    var sqlPat = q.Replace('*', '%');
+                    sb.AppendLine($"  AND UPPER(i.MATRICULA) LIKE '{sqlPat}'");
+                }
+                else
+                {
+                    sb.AppendLine($"  AND UPPER(i.MATRICULA) LIKE '%{q}%'");
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtros.Cliente))
+            {
+                var q = filtros.Cliente.Trim().ToUpperInvariant();
+                if (q.Contains('*'))
+                {
+                    var sqlPat = q.Replace('*', '%');
+                    sb.AppendLine($"  AND (UPPER(i.NOMBRE) LIKE '{sqlPat}' OR UPPER(i.APELLIDOS) LIKE '{sqlPat}' OR UPPER(i.NOMBRE || ' ' || i.APELLIDOS) LIKE '{sqlPat}')");
+                }
+                else
+                {
+                    sb.AppendLine($"  AND (UPPER(i.NOMBRE) LIKE '%{q}%' OR UPPER(i.APELLIDOS) LIKE '%{q}%' OR UPPER(i.NOMBRE || ' ' || i.APELLIDOS) LIKE '%{q}%')");
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtros.FechaCaducidad))
+            {
+                var q = filtros.FechaCaducidad.Trim();
+                sb.AppendLine($"  AND TO_CHAR(i.FECHACADUCIDAD, 'DD/MM/YYYY') LIKE '%{q}%'");
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtros.FechaEnvioFiltro))
+            {
+                var q = filtros.FechaEnvioFiltro.Trim();
+                sb.AppendLine($"  AND TO_CHAR(x.FECHAENVIO, 'DD/MM/YYYY') LIKE '%{q}%'");
             }
 
             if (!string.IsNullOrWhiteSpace(filtros.Busqueda))
             {
                 var q = filtros.Busqueda.Trim().ToUpperInvariant();
-                sb.AppendLine($"  AND (UPPER(i.MATRICULA) LIKE '%{q}%' OR UPPER(i.NOMBRE) LIKE '%{q}%' OR UPPER(i.APELLIDOS) LIKE '%{q}%')");
+                sb.AppendLine($"  AND (UPPER(i.MATRICULA) LIKE '%{q}%' OR UPPER(i.NOMBRE) LIKE '%{q}%' OR UPPER(i.APELLIDOS) LIKE '%{q}%' OR UPPER(i.EMAIL) LIKE '%{q}%')");
             }
         }
 
-        var destSmsExpr = "NVL(DECODE(SUBSTR(i.TELEFONO, 1, 1), '6', i.TELEFONO, '7', i.TELEFONO, i.TELEFONO2), '-')";
-        var destMailExpr = "NVL(i.EMAIL, '-')";
+        void ConstruirSubqueryDetalleSmsReal()
+        {
+            sb.AppendLine(@"SELECT 
+                'SMS' AS Canal,
+                LPAD(TRIM(s.CODESTACION), 4, '0') AS CodigoEstacion,
+                NVL(e.DESESTACION, 'ITV ' || s.CODESTACION) AS NombreEstacion,
+                s.FECHA_ENVIO AS FechaEnvio,
+                TO_NUMBER(NVL(REGEXP_SUBSTR(s.CODINSPECCION, '^[0-9]+'), '0')) AS NumeroInspeccion,
+                TO_NUMBER(TO_CHAR(s.FECHA_ENVIO, 'YYYY')) AS AnioInspeccion,
+                NVL(s.MATRICULA, '-') AS Matricula,
+                NVL(p.IDTIPO_ENVIO, 1) AS IdPlantilla,
+                NVL(p.NOMBRE_ENVIO, 'SMS Recordatorio') AS DescripcionPlantilla,
+                NVL(s.TELEFONO_ENVIO, '-') AS Destinatario,
+                NVL(s.CIF_CLIENTE, '') AS Nombre,
+                '' AS Apellidos,
+                'ENVIADO' AS EstadoEnvio,
+                s.FECHACADUCIDAD AS FechaCaducidad
+            FROM CENTRALITV.ENVIOS_CLIENTE_SMS_DETALLE s
+            LEFT JOIN CENTRALITV.ENVIOS_CLIENTE_SMS p ON p.IDPAQUETE = s.IDPAQUETE
+            LEFT JOIN CENTRALITV.ESTACIONES e ON e.CODESTACION = s.CODESTACION
+            WHERE s.FECHA_ENVIO >= :p_FechaInicio AND s.FECHA_ENVIO <= :p_FechaFin");
+
+            if (!string.IsNullOrWhiteSpace(filtros.CodEmpresa) &&
+                !string.Equals(filtros.CodEmpresa, "TODAS", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(filtros.CodEmpresa, "ALL", StringComparison.OrdinalIgnoreCase))
+            {
+                var codEmpNorm = filtros.CodEmpresa.Trim().ToUpperInvariant() switch
+                {
+                    "TSA" => "01",
+                    "CAL" => "03",
+                    _ => filtros.CodEmpresa.Trim()
+                };
+                sb.AppendLine($"  AND e.COD_EMPRESA = '{codEmpNorm}'");
+            }
+
+            var codsFiltrados = filtros.CodEstaciones?
+                .Where(c => !string.IsNullOrWhiteSpace(c) && !string.Equals(c, "TODAS", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (codsFiltrados != null && codsFiltrados.Count > 0)
+            {
+                var codsQuotes = codsFiltrados
+                    .SelectMany(c => new[] { $"'{c.Trim()}'", $"'{c.Trim().TrimStart('0')}'", $"'{c.Trim().PadLeft(4, '0')}'" })
+                    .Distinct()
+                    .ToList();
+
+                sb.AppendLine($"  AND (TRIM(s.CODESTACION) IN ({string.Join(", ", codsQuotes)}) OR LPAD(TRIM(s.CODESTACION), 4, '0') IN ({string.Join(", ", codsQuotes)}))");
+            }
+
+            if (filtros.IdPlantilla.HasValue && filtros.IdPlantilla.Value > 0)
+            {
+                sb.AppendLine($"  AND p.IDTIPO_ENVIO = {filtros.IdPlantilla.Value}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtros.CodInspeccion))
+            {
+                var q = filtros.CodInspeccion.Trim();
+                sb.AppendLine($"  AND (s.CODINSPECCION LIKE '%{q}%')");
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtros.Telefono))
+            {
+                var q = filtros.Telefono.Trim().ToUpperInvariant();
+                if (q.Contains('*'))
+                {
+                    var sqlPat = q.Replace('*', '%');
+                    sb.AppendLine($"  AND UPPER(s.TELEFONO_ENVIO) LIKE '{sqlPat}'");
+                }
+                else
+                {
+                    sb.AppendLine($"  AND UPPER(s.TELEFONO_ENVIO) LIKE '%{q}%'");
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtros.Matricula))
+            {
+                var q = filtros.Matricula.Trim().ToUpperInvariant();
+                if (q.Contains('*'))
+                {
+                    var sqlPat = q.Replace('*', '%');
+                    sb.AppendLine($"  AND UPPER(s.MATRICULA) LIKE '{sqlPat}'");
+                }
+                else
+                {
+                    sb.AppendLine($"  AND UPPER(s.MATRICULA) LIKE '%{q}%'");
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtros.Cliente))
+            {
+                var q = filtros.Cliente.Trim().ToUpperInvariant();
+                if (q.Contains('*'))
+                {
+                    var sqlPat = q.Replace('*', '%');
+                    sb.AppendLine($"  AND UPPER(s.CIF_CLIENTE) LIKE '{sqlPat}'");
+                }
+                else
+                {
+                    sb.AppendLine($"  AND UPPER(s.CIF_CLIENTE) LIKE '%{q}%'");
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtros.FechaCaducidad))
+            {
+                var q = filtros.FechaCaducidad.Trim();
+                sb.AppendLine($"  AND TO_CHAR(s.FECHACADUCIDAD, 'DD/MM/YYYY') LIKE '%{q}%'");
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtros.FechaEnvioFiltro))
+            {
+                var q = filtros.FechaEnvioFiltro.Trim();
+                sb.AppendLine($"  AND TO_CHAR(s.FECHA_ENVIO, 'DD/MM/YYYY') LIKE '%{q}%'");
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtros.Busqueda))
+            {
+                var q = filtros.Busqueda.Trim().ToUpperInvariant();
+                sb.AppendLine($"  AND (UPPER(s.MATRICULA) LIKE '%{q}%' OR UPPER(s.TELEFONO_ENVIO) LIKE '%{q}%' OR UPPER(s.CIF_CLIENTE) LIKE '%{q}%')");
+            }
+        }
 
         string queryBase;
         if (includeSms && includeMail)
         {
-            ConstruirSubqueryDetalle("INSPECCION_SMS", "IDTIPO_SMS", destSmsExpr, "SMS", "2");
+            ConstruirSubqueryDetalleSmsReal();
             sb.AppendLine("UNION ALL");
-            ConstruirSubqueryDetalle("INSPECCION_EMAIL", "IDTIPO_EMAIL", destMailExpr, "EMAIL", "3");
+            ConstruirSubqueryDetalleEmail();
             queryBase = sb.ToString();
         }
         else if (includeSms)
         {
-            ConstruirSubqueryDetalle("INSPECCION_SMS", "IDTIPO_SMS", destSmsExpr, "SMS", "2");
+            ConstruirSubqueryDetalleSmsReal();
             queryBase = sb.ToString();
         }
         else if (includeMail)
         {
-            ConstruirSubqueryDetalle("INSPECCION_EMAIL", "IDTIPO_EMAIL", destMailExpr, "EMAIL", "3");
+            ConstruirSubqueryDetalleEmail();
             queryBase = sb.ToString();
         }
         else
@@ -319,8 +544,18 @@ public sealed partial class OracleInformesRepository
             return Array.Empty<FilaDetalleEnviosRecordatoriosDto>();
         }
 
-        // Paginación segura: limitar a 2.000 filas para respuesta instantánea en navegador
-        var sqlFinal = $"SELECT * FROM ({queryBase} ORDER BY FechaEnvio DESC, CodigoEstacion) WHERE ROWNUM <= 2000";
+        // Límite configurable según filtros: Si se aplican filtros específicos, permitir traer hasta 5.000 filas; si no, 2.000 por defecto
+        var limiteFilas = (!string.IsNullOrWhiteSpace(filtros.Matricula) ||
+                           !string.IsNullOrWhiteSpace(filtros.Telefono) ||
+                           !string.IsNullOrWhiteSpace(filtros.CodInspeccion) ||
+                           !string.IsNullOrWhiteSpace(filtros.Cliente) ||
+                           !string.IsNullOrWhiteSpace(filtros.FechaCaducidad) ||
+                           !string.IsNullOrWhiteSpace(filtros.FechaEnvioFiltro) ||
+                           !string.IsNullOrWhiteSpace(filtros.Busqueda))
+            ? 5000
+            : 2000;
+
+        var sqlFinal = $"SELECT * FROM ({queryBase} ORDER BY FechaEnvio DESC, CodigoEstacion) WHERE ROWNUM <= {limiteFilas}";
 
         try
         {

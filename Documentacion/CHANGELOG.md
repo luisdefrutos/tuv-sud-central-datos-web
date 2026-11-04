@@ -4,6 +4,35 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.25.0] - 05/11/2026 - *Separación Física en Dos Pantallas 100% Independientes (Totales y Enviados), Optimización de Tarjetas KPI y Filtros Responsivos*
+
+### 🚀 Desacoplamiento Total en Dos Módulos y Pantallas Independientes
+* **Resolución Definitiva de Mezcla de Vistas y Filtros**:
+  * **Pantalla 1: `recordatorios-totales` (`EnviosTotalesReportPage.tsx`)**:
+    * Análisis estadístico y de gestión agregado (réplica de `frmCriterios.vb`).
+    * 4 Tarjetas de KPIs ejecutivos globales, gráficos de barras por estación con scroll vertical continuo (`.cd-touch-scroll`), gráficos circulares por plantilla y canal, y tabla agregada de volúmenes por estación y plantilla con exportación Excel.
+  * **Pantalla 2: `recordatorios-enviados` (`EnviosEnviadosReportPage.tsx`)**:
+    * Consulta operativa y auditoría de destinatarios individuales (réplica de `frmSMSEnviado.vb`).
+    * Criterios de búsqueda rápida: Canal, Nº Inspección, Teléfono / Email, Matrícula con comodines (*), Fecha Vencimiento, Cliente y Fecha Envío, con ejecución inmediata vía botón **Filtrar** o tecla **Enter**.
+    * Botón **Limpiar** con reseteo total de filtros y ejecución de consulta inmediata sin parámetros.
+
+### 🎨 Diseño y Experiencia de Usuario (UX / UI)
+* **Ajuste Tipográfico y Contención en Tarjetas KPI (`ReportKpiCard.tsx`)**:
+  * **Problema resuelto**: En la tarjeta *Plantilla Más Utilizada* (o cualquier KPI con texto descriptivo largo como *"EMAIL PERSONALIZADO - Previo 1 mes a la fecha de vencimiento"* o identificadores SMS como *"RECORDATORIO_PRE"*), el texto se mostraba con una tipografía gigante de 1.85rem en mayúsculas, ocupando 5 líneas y rompiendo por completo la altura de las tarjetas de la fila.
+  * **Solución implementada**:
+    * Detección inteligente de valores textuales descriptivos (cadenas largas o no numéricas).
+    * Reducción automática de tamaño de fuente a `0.98rem` con interlineado compacto (`lineHeight: 1.3`), `fontWeight: 700` y `textTransform: 'none'`.
+    * Clamping de seguridad a máximo 2 líneas (`-webkit-line-clamp: 2`, `text-overflow: ellipsis`) junto con atributo `title` nativo y tooltip para lectura del texto íntegro en hover.
+    * Todas las tarjetas KPI conservan una altura armónica, alineada y profesional independientemente de la longitud del contenido.
+* **Tooltip Interactivo con Scroll para Desglose de Plantillas (`AppTooltip.tsx`)**:
+  * En la tarjeta KPI *Plantilla Más Utilizada*, el subtítulo *"X plantillas activas"* cuenta ahora con un tooltip enriquecido al pasar el ratón (*hover*).
+  * Incluye la aclaración *"Número de plantillas diferentes que han emitido mensajes en las fechas seleccionadas:"* junto con un listado con scroll vertical (`maxHeight: 210px`) que muestra cada plantilla utilizada y su total acumulado de envíos, ordenadas de mayor a menor sin sobrecargar la interfaz ni requerir peticiones adicionales al servidor.
+* **Barra de Criterios de Búsqueda 100% Responsive (`EnviosEnviadosReportPage.tsx`)**:
+  * Sustitución del grid rígido por un layout `flex-wrap` con distribución adaptativa (`flex: 1 1 <minWidth>`), permitiendo que en resoluciones medianas (pantallas compactas, tablets o portátiles) los 8 campos se redistribuyan elegantemente sin desbordar ni apretar los controles.
+  * Botonera fija de acciones (**Filtrar** y **Limpiar**) con margen automático (`marginLeft: 'auto'`) para permanecer siempre visible y encajada.
+
+---
+
 ## [2.24.0] - 04/11/2026 - *Módulo de Informes de Envíos de Recordatorios (SMS y Email), Conexión Real Oracle Producción y Reactividad Integral*
 
 ### 🚀 Implementación Integral del Módulo de Envíos Recordatorios (SMS y Email)

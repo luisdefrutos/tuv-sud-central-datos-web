@@ -10,6 +10,14 @@ public class FiltrosEnviosRecordatoriosRequestDto
     public List<string> CodEstaciones { get; set; } = new();
     public string? Busqueda { get; set; }
     public string ModoVista { get; set; } = "resumen"; // "resumen" o "detalle"
+    public string? CodInspeccion { get; set; }
+    public string? Telefono { get; set; }
+    public string? Matricula { get; set; }
+    public string? FechaCaducidad { get; set; }
+    public string? Cliente { get; set; }
+    public string? FechaEnvioFiltro { get; set; }
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 50;
 }
 
 public class FilaResumenEnviosRecordatoriosDto

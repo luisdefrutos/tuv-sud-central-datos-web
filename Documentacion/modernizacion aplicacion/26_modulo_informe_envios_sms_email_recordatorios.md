@@ -140,3 +140,33 @@ En la interfaz de usuario de Central Datos Web (`EnviosRecordatoriosReportPage.t
    * **Todas las Estaciones (Barras con Scroll)**: Vista ampliada a todo el ancho para análisis pormenorizado de todas las ITV.
    * **Donut por Plantilla**: Análisis focalizado de las plantillas más demandadas.
    * **Donut por Canal**: Comparativa global SMS vs Email.
+
+---
+
+## 5. Desacoplamiento de Pantallas y Resolución de SMS Reales
+
+### 5.1. Desacoplamiento Total en Dos Rutas y Componentes Independientes
+Para respetar escrupulosamente la separación funcional del cliente desktop original:
+1. **Nº total de envíos recordatorios (`#/modulo/recordatorios-totales`)**:
+   - Componente dedicado: `EnviosTotalesReportPage.tsx`.
+   - Propósito: Cuadro de mando ejecutivo, KPIs agregados de volumen global, desglose por sociedad (TSA/CAL), gráfico interactivo de barras con scroll y gráficos donut por plantilla y canal, junto con tabla agrupada de totales por estación y plantilla.
+2. **SMS's/Email's enviados (`#/modulo/recordatorios-enviados`)**:
+   - Componente dedicado: `EnviosEnviadosReportPage.tsx`.
+   - Propósito: Trazabilidad y consulta operativa individual fiel a `frmSMSEnviado.vb`. Dispone de cabecera con filtros rápidos (`COD. INSP.`, `TELÉFONO`, `MATRÍCULA (*)` con soporte comodín/regex, `FECHA VTO.`, `CLIENTE`, `FECHA ENVÍO`), botones `Filtrar` y `Limpiar`, paginación nativa estilo escritorio (`◀ Anteriores` / `Siguientes ▶`) y modal con ficha de inspección y contenido del mensaje.
+
+### 5.2. Corrección de la Fuente de Datos de SMS (Auditoría de Producción)
+- **Diagnóstico**: `CENTRALITV.INSPECCION_SMS` tiene 0 filas tanto en Producción como en Desarrollo debido a que el sistema nunca persistió en esa tabla por el histórico bug de VB.
+- **Solución implementada**: Se conectó a la tabla real de envíos por lotes `CENTRALITV.ENVIOS_CLIENTE_SMS_DETALLE` y `CENTRALITV.ENVIOS_CLIENTE_SMS` (más de 6,77 millones de registros en Producción).
+### 5.4. Filtro y Columna 'Nº Inspección' y Soporte de Comodín (*)
+- **Visibilidad en Grid y Filtros**:
+  1. Se restableció el campo `Nº INSP.` en la barra de criterios de búsqueda granular con ejecución inmediata tanto al pulsar el botón `Filtrar` como la tecla `Enter`.
+  2. Se añadió la columna `Nº Insp.` en la tabla de resultados del grid, situada tras la columna `Estación`. Si el envío cuenta con un identificador de inspección mayor a cero, se muestra resaltado con estilo de credencial numérica; si proviene de envíos por lotes masivos sin número asociado, se muestra un guion limpio (`—`).
+  3. Búsqueda por comodín (`*`) optimizada: tanto para números de teléfono, direcciones de correo electrónico, matrículas o nombres de clientes, los patrones como `657*` o `*gmail*` viajan a Oracle transformándose a `LIKE '657%'` o `LIKE '%GMAIL%'` respectivamente, y se sincronizan con el filtro reactivo en memoria para asegurar que el grid se actualice de inmediato reduciendo el total mostrado (ej: mostrando las 108 coincidencias reales en lugar del corte genérico).
+  4. Se depuró la etiqueta en UI eliminando el texto `(Filtros de frmSMSEnviado)` a favor de `Criterios de Búsqueda` y se retiró el campo `COD. INSP.` que carece de uso en envíos masivos.
+  5. Se corrigió el formato de fecha a estándar estricto español `DD/MM/YYYY HH:mm` en una sola línea no rompible tanto en la tabla como en el modal de detalle.
+  6. Se añadió el selector desplegable `CANAL` (`Todos`, `Solo SMS`, `Solo Email`) directamente en la banda rápida de criterios de búsqueda.
+  7. Se depuraron los titulares en el grid eliminando guiones iniciales automáticos y se equilibraron los anchos de columna (`Destinatario`, `Plantilla`, `Matrícula`) para evitar deformaciones en cuentas de correo extensas.
+  8. Se añadió el icono informativo corporativo (`<TsIcon name="info" />`) junto al contador de registros con tooltip explicativo del límite de seguridad en pantalla frente a la exportación Excel completa.
+
+
+

@@ -7,6 +7,13 @@ export interface FiltrosEnviosRecordatorios {
   codEstaciones?: string[];
   busqueda?: string;
   modoVista: 'resumen' | 'detalle';
+  // Filtros rápidos granulares (frmSMSEnviado)
+  codInspeccion?: string;
+  telefono?: string;
+  matricula?: string;
+  fechaCaducidad?: string;
+  cliente?: string;
+  fechaEnvioFiltro?: string;
 }
 
 export interface FilaResumenEnviosRecordatorios {

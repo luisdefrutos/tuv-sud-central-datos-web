@@ -17,7 +17,8 @@ import { BastidoresObdReportPage } from './features/informes/pages/BastidoresObd
 import { InspRangoHorarioReportPage } from './features/informes/pages/InspRangoHorarioReportPage';
 import { VolumenDefectosReportPage } from './features/informes/pages/VolumenDefectosReportPage';
 import { ClientesVolumenReportPage } from './features/informes/pages/ClientesVolumenReportPage';
-import { EnviosRecordatoriosReportPage } from './features/informes/pages/EnviosRecordatoriosReportPage';
+import { EnviosTotalesReportPage } from './features/informes/pages/EnviosTotalesReportPage';
+import { EnviosEnviadosReportPage } from './features/informes/pages/EnviosEnviadosReportPage';
 import { InformesHubPage } from './features/informes/pages/InformesHubPage';
 import { DESKTOP_MENUS, findMenuItem } from './constants/navigation.constants';
 import { UI_CONSTANTS } from './constants/ui.constants';
@@ -600,13 +601,23 @@ function AppContent() {
           </ErrorBoundary>
         )}
 
-        {/* CASO C.11: Módulo de Envíos de Recordatorios (SMS y Email) */}
-        {(activeItemId === 'recordatorios-enviados' ||
-          activeItemId === 'recordatorios-totales' ||
-          activeItemId === 'envios-recordatorios') && (
-          <ErrorBoundary fallbackTitle="Error en Envíos de Recordatorios">
-            <EnviosRecordatoriosReportPage
-              initialModo={activeItemId === 'recordatorios-enviados' ? 'detalle' : 'resumen'}
+        {/* CASO C.11: Módulo 1 - SMSs/EMAILs Nº Envíos Totales (frmCriterios) */}
+        {(activeItemId === 'recordatorios-totales' || activeItemId === 'envios-recordatorios') && (
+          <ErrorBoundary fallbackTitle="Error en Resumen de Envíos Totales">
+            <EnviosTotalesReportPage
+              onNavigateHome={handleGoHome}
+              onNavigateToInformes={() => {
+                setActiveGroupId('informes');
+                setActiveItemId('informes');
+              }}
+            />
+          </ErrorBoundary>
+        )}
+
+        {/* CASO C.12: Módulo 2 - SMSs/EMAILs Enviados (frmSMSEnviado) */}
+        {activeItemId === 'recordatorios-enviados' && (
+          <ErrorBoundary fallbackTitle="Error en Destinatarios Enviados">
+            <EnviosEnviadosReportPage
               onNavigateHome={handleGoHome}
               onNavigateToInformes={() => {
                 setActiveGroupId('informes');
