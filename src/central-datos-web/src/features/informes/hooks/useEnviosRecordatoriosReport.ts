@@ -56,7 +56,27 @@ export function useEnviosRecordatoriosReport(initialModo: 'resumen' | 'detalle' 
       });
   }, []);
 
-  // Función de consulta reactiva ante cualquier cambio de estación, sociedad o filtros
+  // Refs para los filtros rápidos en cliente (evitan que cada pulsación de tecla recree handleConsultar y dispare peticiones al servidor)
+  const textFiltersRef = useRef({
+    busqueda,
+    filtroCodInspeccion,
+    filtroTelefono,
+    filtroMatricula,
+    filtroFechaCaducidad,
+    filtroCliente,
+    filtroFechaEnvio,
+  });
+  textFiltersRef.current = {
+    busqueda,
+    filtroCodInspeccion,
+    filtroTelefono,
+    filtroMatricula,
+    filtroFechaCaducidad,
+    filtroCliente,
+    filtroFechaEnvio,
+  };
+
+  // Función de consulta reactiva ante cambios de estación, sociedad, canal o plantilla
   const handleConsultar = useCallback(async (
     signal?: AbortSignal, 
     currentFilters?: ReportFilterValues,
@@ -76,6 +96,7 @@ export function useEnviosRecordatoriosReport(initialModo: 'resumen' | 'detalle' 
     setIsLoading(true);
     setError(null);
 
+    const tf = textFiltersRef.current;
     const payload: FiltrosEnviosRecordatorios = {
       fechaInicio: activeFilters.fechaInicio,
       fechaFin: activeFilters.fechaFin,
@@ -85,26 +106,26 @@ export function useEnviosRecordatoriosReport(initialModo: 'resumen' | 'detalle' 
       codEstaciones: activeFilters.estacionesSeleccionadas,
       busqueda: overrideGranulares && 'busqueda' in overrideGranulares 
         ? overrideGranulares.busqueda 
-        : (busqueda.trim() ? busqueda.trim() : undefined),
+        : (tf.busqueda.trim() ? tf.busqueda.trim() : undefined),
       modoVista,
       codInspeccion: overrideGranulares && 'codInspeccion' in overrideGranulares 
         ? overrideGranulares.codInspeccion 
-        : (filtroCodInspeccion.trim() ? filtroCodInspeccion.trim() : undefined),
+        : (tf.filtroCodInspeccion.trim() ? tf.filtroCodInspeccion.trim() : undefined),
       telefono: overrideGranulares && 'telefono' in overrideGranulares 
         ? overrideGranulares.telefono 
-        : (filtroTelefono.trim() ? filtroTelefono.trim() : undefined),
+        : (tf.filtroTelefono.trim() ? tf.filtroTelefono.trim() : undefined),
       matricula: overrideGranulares && 'matricula' in overrideGranulares 
         ? overrideGranulares.matricula 
-        : (filtroMatricula.trim() ? filtroMatricula.trim() : undefined),
+        : (tf.filtroMatricula.trim() ? tf.filtroMatricula.trim() : undefined),
       fechaCaducidad: overrideGranulares && 'fechaCaducidad' in overrideGranulares 
         ? overrideGranulares.fechaCaducidad 
-        : (filtroFechaCaducidad.trim() ? filtroFechaCaducidad.trim() : undefined),
+        : (tf.filtroFechaCaducidad.trim() ? tf.filtroFechaCaducidad.trim() : undefined),
       cliente: overrideGranulares && 'cliente' in overrideGranulares 
         ? overrideGranulares.cliente 
-        : (filtroCliente.trim() ? filtroCliente.trim() : undefined),
+        : (tf.filtroCliente.trim() ? tf.filtroCliente.trim() : undefined),
       fechaEnvioFiltro: overrideGranulares && 'fechaEnvioFiltro' in overrideGranulares 
         ? overrideGranulares.fechaEnvioFiltro 
-        : (filtroFechaEnvio.trim() ? filtroFechaEnvio.trim() : undefined),
+        : (tf.filtroFechaEnvio.trim() ? tf.filtroFechaEnvio.trim() : undefined),
     };
 
     try {
@@ -121,14 +142,7 @@ export function useEnviosRecordatoriosReport(initialModo: 'resumen' | 'detalle' 
   }, [
     canal,
     idPlantilla,
-    busqueda,
     modoVista,
-    filtroCodInspeccion,
-    filtroTelefono,
-    filtroMatricula,
-    filtroFechaCaducidad,
-    filtroCliente,
-    filtroFechaEnvio,
   ]);
 
   const limpiarFiltrosGranulares = useCallback(() => {
@@ -142,7 +156,6 @@ export function useEnviosRecordatoriosReport(initialModo: 'resumen' | 'detalle' 
     setBusqueda('');
     setPage(1);
 
-    // Ejecución inmediata con el payload completamente limpio sin depender de closures asíncronas
     handleConsultar(undefined, undefined, {
       canal: 'TODOS',
       codInspeccion: undefined,
@@ -334,7 +347,18 @@ export function useEnviosRecordatoriosReport(initialModo: 'resumen' | 'detalle' 
     });
 
     return list;
-  }, [data?.filasDetalle, busqueda, sortField, sortAsc]);
+  }, [
+    data?.filasDetalle,
+    busqueda,
+    filtroCodInspeccion,
+    filtroTelefono,
+    filtroMatricula,
+    filtroFechaCaducidad,
+    filtroCliente,
+    filtroFechaEnvio,
+    sortField,
+    sortAsc,
+  ]);
 
   const filasActuales = modoVista === 'resumen' ? filasResumenFiltradas : filasDetalleFiltradas;
   const totalFilas = filasActuales.length;
