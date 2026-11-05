@@ -142,11 +142,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.warn('[Auth] Error de red al notificar logout al backend:', err);
     } finally {
-      // Garantizar reseteo total de credenciales y retorno inmediato a pantalla de Login
+      // Garantizar reseteo total de credenciales, ruta activa y retorno inmediato a pantalla de Login/Inicio
       sessionStorage.removeItem(TOKEN_KEY);
       sessionStorage.removeItem(USER_KEY);
+      sessionStorage.removeItem('cd_active_item');
+      sessionStorage.removeItem('cd_active_group');
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
+      if (typeof window !== 'undefined' && window.location.hash) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
       setToken(null);
       setUser(null);
     }

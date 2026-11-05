@@ -89,9 +89,13 @@ function AppContent() {
   const { BRAND } = UI_CONSTANTS;
 
   // Registrar auditoría de navegación al cambiar de módulo o volver al inicio
+  // Si el usuario cierra sesión (!isAuthenticated), resetear módulo activo a Inicio (null)
   useEffect(() => {
     if (isAuthenticated) {
       logNavigation(activeItemId ? `/modulo/${activeItemId}` : '/inicio');
+    } else {
+      setActiveGroupId(null);
+      setActiveItemId(null);
     }
   }, [activeItemId, isAuthenticated, logNavigation]);
 

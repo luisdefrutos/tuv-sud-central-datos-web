@@ -26,6 +26,11 @@ export const authApi = {
       };
     }
 
+    const contentType = response.headers.get('content-type') ?? '';
+    if (!contentType.includes('application/json')) {
+      throw new Error(`Respuesta no válida del servidor (HTTP ${response.status})`);
+    }
+
     return response.json();
   },
 

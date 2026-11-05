@@ -4,6 +4,19 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.28.1] - 05/11/2026 - *Corrección de Enrutamiento Dual Local/IIS, Endpoints de SMS/EMAILs y Reseteo de Sesión al Cerrar Sesión*
+
+### 🛠️ Correcciones (Bugfixes)
+* **Resolución Dual Automática `localhost` vs Servidor IIS (`api.constants.ts` y `vite.config.ts`)**:
+  * Detección automática del entorno local (`localhost` / `127.0.0.1`) en `getApiBaseUrl()` para utilizar el proxy local de Vite (`/api/v1/...` hacia `localhost:5113`) sin colisionar con el fichero `public/config.js` (`window.__API_URL__ = "/API_CENTRALDATOS"`) empleado en el servidor IIS (`gestion3-desa.atisae.com`).
+  * Adición de regla de proxy `/API_CENTRALDATOS/api` en `vite.config.ts` y validación de `content-type: application/json` en `authApi.ts`.
+* **Centralización de Endpoints en Informes de SMSs/EMAILs (`enviosRecordatoriosApi.ts` y `api.constants.ts`)**:
+  * Sustitución de la ruta estática `/api/v1/informes/envios-recordatorios` por las constantes centralizadas `API_ENDPOINTS.INFORMES.ENVIOS_RECORDATORIOS_*`, corrigiendo el error `HTTP 404` al consultar y exportar envíos de recordatorios en el servidor IIS (`/API_CENTRALDATOS`).
+* **Limpieza Completa de Ruta y Estado al Cerrar Sesión (`AuthContext.tsx` y `App.tsx`)**:
+  * Al pulsar *Cerrar sesión*, ahora se eliminan las claves de navegación persistida en `sessionStorage` (`cd_active_item`, `cd_active_group`), se limpia el hash `#/modulo/...` de la URL y se resetean `activeItemId` y `activeGroupId` a `null`, garantizando que el siguiente inicio de sesión (con el mismo o distinto usuario) aterrice siempre en la pantalla principal de **Inicio**.
+
+---
+
 ## [2.28.0] - 05/11/2026 - *Blindaje de Seguridad en Autenticación Windows SSO Bajo Demanda y Dossier Ejecutivo de Dirección*
 
 ### 🔒 Seguridad y Autenticación (Windows SSO Híbrido)

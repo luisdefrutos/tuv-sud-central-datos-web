@@ -10,8 +10,15 @@ declare global {
 }
 
 const getApiBaseUrl = (): string => {
-  if (typeof window !== 'undefined' && typeof window.__API_URL__ === 'string') {
-    return window.__API_URL__.replace(/\/+$/, ''); // Quita barra final si la tiene
+  if (typeof window !== 'undefined') {
+    // En desarrollo local (Vite proxy en localhost / 127.0.0.1) usar siempre ruta relativa '/api/...'
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return '';
+    }
+    if (typeof window.__API_URL__ === 'string') {
+      return window.__API_URL__.replace(/\/+$/, ''); // Quita barra final si la tiene
+    }
   }
   return '';
 };
@@ -64,6 +71,9 @@ export const API_ENDPOINTS = {
     CLIENTES_VOLUMEN_EXPORTAR: `${BASE_URL}/api/v1/informes/clientes-volumen/exportar-excel`,
     CLIENTES_VOLUMEN_PROYECTOS: `${BASE_URL}/api/v1/informes/clientes-volumen/proyectos-comerciales`,
     CLIENTES_VOLUMEN_TIPOS_VEHICULO: `${BASE_URL}/api/v1/informes/clientes-volumen/tipos-vehiculo`,
+    ENVIOS_RECORDATORIOS_PLANTILLAS: `${BASE_URL}/api/v1/informes/envios-recordatorios/plantillas`,
+    ENVIOS_RECORDATORIOS_CONSULTAR: `${BASE_URL}/api/v1/informes/envios-recordatorios/consultar`,
+    ENVIOS_RECORDATORIOS_EXPORTAR: `${BASE_URL}/api/v1/informes/envios-recordatorios/exportar-excel`,
   },
   DOCS: {
     SWAGGER: `${BASE_URL}/swagger`,

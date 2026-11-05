@@ -1,15 +1,14 @@
+import { API_ENDPOINTS } from '../../../constants/api.constants';
 import type {
   FiltrosEnviosRecordatorios,
   InformeEnviosRecordatoriosResponse,
   PlantillaRecordatorioCatalogo,
 } from '../types/enviosRecordatorios.types';
 
-const BASE_URL = '/api/v1/informes/envios-recordatorios';
-
 export async function fetchPlantillasRecordatorio(
   signal?: AbortSignal
 ): Promise<PlantillaRecordatorioCatalogo[]> {
-  const response = await fetch(`${BASE_URL}/plantillas`, {
+  const response = await fetch(API_ENDPOINTS.INFORMES.ENVIOS_RECORDATORIOS_PLANTILLAS, {
     method: 'GET',
     headers: { 'Accept': 'application/json' },
     signal,
@@ -26,7 +25,7 @@ export async function consultarEnviosRecordatorios(
   filtros: FiltrosEnviosRecordatorios,
   signal?: AbortSignal
 ): Promise<InformeEnviosRecordatoriosResponse> {
-  const response = await fetch(`${BASE_URL}/consultar`, {
+  const response = await fetch(API_ENDPOINTS.INFORMES.ENVIOS_RECORDATORIOS_CONSULTAR, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -49,7 +48,7 @@ export async function exportarExcelEnviosRecordatorios(
   filtros: FiltrosEnviosRecordatorios,
   signal?: AbortSignal
 ): Promise<Blob> {
-  const response = await fetch(`${BASE_URL}/exportar-excel`, {
+  const response = await fetch(API_ENDPOINTS.INFORMES.ENVIOS_RECORDATORIOS_EXPORTAR, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

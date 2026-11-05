@@ -72,8 +72,14 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/API_CENTRALDATOS/api': {
+        target: 'http://localhost:5113',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/API_CENTRALDATOS/, ''),
+      },
     },
-    },
+  },
     build: {
         chunkSizeWarningLimit: 2000,
     }
