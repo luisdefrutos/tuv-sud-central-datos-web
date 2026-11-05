@@ -24,6 +24,8 @@ const BASE_URL = getApiBaseUrl();
 export const API_ENDPOINTS = {
   HEALTH: `${BASE_URL}/api/v1/health`,
   AUTH: {
+    WINDOWS_IDENTITY: `${BASE_URL}/api/v1/auth/windows-identity`,
+    SSO_LOGIN: `${BASE_URL}/api/v1/auth/sso-login`,
     LOGIN: `${BASE_URL}/api/v1/auth/login`,
     LOGOUT: `${BASE_URL}/api/v1/auth/logout`,
     ME: `${BASE_URL}/api/v1/auth/me`,

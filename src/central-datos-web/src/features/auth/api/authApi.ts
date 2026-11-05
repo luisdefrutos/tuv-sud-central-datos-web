@@ -4,13 +4,27 @@ import { auditQueue } from '../services/auditQueue';
 
 export const authApi = {
   async login(request: LoginRequest): Promise<LoginResponse> {
-    const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
+    // Si el usuario marca "Usar usuario de sesión Windows", llamamos al endpoint /sso-login con credentials: 'include'
+    // para que IIS negocie Kerberos/NTLM únicamente en ese momento y verifique la sesión Windows del equipo.
+    const endpoint = request.isSso ? API_ENDPOINTS.AUTH.SSO_LOGIN : API_ENDPOINTS.AUTH.LOGIN;
+
+    const response = await fetch(endpoint, {
       method: 'POST',
+      credentials: request.isSso ? 'include' : 'same-origin',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(request),
     });
+
+    if (response.status === 401) {
+      return {
+        success: false,
+        token: null,
+        user: null,
+        errorMessage: 'No se ha podido autenticar su sesión de Windows en este equipo. Desmarque la casilla SSO e introduzca su contraseña.',
+      };
+    }
 
     return response.json();
   },
@@ -88,4 +102,3 @@ export const authApi = {
     return auditQueue.flush(token);
   },
 };
-

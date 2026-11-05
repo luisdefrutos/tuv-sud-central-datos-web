@@ -6,6 +6,12 @@ public sealed record LoginRequestDto(
     bool IsSso = false
 );
 
+public sealed record WindowsIdentityDto(
+    bool IsAuthenticated,
+    string? Username,
+    string? Domain
+);
+
 public sealed record LoginResponseDto(
     bool Success,
     string? Token,
@@ -30,4 +36,3 @@ public sealed record AuditLogRequestDto(
     long? DurationMs,
     string? Details
 );
-

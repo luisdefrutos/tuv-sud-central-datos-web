@@ -33,7 +33,12 @@ public sealed class AuthService : IAuthService
     /// <summary>
     /// Flujo principal de autenticación: orquesta la validación, resolución de proveedor y emisión de sesión.
     /// </summary>
-    public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request, string? clientIp, string? userAgent, CancellationToken cancellationToken = default)
+    public async Task<LoginResponseDto> LoginAsync(
+        LoginRequestDto request,
+        string? clientIp,
+        string? userAgent,
+        string? verifiedWindowsUser = null,
+        CancellationToken cancellationToken = default)
     {
         var validationError = ValidarPeticionInicial(request);
         if (validationError != null) return validationError;
@@ -43,7 +48,7 @@ public sealed class AuthService : IAuthService
 
         try
         {
-            var (user, errorMessage) = await ResolverAutenticacionAsync(username, rawPassword, request.IsSso, cancellationToken);
+            var (user, errorMessage) = await ResolverAutenticacionAsync(username, rawPassword, request.IsSso, verifiedWindowsUser, cancellationToken);
             if (errorMessage != null || user == null)
             {
                 return new LoginResponseDto(false, null, null, errorMessage ?? "Credenciales no válidas o acceso no autorizado.");
@@ -103,7 +108,7 @@ public sealed class AuthService : IAuthService
     }
 
     private async Task<(AuthenticatedUser? User, string? ErrorMessage)> ResolverAutenticacionAsync(
-        string username, string rawPassword, bool isSso, CancellationToken ct)
+        string username, string rawPassword, bool isSso, string? verifiedWindowsUser, CancellationToken ct)
     {
         // 1. Caso: Suplantación de identidad por Supervisor (ej. "SUPERVISOR:USUARIO")
         if (username.Contains(':'))
@@ -117,10 +122,10 @@ public sealed class AuthService : IAuthService
             return await AutenticarSupervisorAsync(username, rawPassword, ct);
         }
 
-        // 3. Caso: Single Sign-On (Windows SSO)
+        // 3. Caso: Single Sign-On (Windows SSO) — Comprueba que el usuario introducido coincida con la sesión de Windows del PC
         if (isSso)
         {
-            return await AutenticarWindowsSsoAsync(username, ct);
+            return await AutenticarWindowsSsoAsync(username, verifiedWindowsUser, ct);
         }
 
         // 4. Caso: Usuario Propio / Empleado Interno de Planta (DNI, 0001, etc.)
@@ -213,13 +218,25 @@ public sealed class AuthService : IAuthService
     }
 
     private async Task<(AuthenticatedUser? User, string? ErrorMessage)> AutenticarWindowsSsoAsync(
-        string username, CancellationToken ct)
+        string requestedUsername, string? verifiedWindowsUser, CancellationToken ct)
     {
-        var emp = await _authRepo.FindEmployeeByUsernameAsync(username, ct);
+        // SEGURIDAD: Solo permite acceso SSO si el usuario escrito coincide exactamente con el usuario autenticado en el PC/Windows
+        if (string.IsNullOrWhiteSpace(verifiedWindowsUser) ||
+            !requestedUsername.Trim().Equals(verifiedWindowsUser.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogWarning(
+                "Acceso SSO denegado: El usuario solicitado '{RequestedUser}' no coincide con la sesión de Windows autenticada en el equipo ('{VerifiedWinUser}').",
+                requestedUsername,
+                verifiedWindowsUser ?? "NINGUNA");
+
+            return (null, "Las credenciales introducidas no son válidas o el usuario no corresponde con la sesión de Windows activa en este equipo.");
+        }
+
+        var emp = await _authRepo.FindEmployeeByUsernameAsync(verifiedWindowsUser, ct);
         if (emp == null)
         {
-            _logger.LogWarning("SSO Fallido: El usuario de Windows '{Username}' no existe en Central ITV.", username);
-            return (null, "Usuario no autorizado o sin permisos de acceso a Central ITV.");
+            _logger.LogWarning("SSO Fallido: El usuario de Windows verificado '{Username}' no existe o no tiene permisos en Central ITV.", verifiedWindowsUser);
+            return (null, "El usuario de su sesión de Windows no está autorizado en Central ITV.");
         }
 
         return (emp with { Provider = AuthProviderType.WindowsSso }, null);

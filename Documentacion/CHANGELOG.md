@@ -4,6 +4,23 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.28.0] - 05/11/2026 - *Blindaje de Seguridad en Autenticación Windows SSO Bajo Demanda y Dossier Ejecutivo de Dirección*
+
+### 🔒 Seguridad y Autenticación (Windows SSO Híbrido)
+* **Resolución de Vulnerabilidad de Suplantación en Modo SSO (`AuthService.cs` y `AuthEndpoints.cs`)**:
+  * **Problema corregido**: En el flujo anterior de simulación para máquinas virtuales, marcar la casilla *"Usar usuario de sesión Windows"* permitía autenticar cualquier cuenta de empleado activa en Oracle introduciendo únicamente su nombre de usuario sin verificar que correspondiera con la sesión real de Windows del equipo.
+  * **Solución híbrida bajo demanda (`/api/v1/auth/sso-login`)**:
+    * Todas las rutas generales y el login estándar (`/api/v1/auth/login`) operan de forma anónima sin provocar popups intrusivos de credenciales de Windows al cargar la aplicación web.
+    * Cuando el usuario marca explícitamente la casilla *"Usar usuario de sesión Windows (SSO Intranet)"* y pulsa *Iniciar Sesión*, el frontend invoca `/api/v1/auth/sso-login` con `credentials: 'include'`, solicitando a IIS la negociación Kerberos/NTLM (`Results.Challenge("Windows")`) y extrayendo la identidad real del sistema operativo (`WindowsIdentity` / `LOGON_USER`).
+    * El backend verifica estrictamente que el usuario escrito coincida con el usuario de Windows autenticado en el PC; si no coincide (por ejemplo, al intentar acceder con otro usuario como `marti-ai`), deniega inmediatamente el acceso y registra la alerta de seguridad en Serilog.
+
+### 📄 Documentación Ejecutiva
+* **Dossier Ejecutivo para Dirección de Negocio ITV (`29_dossier_ejecutivo_direccion_ventajas_web_y_catalogo_informes.md`)**:
+  * Elaboración del documento estratégico comparando la nueva plataforma **Central Datos Web** frente a la aplicación de escritorio legacy en 6 dimensiones de negocio (visión ejecutiva, velocidad, fiabilidad financiera, despliegue *Zero-Install*, seguridad y continuidad operativa).
+  * Catálogo funcional detallado de las **14 pantallas e informes** ya desarrollados en las 2 primeras opciones del menú principal (*1. Aplicación* y *2. Informes*), destacando las mejoras específicas aportadas por la versión Web en cada módulo.
+
+---
+
 ## [2.27.0] - 05/11/2026 - *Despliegue Manual en IIS (Windows Server), Resiliencia de Subdirectorios y Configuración Externa*
 
 ### 🚀 Despliegue en Producción y Servidor de Pruebas (IIS)

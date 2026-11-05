@@ -8,6 +8,12 @@ export interface CurrentUser {
   allowedStations: string[];
 }
 
+export interface WindowsIdentityResponse {
+  isAuthenticated: boolean;
+  username?: string | null;
+  domain?: string | null;
+}
+
 export interface LoginRequest {
   username: string;
   password?: string;
@@ -28,4 +34,3 @@ export interface AuditLogRequest {
   durationMs?: number;
   details?: string;
 }
-

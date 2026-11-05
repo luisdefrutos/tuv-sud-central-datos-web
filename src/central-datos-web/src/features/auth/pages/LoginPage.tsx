@@ -74,9 +74,11 @@ export const LoginPage: React.FC = () => {
         setAlert({
           variant: 'danger',
           heading: isNetworkErr ? 'Incidencia de comunicación' : 'Acceso no autorizado',
-          message: isNetworkErr
-            ? 'No ha sido posible verificar las credenciales en este momento. Por favor, inténtelo de nuevo más tarde.'
-            : 'Las credenciales introducidas no son válidas o no dispone de autorización para acceder al sistema.',
+          message:
+            result.errorMessage ||
+            (isNetworkErr
+              ? 'No ha sido posible verificar las credenciales en este momento. Por favor, inténtelo de nuevo más tarde.'
+              : 'Las credenciales introducidas no son válidas o no dispone de autorización para acceder al sistema.'),
         });
       }
     } catch {
@@ -287,7 +289,10 @@ export const LoginPage: React.FC = () => {
                           cursor: 'pointer',
                         }}
                       >
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TsIcon name="download" style={{ fontSize: '15px' }} /><span>Descargar informe de diagnóstico (.log) para soporte técnico</span></span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <TsIcon name="download" style={{ fontSize: '15px' }} />
+                          <span>Descargar informe de diagnóstico (.log) para soporte técnico</span>
+                        </span>
                       </button>
                     </div>
                   )}
