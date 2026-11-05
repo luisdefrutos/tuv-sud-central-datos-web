@@ -4,6 +4,25 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.26.0] - 05/11/2026 - *Rediseño Minimalista de la Pantalla de Inicio (Módulos Central Datos Web)*
+
+### 🎨 Diseño y Experiencia de Usuario (UX / UI)
+* **Pantalla de Inicio Minimalista (`App.tsx`)**:
+  * **Nuevo diseño sobrio y limpio**: Se sustituyen los paneles y tarjetas con botones interactivos de acceso directo ("Abrir Módulo") e insignias por un catálogo visual estructurado en formato exclusivamente informativo.
+  * **Centralización de la navegación**: Toda la selección de pantallas y módulos operativos se canaliza de forma natural y unificada a través del menú superior (`Navbar.tsx`).
+  * **Título principal corporativo**: Actualizado a *"Módulos de la Central Datos Web"* acompañado de su miga de pan oficial (`TsBreadcrumb`) en estado activo *Inicio*.
+  * **Catálogo de módulos en formato texto**: Presentación de las 7 áreas clave de la aplicación con su icono temático y descripción funcional:
+    * *Aplicación*: Monitorización en tiempo real del estado de sincronización y fecha de última inspección centralizada de las estaciones ITV.
+    * *Informes*: Cuadros de mando analíticos, facturación, volumen de inspecciones, tiempos medios, estadística oficial MINER, OBD y envíos de recordatorios.
+    * *Inspecciones*: Consulta y localización técnica detallada de inspecciones, defectos detectados, elementos verificados y mediciones de vehículos.
+    * *Comercial*: Gestión de citas previas, carteras de clientes terceros, proyectos comerciales y campañas de avisos de vencimiento por SMS y carta.
+    * *Datos*: Administración y consulta de tablas maestras y definición del alcance técnico de elementos de inspección.
+    * *Mantenimientos*: Gestión de recursos laborales, directorio de empleados, inventario de equipos de medición y control de versiones de soporte IT.
+    * *Acerca de*: Información técnica de la plataforma, versión del sistema y diagnóstico de conectividad de TÜV SÜD Central Datos ITV.
+  * **Preservación total de fondos y migas de pan**: Mantiene intacto el comportamiento de navegación, fondos de vista y migas de pan interactivas para todos los informes y módulos existentes.
+
+---
+
 ## [2.25.0] - 05/11/2026 - *Separación Física en Dos Pantallas 100% Independientes (Totales y Enviados), Optimización de Tarjetas KPI y Filtros Responsivos*
 
 ### 🚀 Desacoplamiento Total en Dos Módulos y Pantallas Independientes

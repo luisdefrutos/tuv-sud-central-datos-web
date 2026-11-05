@@ -215,225 +215,138 @@ function AppContent() {
           boxSizing: 'border-box',
         }}
       >
-        {/* CASO A: Pantalla Inicial Limpia (Al entrar solo se muestran los menús de arriba; no se carga nada hasta pinchar) */}
+        {/* CASO A: Pantalla Inicial Minimalista (Navegación exclusivamente desde el menú superior) */}
         {activeItemId === null && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '0.5rem' }}>
-            <TsCard style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)', backgroundColor: '#ffffff' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
-                <div
-                  style={{
-                    width: '64px',
-                    height: '64px',
-                    borderRadius: '12px',
-                    backgroundColor: '#f0f6ff',
-                    border: '2px solid #0046ad',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '2rem',
-                    flexShrink: 0,
-                  }}
-                ><TsIcon name="desktop_windows" size={36} style={{ color: '#0046ad' }} /></div>
-                <div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {/* 1. Miga de pan de navegación */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+              <TsBreadcrumb>
+                <TsBreadcrumbItem active style={{ fontWeight: 700, color: 'var(--ts-semantic-color-surface-inverted-default, #0b253b)' }}>
+                  Inicio
+                </TsBreadcrumbItem>
+              </TsBreadcrumb>
+            </div>
+
+            {/* 2. Cabecera Principal Minimalista */}
+            <div
+              style={{
+                borderBottom: '1px solid #e2e8f0',
+                paddingBottom: '0.85rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '12px',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <TsIcon name="desktop_windows" size={28} style={{ color: '#0046ad' }} />
                   <h1
                     style={{
-                      margin: '0 0 0.35rem 0',
-                      fontSize: 'clamp(1.4rem, 2.5vw, 1.85rem)',
-                      color: 'var(--ts-semantic-color-surface-inverted-default, #0b253b)',
+                      margin: 0,
+                      fontSize: 'clamp(1.25rem, 2.5vw, 1.6rem)',
                       fontWeight: 800,
+                      color: '#0b253b',
+                      letterSpacing: '-0.3px',
                     }}
                   >
-                    TÜV SÜD Central Datos Web
+                    Módulos de la Central Datos Web
                   </h1>
-                  <p style={{ margin: 0, color: '#5c768d', fontSize: '0.95rem' }}>
-                    Gestión y Control Operativo Centralizado de Estaciones ITV. Seleccione una opción del menú superior para abrir un módulo de trabajo.
-                  </p>
                 </div>
+                <p
+                  style={{
+                    margin: '0.35rem 0 0 0',
+                    color: '#64748b',
+                    fontSize: '0.88rem',
+                    lineHeight: 1.4,
+                  }}
+                >
+                  Gestión y control operativo centralizado de estaciones ITV. Utilice el menú superior para acceder a cada módulo de trabajo.
+                </p>
               </div>
-            </TsCard>
+            </div>
 
-            {/* Accesos Rápidos Principales */}
-            <div>
-              <h2
-                style={{
-                  fontSize: '1rem',
-                  fontWeight: 700,
-                  color: '#0b253b',
-                  marginBottom: '0.75rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
-                }}
-              >
-                Módulos de la Aplicación
-              </h2>
-
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
-                  gap: '1rem',
-                }}
-              >
-                {/* Tarjeta de Acceso Directo: Última fecha inspección */}
+            {/* 3. Listado Minimalista en Formato Texto de los Módulos del Sistema (Sin enlaces directos) */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))',
+                gap: '1rem',
+              }}
+            >
+              {[
+                {
+                  titulo: 'Aplicación',
+                  icono: 'sensors',
+                  descripcion: 'Monitorización en tiempo real del estado de sincronización y fecha de última inspección centralizada de las estaciones ITV.',
+                },
+                {
+                  titulo: 'Informes',
+                  icono: 'bar_chart',
+                  descripcion: 'Cuadros de mando analíticos, facturación, volumen de inspecciones, tiempos medios, estadística oficial MINER, OBD y envíos de recordatorios.',
+                },
+                {
+                  titulo: 'Inspecciones',
+                  icono: 'directions_car',
+                  descripcion: 'Consulta y localización técnica detallada de inspecciones, defectos detectados, elementos verificados y mediciones de vehículos.',
+                },
+                {
+                  titulo: 'Comercial',
+                  icono: 'chat',
+                  descripcion: 'Gestión de citas previas, carteras de clientes terceros, proyectos comerciales y campañas de avisos de vencimiento por SMS y carta.',
+                },
+                {
+                  titulo: 'Datos',
+                  icono: 'table_chart',
+                  descripcion: 'Administración y consulta de tablas maestras y definición del alcance técnico de elementos de inspección.',
+                },
+                {
+                  titulo: 'Mantenimientos',
+                  icono: 'build',
+                  descripcion: 'Gestión de recursos laborales, directorio de empleados, inventario de equipos de medición y control de versiones de soporte IT.',
+                },
+                {
+                  titulo: 'Acerca de',
+                  icono: 'info',
+                  descripcion: 'Información técnica de la plataforma, versión del sistema y diagnóstico de conectividad de TÜV SÜD Central Datos ITV.',
+                },
+              ].map((modulo) => (
                 <TsCard
+                  key={modulo.titulo}
                   style={{
-                    padding: '1.5rem',
+                    padding: '1.25rem',
                     backgroundColor: '#ffffff',
-                    borderLeft: '4px solid #0046ad',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
+                    borderLeft: '3px solid #0046ad',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
                   }}
                 >
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <TsIcon name="bar_chart" size={32} style={{ color: '#0046ad' }} />
-                      <TsBadge variant="primary">Activo (30 ITV)</TsBadge>
-                    </div>
-                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0046ad', fontWeight: 700 }}>
-                      Última fecha inspección
-                    </h3>
-                    <p style={{ margin: '0 0 1.25rem 0', color: '#64748b', fontSize: '0.88rem', lineHeight: 1.5 }}>
-                      Consulta del estado de sincronización y fecha de última inspección recibida en Central Datos para las 30 estaciones de la red.
-                    </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.45rem' }}>
+                    <TsIcon name={modulo.icono} size={20} style={{ color: '#0046ad' }} />
+                    <h2
+                      style={{
+                        margin: 0,
+                        fontSize: '0.98rem',
+                        fontWeight: 700,
+                        color: '#0b253b',
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      {modulo.titulo}
+                    </h2>
                   </div>
-                  <TsButton
-                    variant="primary"
-                    onClick={() => handleSelectItem('ultima-fecha', 'aplicacion')}
-                    style={{ width: '100%' }}
+                  <p
+                    style={{
+                      margin: 0,
+                      color: '#64748b',
+                      fontSize: '0.84rem',
+                      lineHeight: 1.5,
+                    }}
                   >
-                    Abrir Módulo
-                  </TsButton>
+                    {modulo.descripcion}
+                  </p>
                 </TsCard>
-
-                {/* Tarjeta Informes: Facturación de Inspecciones */}
-                <TsCard
-                  style={{
-                    padding: '1.5rem',
-                    backgroundColor: '#ffffff',
-                    borderLeft: '4px solid #00875a',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <TsIcon name="payments" size={32} style={{ color: '#00875a' }} />
-                      <TsBadge variant="success">Disponible</TsBadge>
-                    </div>
-                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0046ad', fontWeight: 700 }}>
-                      Facturación de Inspecciones
-                    </h3>
-                    <p style={{ margin: '0 0 1.25rem 0', color: '#64748b', fontSize: '0.88rem', lineHeight: 1.5 }}>
-                      Dashboard con KPIs consolidados, ranking gráfico por estación y tabla analítica con exportación directa a Excel.
-                    </p>
-                  </div>
-                  <TsButton
-                    variant="primary"
-                    onClick={() => handleSelectItem('facturacion', 'informes')}
-                    style={{ width: '100%' }}
-                  >
-                    Abrir Módulo
-                  </TsButton>
-                </TsCard>
-
-                {/* Tarjeta Informes: Número de Inspecciones */}
-                <TsCard
-                  style={{
-                    padding: '1.5rem',
-                    backgroundColor: '#ffffff',
-                    borderLeft: '4px solid #00875a',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <TsIcon name="trending_up" size={32} style={{ color: '#00875a' }} />
-                      <TsBadge variant="success">Disponible</TsBadge>
-                    </div>
-                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0046ad', fontWeight: 700 }}>
-                      Número de Inspecciones
-                    </h3>
-                    <p style={{ margin: '0 0 1.25rem 0', color: '#64748b', fontSize: '0.88rem', lineHeight: 1.5 }}>
-                      Volumen de inspecciones periódicas: favorables, rechazadas y porcentajes de rechazo en Fase 1 y Fase 2.
-                    </p>
-                  </div>
-                  <TsButton
-                    variant="primary"
-                    onClick={() => handleSelectItem('num-inspecciones', 'informes')}
-                    style={{ width: '100%' }}
-                  >
-                    Abrir Módulo
-                  </TsButton>
-                </TsCard>
-
-                {/* Tarjeta Informes: Duración Promedio */}
-                <TsCard
-                  style={{
-                    padding: '1.5rem',
-                    backgroundColor: '#ffffff',
-                    borderLeft: '4px solid #00875a',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <TsIcon name="schedule" size={32} style={{ color: '#00875a' }} />
-                      <TsBadge variant="success">Disponible</TsBadge>
-                    </div>
-                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0046ad', fontWeight: 700 }}>
-                      Duración Promedio (001)
-                    </h3>
-                    <p style={{ margin: '0 0 1.25rem 0', color: '#64748b', fontSize: '0.88rem', lineHeight: 1.5 }}>
-                      Tiempos medios de proceso por estación y tipo de vehículo, ranking de agilidad y réplica Crystal Reports.
-                    </p>
-                  </div>
-                  <TsButton
-                    variant="primary"
-                    onClick={() => handleSelectItem('duracion-promedio', 'informes')}
-                    style={{ width: '100%' }}
-                  >
-                    Abrir Módulo
-                  </TsButton>
-                </TsCard>
-
-                {/* Tarjeta Fase 2: Inspecciones */}
-                <TsCard style={{ padding: '1.5rem', backgroundColor: '#ffffff', opacity: 0.9 }}>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <TsIcon name="directions_car" size={32} style={{ color: '#64748b' }} />
-                      <TsBadge variant="neutral">Próximamente</TsBadge>
-                    </div>
-                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0b253b', fontWeight: 700 }}>
-                      Localización de Inspecciones
-                    </h3>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '0.88rem', lineHeight: 1.5 }}>
-                      Búsqueda y trazabilidad por matrícula, bastidor, defectos y mediciones de vehículos.
-                    </p>
-                  </div>
-                </TsCard>
-
-                {/* Tarjeta Fase 2: Comercial */}
-                <TsCard style={{ padding: '1.5rem', backgroundColor: '#ffffff', opacity: 0.9 }}>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <TsIcon name="chat" size={32} style={{ color: '#64748b' }} />
-                      <TsBadge variant="neutral">Próximamente</TsBadge>
-                    </div>
-                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#0b253b', fontWeight: 700 }}>
-                      Citas Previas & Campañas SMS
-                    </h3>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '0.88rem', lineHeight: 1.5 }}>
-                      Gestión de citas previas, recordatorios automáticos de vencimiento y campañas a clientes.
-                    </p>
-                  </div>
-                </TsCard>
-              </div>
+              ))}
             </div>
           </div>
         )}
