@@ -9,7 +9,7 @@ export function TuvSudLogo({ size = 42, className, style }: TuvSudLogoProps) {
 
   return (
     <img
-      src="/images/logo-tuv.svg"
+      src="./images/logo-tuv.svg"
       alt="TÜV SÜD Logo Oficial"
       width={pixelSize}
       height={pixelSize}

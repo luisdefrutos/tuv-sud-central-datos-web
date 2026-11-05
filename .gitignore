@@ -19,10 +19,15 @@ appsettings.*.Local.json
 # Node.js
 node_modules/
 dist/
+publish/
 *.log
 *.tsbuildinfo
 
 # Documentación pendiente hasta finalizar plan de informes
 Documentacion/modernizacion aplicacion/11_hoja_de_ruta_modulo_informes_dashboard_grid_excel.md
 
+# Publish profiles locales de Visual Studio / dotnet
+**/PublishProfiles/
 
+# Documentación de despliegue temporal
+Documentacion/modernizacion aplicacion/28_guia_despliegue_manual_servidor_pruebas_iis.md

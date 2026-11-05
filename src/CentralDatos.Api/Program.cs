@@ -114,23 +114,17 @@ try
         });
     });
 
-    if (app.Environment.IsDevelopment())
+    // OpenAPI y Swagger UI habilitados para desarrollo y pruebas IIS
+    app.MapOpenApi();
+    app.UseSwaggerUI(options =>
     {
-        // Genera el documento OpenAPI en /openapi/v1.json
-        app.MapOpenApi();
+        options.SwaggerEndpoint("openapi/v1.json", "TÜV SÜD Central Datos API v1");
+        options.RoutePrefix = "swagger";
+    });
+    app.MapScalarApiReference();
 
-        // Interfaz interactiva Swagger UI en /swagger
-        app.UseSwaggerUI(options =>
-        {
-            options.SwaggerEndpoint("/openapi/v1.json", "TÜV SÜD Central Datos API v1");
-            options.RoutePrefix = "swagger";
-        });
-
-        // Interfaz interactiva moderna Scalar en /scalar/v1
-        app.MapScalarApiReference();
-
-        app.UseCors(CorsExtensions.PolicyName);
-    }
+    // Habilitar CORS siempre
+    app.UseCors(CorsExtensions.PolicyName);
 
     if (!app.Environment.IsDevelopment())
     {
@@ -141,14 +135,14 @@ try
     app.UseAuthorization();
     app.UseRateLimiter();
 
-    // Redirección de la raíz del API: en desarrollo hacia la web (Vite :5173) y en producción hacia Swagger
+    // Endpoint raíz informativo y redirección relativa a swagger
     if (app.Environment.IsDevelopment())
     {
         app.MapGet("/", () => Results.Redirect("http://localhost:5173"));
     }
     else
     {
-        app.MapGet("/", () => Results.Redirect("/swagger"));
+        app.MapGet("/", () => Results.Redirect("swagger"));
     }
 
     // Registro modular de Endpoints desacoplados por características

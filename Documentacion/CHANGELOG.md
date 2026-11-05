@@ -4,6 +4,27 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.27.0] - 05/11/2026 - *Despliegue Manual en IIS (Windows Server), Resiliencia de Subdirectorios y Configuración Externa*
+
+### 🚀 Despliegue en Producción y Servidor de Pruebas (IIS)
+* **Compatibilidad Universal con Subcarpetas en IIS (`web.config` y `vite.config.ts`)**:
+  * Configuración de `base: './'` en Vite para generar rutas 100% relativas para bundles JS, CSS y recursos.
+  * Inclusión de `web.config` seguro con los tipos MIME obligatorios en IIS (`.svg`, `.woff2`, `.json`) sin requerir módulos externos como URL Rewrite (evitando errores HTTP 500.19).
+  * Soporte para albergar la aplicación bajo cualquier nombre de subdirectorio (ej. `/WEB_CENTRALDATOS/`) o en la raíz sin recompilar.
+* **Desacoplamiento de URL del Backend mediante `config.js` Dinámico**:
+  * Creación de `config.js` externo montado en tiempo de ejecución (`window.__API_URL__`) que permite configurar la ruta del API (`/API_CENTRALDATOS`) directamente en el servidor sin necesidad de reconstruir los artefactos de React.
+  * Consumo centralizado en `api.constants.ts` para todos los endpoints (`/api/v1/health`, `/api/v1/auth/login`, informes y exportaciones Excel).
+* **Resolución Automática de Rutas de Iconos del Design System (`main.tsx`)**:
+  * Detección dinámica del subdirectorio base de la aplicación para registrar la biblioteca oficial de iconos corporativos (`registerGoogleMaterial`), garantizando la carga limpia de los 53 iconos SVG en cualquier nivel de ruta.
+  * Ruta relativa en el componente del logotipo oficial (`TuvSudLogo.tsx`).
+* **Habilitación de Swagger UI y CORS en Entornos de Servidor (`Program.cs`)**:
+  * Disponibilidad de Swagger UI (`/swagger`) y OpenAPI (`/openapi/v1.json`) en servidores IIS para diagnóstico y pruebas de integración.
+  * Activación transversal de la directiva CORS en el pipeline de la API para permitir peticiones desde dominios corporativos (`gestion3-desa.atisae.com`).
+* **Actualización de Seguridad en Repositorio (`.gitignore`)**:
+  * Exclusión de artefactos de publicación manual (`publish/`), perfiles locales de Visual Studio (`**/PublishProfiles/`) y guías operativas locales temporales.
+
+---
+
 ## [2.26.0] - 05/11/2026 - *Rediseño Minimalista de la Pantalla de Inicio (Módulos Central Datos Web)*
 
 ### 🎨 Diseño y Experiencia de Usuario (UX / UI)

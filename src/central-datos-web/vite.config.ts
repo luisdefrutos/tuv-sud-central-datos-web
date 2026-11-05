@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import { designSystemIconsVitePlugin } from '@tuvsud/design-system/vite';
 
 export default defineConfig({
+  base: './',
   plugins: [
     react(),
     designSystemIconsVitePlugin({
@@ -72,5 +73,8 @@ export default defineConfig({
         secure: false,
       },
     },
-  },
+    },
+    build: {
+        chunkSizeWarningLimit: 2000,
+    }
 });
