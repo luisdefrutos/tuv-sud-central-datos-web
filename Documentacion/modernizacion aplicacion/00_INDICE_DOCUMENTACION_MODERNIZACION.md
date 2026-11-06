@@ -8,7 +8,7 @@
 
 | # | Documento | Contenido Principal |
 | :-: | :--- | :--- |
-| **00** | [../CHANGELOG.md](../CHANGELOG.md) | **Registro Histórico de Versiones**: Resumen cronológico de entregas, hitos de negocio, versiones desplegadas y cambios técnicos acumulados. |
+| **00** | [CHANGELOG.md](./CHANGELOG.md) | **Registro Histórico de Versiones**: Copia sincronizada del changelog del proyecto con entregas, hitos de negocio y cambios técnicos acumulados. |
 | **01** | [analisis_y_estrategia_central_datos.md](./analisis_y_estrategia_central_datos.md) | Radiografía funcional del producto (código vivo vs. muerto, 4 dominios de negocio, bugs actuales), stack recomendado (**.NET 10 + React 19 + ODP.NET Thin**), hoja de ruta *Strangler Fig* en 5 fases y arquitectura global. |
 | **02** | [auditoria_y_optimizacion_sql_oracle.md](./auditoria_y_optimizacion_sql_oracle.md) | Auditoría exhaustiva de las consultas SQL sobre Oracle `CENTRALITV` y `COMUN.PERSONA`, eliminación de *Hard Parsing* (`clsCur.vb`), índices recomendados, paginación nativa y reescritura parametrizada. |
 | **03** | [modernizacion_web_services_y_arquitectura_api.md](./modernizacion_web_services_y_arquitectura_api.md) | Impacto del paso a Web sobre `centralitv.asmx` y `Login.asmx`: cómo el despliegue Web centralizado resuelve de raíz el problema de visibilidad `OCI`/`:1521` desde las estaciones ITV, eliminando el puente SOAP sin riesgo para aplicaciones desktop en coexistencia. |
@@ -38,6 +38,7 @@
 | **27** | [27_guia_creacion_y_configuracion_mcp_oracle.md](./27_guia_creacion_y_configuracion_mcp_oracle.md) | **Guía de Creación y Configuración del Servidor MCP de Oracle (`central-datos-db`)**: Arquitectura C# .NET 10 + ODP.NET Thin (Zero-Install), catálogo de herramientas MCP de solo lectura, conexión de alta disponibilidad con Producción (`10.108.206.3:1521/orclpr`) y configuración en `mcp_config.json`. |
 | **29** | [29_dossier_ejecutivo_direccion_ventajas_web_y_catalogo_informes.md](./29_dossier_ejecutivo_direccion_ventajas_web_y_catalogo_informes.md) | **Dossier Ejecutivo para Dirección de Negocio ITV**: Comparativa estratégica Web vs. Escritorio en 6 dimensiones de negocio y catálogo funcional detallado de las pantallas implementadas. |
 | **30** | [30_modulo_localizacion_inspecciones_defectos_elementos_mediciones.md](./30_modulo_localizacion_inspecciones_defectos_elementos_mediciones.md) | **Módulo de Localización (`3. Inspecciones`: Inspecciones, Defectos, Elementos y Mediciones)**: Motor unificado conducido por metadatos (`CAMPOS_*LOCALIZADOS`), proyección dinámica segura, combos en cascada, selector modal de columnas y exportación Excel 1:1 con trazabilidad de filtros aplicados. |
+| **31** | [31_plan_optimizacion_localizacion_inspecciones.md](./31_plan_optimizacion_localizacion_inspecciones.md) | **Plan de optimización de Localización de Inspecciones**: diagnóstico del recorrido completo Oracle/API/Excel, hipótesis pendientes de medir, propuesta de consulta acotada y límite de exportación con prevalidación, fases, pruebas y decisiones previas a implementación. |
 
 ---
 

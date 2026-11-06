@@ -1,0 +1,44 @@
+{
+  "inputs": [
+    {
+      "id": "central-datos-desa-password",
+      "type": "promptString",
+      "description": "Contraseña Oracle de Desarrollo (ORCLDV)",
+      "password": true
+    },
+    {
+      "id": "central-datos-prod-password",
+      "type": "promptString",
+      "description": "Contraseña Oracle de Producción (orclpr)",
+      "password": true
+    }
+  ],
+  "servers": {
+    "central-datos-desa": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${workspaceFolder}\\tools\\central-datos-mcp\\index.mjs"
+      ],
+      "env": {
+        "DB_MODE": "oracle",
+        "ORACLE_CONNECT_STRING": "10.108.206.7:1521/ORCLDV.snprivate.vcnatisae.oraclevcn.com",
+        "ORACLE_USER": "CENTRALITV",
+        "ORACLE_PASSWORD": "${input:central-datos-desa-password}"
+      }
+    },
+    "central-datos-prod": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${workspaceFolder}\\tools\\central-datos-mcp\\index.mjs"
+      ],
+      "env": {
+        "DB_MODE": "oracle",
+        "ORACLE_CONNECT_STRING": "10.108.206.3:1521/orclpr.snprivate.vcnatisae.oraclevcn.com",
+        "ORACLE_USER": "CENTRALITV",
+        "ORACLE_PASSWORD": "${input:central-datos-prod-password}"
+      }
+    }
+  }
+}

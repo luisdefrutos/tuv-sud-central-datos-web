@@ -128,11 +128,24 @@ El archivo `package.json` contiene únicamente 4 dependencias:
 
 ### Paso 3: Registrar el servidor MCP en el IDE / Antigravity
 
+#### VS Code (configuración de este workspace)
+
+El repositorio incluye [`../../.vscode/mcp.json`](../../.vscode/mcp.json), que registra dos servidores Oracle Thin independientes:
+
+| Servidor VS Code | Entorno | Servicio |
+|---|---|---|
+| `central-datos-desa` | Desarrollo | `10.108.206.7:1521/ORCLDV.snprivate.vcnatisae.oraclevcn.com` |
+| `central-datos-prod` | Producción | `10.108.206.3:1521/orclpr.snprivate.vcnatisae.oraclevcn.com` |
+
+En VS Code, abre **MCP: List Servers** e inicia el servidor del entorno autorizado. La primera vez, VS Code solicitará su contraseña Oracle en un campo oculto. Las dos contraseñas se solicitan por separado y no están guardadas en el repositorio ni en el archivo de configuración. No copies credenciales en archivos versionados ni en prompts o chats. Si una contraseña real se ha compartido fuera del canal autorizado, solicita su rotación al responsable de base de datos.
+
+Requisitos: Node.js 20 o superior, dependencias instaladas con `npm ci` desde `tools/central-datos-mcp` y acceso de red/VPN al host del entorno. La configuración usa el usuario `CENTRALITV`. Antes de habilitar Producción, confirma con DBA que la cuenta tiene privilegios de solo lectura; `SET TRANSACTION READ ONLY` y los guardrails del servidor MCP son capas adicionales, no sustituyen una cuenta Oracle de mínimo privilegio. Para medir la duración de consulta sin incluir el establecimiento de conexión, usa `queryElapsedMs` de `query_readonly`; incluye ejecución y lectura de las filas solicitadas.
+
 El asistente de IA lee los servidores MCP registrados en el fichero JSON de configuración:
 - **Ruta global de Antigravity**: `C:\Users\<TuUsuario>\.gemini\config\mcp_config.json`
 - **Ruta local de proyecto**: `c:\Project\TUV-SUD-CENTRAL-DATOS-WEB\.agents\mcp_config.json`
 
-Podemos configurar ambos entornos en el mismo archivo para que el asistente tenga acceso a Desarrollo y a Producción como herramientas diferenciadas:
+Para clientes MCP distintos de VS Code, registra dos procesos independientes y suministra cada contraseña desde el almacén de secretos o el entorno local no versionado del IDE. Ejemplo estructural (sin credenciales):
 
 ```json
 {
@@ -146,7 +159,7 @@ Podemos configurar ambos entornos en el mismo archivo para que el asistente teng
         "DB_MODE": "oracle",
         "ORACLE_CONNECT_STRING": "10.108.206.7:1521/ORCLDV.snprivate.vcnatisae.oraclevcn.com",
         "ORACLE_USER": "CENTRALITV",
-        "ORACLE_PASSWORD": "TU_PASSWORD"
+        "ORACLE_PASSWORD": "<inyectar desde el almacén de secretos>"
       }
     },
     "central-datos-prod": {
@@ -158,7 +171,7 @@ Podemos configurar ambos entornos en el mismo archivo para que el asistente teng
         "DB_MODE": "oracle",
         "ORACLE_CONNECT_STRING": "10.108.206.3:1521/orclpr.snprivate.vcnatisae.oraclevcn.com",
         "ORACLE_USER": "CENTRALITV",
-        "ORACLE_PASSWORD": "TU_PASSWORD"
+        "ORACLE_PASSWORD": "<inyectar desde el almacén de secretos>"
       }
     }
   }
@@ -170,14 +183,15 @@ Podemos configurar ambos entornos en el mismo archivo para que el asistente teng
 > ```json
 > "env": {
 >   "DB_MODE": "soap",
->   "CENTRALITV_WS_URL": "https://gestion-desa.atisae.com/centralitvwebservice/centralitv.asmx"
+>   "CENTRALITV_WS_URL": "https://gestion-desa.atisae.com/centralitvwebservice/centralitv.asmx",
+>   "CENTRALITV_WS_SECRET": "inyectado desde el almacén de secretos del IDE"
 > }
 > ```
 
 ### Paso 4: Reiniciar / Recargar Servidores MCP en Antigravity
 1. En la barra superior o menú de opciones de Antigravity, pulsar en los tres puntos `...` o en el panel de **MCP Servers**.
 2. Hacer clic en **Reload / Refresh**.
-3. Ambos servidores (`central-datos-desa` y `central-datos-prod`) aparecerán con estado **Connected (Verde)**.
+3. Los servidores configurados (`central-datos-desa` y `central-datos-prod`) aparecerán como disponibles. Inicia solo el entorno autorizado y acepta el prompt de contraseña correspondiente.
 
 ---
 
@@ -218,7 +232,6 @@ Tu compañero puede pedirle directamente al asistente frases como estas:
 
 1. **¿Qué es?**: Un puente local en Node.js que conecta el asistente de IA con Oracle.
 2. **¿Requiere instalar Oracle Client?**: **No**. Usa el driver oficial `oracledb` en modo Thin (JavaScript puro).
-3. **¿Es seguro contra Producción?**: **100 % seguro**. Bloquea cualquier comando que no sea `SELECT` antes de que salga del equipo y activa `SET TRANSACTION READ ONLY`.
+3. **¿Qué protecciones aplica?**: Solo acepta consultas `SELECT`/`WITH`, limita las filas devueltas y activa `SET TRANSACTION READ ONLY` en conexión Oracle directa. Esto reduce el riesgo, pero no sustituye una cuenta Oracle de solo lectura ni constituye una garantía de seguridad absoluta.
 4. **¿Soporta ambos entornos?**: Sí, se definen dos servidores en `mcp_config.json`: uno para `ORCLDV` (Desarrollo, IP `10.108.206.7`) y otro para `orclpr` (Producción, IP `10.108.206.3`).
 5. **¿Qué beneficio da?**: Evita tener que copiar manualmente esquemas de tablas, índices o DDLs; la IA consulta la base de datos en milisegundos y genera código C# y TypeScript 100 % exacto a las tablas reales.
-

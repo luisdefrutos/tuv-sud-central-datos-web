@@ -172,6 +172,10 @@
   transition: background-color 0.15s ease;
 }
 
+.cd-data-table tbody tr:nth-child(even) {
+  background-color: #f8fafc;
+}
+
 .cd-data-table tbody tr:hover td,
 .cd-table tbody tr:hover td,
 .ts-table tbody tr:hover td {

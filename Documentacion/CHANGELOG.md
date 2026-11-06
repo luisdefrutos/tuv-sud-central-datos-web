@@ -4,6 +4,52 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.29.9] - 06/11/2026 - *Prueba de avisos y cancelación en Localización*
+
+### 🎨 Experiencia de usuario
+* El grid distingue la página actual, la muestra de hasta 5.000 filas cargadas y el total encontrado.
+* Los avisos de volumen pueden cerrarse y explican cuándo desaparecen; al confirmar exportación se oculta el aviso anterior y el panel con botones evita recortes.
+* El resumen de filas aparece arriba y abajo del grid; Exportar queda deshabilitado si el total supera 150.000.
+* Un icono informativo explica que no se puede exportar si se supera el límite de 150.000 registros y recomienda acotar filtros.
+* Se mejora la respuesta del grid: búsqueda limitada a campos textuales/fechas/identificadores, input aislado con debounce y limpieza inmediata, e índice de texto precalculado por fila.
+* El hover usa CSS para evitar re-renderizados de la página al desplazar el puntero.
+* La cancelación de consulta convierte la `IOException` del transporte Oracle en una cancelación esperada cuando el token está solicitado.
+* En Localización se advierte al completar consultas con más de 50.000 registros y se informa cuántos se muestran en el grid.
+* La exportación entre 50.001 y 150.000 filas requiere confirmación; por encima del máximo actual de 150.000 se solicita reducir filtros para evitar un Excel truncado.
+* La modal de Localización permite cancelar consultas; las peticiones de combos en cascada obsoletas también se cancelan. No se ofrece cancelación manual de Excel mientras la generación sea síncrona y ClosedXML no permita interrumpir la serialización.
+* El servicio de exportación comprueba la cancelación durante la escritura de filas y antes/después de serializar el XLSX; una desconexión durante `SaveAs` no detiene esa operación en curso.
+* El servicio rechaza exportaciones cuyo total supera 150.000 filas antes de crear el workbook, incluso si la petición omite la validación del frontend.
+* No se añade preconteo: el aviso de consulta aparece después de que termine el recorrido actual del cursor. El umbral de 50.000 es provisional y no implica optimización del SQL ni exportación masiva completa.
+
+## [2.29.8] - 06/11/2026 - *Rediseño propuesto para consulta y exportación masivas*
+
+### 📚 Documentación
+* Se amplía el plan de Localización para estudiar preconteo exacto, consulta de solo 5.000 filas y aviso/confirmación en pantalla.
+* Se propone exportación XLSX asíncrona con escritura streaming, progreso, cancelación y hojas segmentadas, sujeta a pruebas de Oracle, memoria, almacenamiento y operación.
+* No se implementó código funcional; quedan abiertas las decisiones de exactitud del conteo, límites operativos e infraestructura.
+
+## [2.29.7] - 06/11/2026 - *Medición de volumen de Localización en Producción*
+
+### 📊 Rendimiento
+* Conteo de solo lectura para 2026-01-01 a 2026-11-06, todas las estaciones y sin filtros adicionales: **1.032.667 inspecciones no anuladas**; duración cliente del SQL de conteo **1.748 ms**, excluida la conexión.
+* No se generó Excel: el volumen supera el máximo síncrono actual de 150.000 filas y el endpoint actual puede truncar el archivo mientras lee todo el cursor.
+* Se documenta que el MCP Oracle Thin no negocia la encriptación de red de Producción en este equipo; el conteo se ejecutó mediante SQL*Plus local con transacción de solo lectura.
+
+## [2.29.6] - 06/11/2026 - *MCP Oracle para Desarrollo y Producción*
+
+### 🛠️ Herramientas de desarrollo
+* Se registran `central-datos-desa` y `central-datos-prod` en `.vscode/mcp.json`, con conexiones Oracle Thin separadas.
+* Las contraseñas de ambos entornos se solicitan como entradas ocultas independientes; no se guardan en la configuración.
+* `query_readonly` informa por separado del tiempo de consulta y del establecimiento de conexión en modo Oracle.
+* Se elimina del servidor el secreto SOAP codificado como valor predeterminado; ese transporte requiere configurar el secreto explícitamente.
+
+## [2.29.4] - 06/11/2026 - *Análisis y plan de rendimiento para Localización de Inspecciones*
+
+### 📚 Documentación
+* Se documenta el recorrido actual de consulta y exportación, los cuellos de botella confirmados en código y las causas de `Failed to fetch` que aún requieren medición.
+* Se propone limitar filas desde Oracle, prevalidar y rechazar exportaciones superiores a un máximo configurable, y validar SQL, memoria y concurrencia antes de implementar.
+* El plan inicial quedó pendiente de medición; el conteo posterior en Producción se documenta en [2.29.7]. No se modificó código funcional y sigue pendiente la aprobación del umbral y del diseño.
+
 ## [2.29.3] - 06/11/2026 - *Validación de navegación y selectores de Localización*
 
 ### 🛠️ Robustez

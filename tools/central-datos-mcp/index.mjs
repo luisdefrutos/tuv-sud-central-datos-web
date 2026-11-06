@@ -28,7 +28,7 @@ const CENTRALITV_WS_URL = (
   process.env.CENTRALITV_WS_URL ||
   'https://gestion-desa.atisae.com/centralitvwebservice/centralitv.asmx'
 ).trim();
-const CENTRALITV_WS_SECRET = process.env.CENTRALITV_WS_SECRET || 'HELKFN23AJURJSK2D';
+const CENTRALITV_WS_SECRET = process.env.CENTRALITV_WS_SECRET || '';
 const REQUEST_TIMEOUT_MS = Number(process.env.CENTRALITV_WS_TIMEOUT_MS || 30000);
 
 const xmlParser = new XMLParser({
@@ -108,6 +108,10 @@ function clampMaxRows(maxRows) {
  * - Computes 32-char lowercase MD5 hex of `Clave + CENTRALITV_WS_SECRET` -> `Passport`
  */
 function computeCentralItvSignature(sql) {
+  if (!CENTRALITV_WS_SECRET) {
+    throw new Error('DB_MODE=soap requiere configurar CENTRALITV_WS_SECRET como secreto del servidor MCP.');
+  }
+
   const sqlLimpia = sql.replace(/[^A-Za-z0-9]/g, '');
   const clave = crypto.createHash('md5').update(sqlLimpia, 'latin1').digest('hex');
   const passport = crypto
@@ -278,7 +282,9 @@ async function executeOracleDirectQuery(validSql, maxRows) {
   try {
     connection = await oracledb.getConnection({ user, password, connectString });
     await connection.execute('SET TRANSACTION READ ONLY');
+    const connectionElapsedMs = Math.round(performance.now() - startMs);
 
+    const queryStartMs = performance.now();
     const result = await connection.execute(validSql, [], {
       outFormat: oracledb.OUT_FORMAT_OBJECT,
       maxRows,
@@ -294,8 +300,9 @@ async function executeOracleDirectQuery(validSql, maxRows) {
       },
     });
 
+    const queryElapsedMs = Math.round(performance.now() - queryStartMs);
     const elapsedMs = Math.round(performance.now() - startMs);
-    return { rows: result.rows || [], elapsedMs };
+    return { rows: result.rows || [], elapsedMs, connectionElapsedMs, queryElapsedMs };
   } finally {
     if (connection) {
       await connection.close().catch(() => {});
@@ -523,7 +530,7 @@ server.tool(
 
 server.tool(
   'query_readonly',
-  'Ejecuta una consulta SQL estrictamente de SOLO LECTURA (SELECT o WITH) sobre Oracle Central Datos con límite máximo de 200 filas.',
+  'Ejecuta una consulta SQL estrictamente de SOLO LECTURA (SELECT o WITH) sobre Oracle Central Datos con límite máximo de 200 filas. En conexión Oracle directa informa también el tiempo de consulta excluyendo la conexión.',
   {
     sql: z.string().describe('Sentencia SELECT o WITH sin punto y coma final'),
     maxRows: z
@@ -537,13 +544,13 @@ server.tool(
   async ({ sql, maxRows }) => {
     try {
       const limit = clampMaxRows(maxRows);
-      const { rows, elapsedMs } = await runReadOnlyQuery(sql, limit);
+      const { rows, ...timings } = await runReadOnlyQuery(sql, limit);
       return formatSuccess({
         transportMode: DB_MODE,
         rowCount: rows.length,
         maxRowsApplied: limit,
         truncated: rows.length >= limit,
-        elapsedMs,
+        ...timings,
         rows,
       });
     } catch (err) {
@@ -554,4 +561,3 @@ server.tool(
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
-

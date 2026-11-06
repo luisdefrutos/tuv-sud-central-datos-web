@@ -22,6 +22,7 @@ dist/
 publish/
 *.log
 *.tsbuildinfo
+EXPORTACION_IA_COMPLETA.zip
 
 # Documentación pendiente hasta finalizar plan de informes
 Documentacion/modernizacion aplicacion/11_hoja_de_ruta_modulo_informes_dashboard_grid_excel.md

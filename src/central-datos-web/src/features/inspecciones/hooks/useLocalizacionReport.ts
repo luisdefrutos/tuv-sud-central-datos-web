@@ -19,6 +19,9 @@ import type {
   TipoLocalizacion,
 } from '../types/localizacion.types';
 
+const UMBRAL_AVISO_REGISTROS_ALTOS = 50_000;
+const MAX_FILAS_EXPORT_EXCEL = 150_000;
+
 export function useLocalizacionReport(tipo: TipoLocalizacion) {
   // En frmCriteriosLocalizacion*.vb las fechas por defecto son Ayer (Now - 1 día) a Hoy (Now)
   const defaultDates = useMemo(() => {
@@ -82,6 +85,8 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
   const [error, setError] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [exportConfirmationRequired, setExportConfirmationRequired] = useState(false);
+  const activeQueryControllerRef = useRef<AbortController | null>(null);
 
   // Estado de tabla, búsqueda, ordenación y paginación
   const [busqueda, setBusqueda] = useState('');
@@ -196,18 +201,30 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
       if (!catalogLoadedRef.current && !overrideCampos) {
         return;
       }
+      activeQueryControllerRef.current?.abort();
       const f = currentFilters ?? filtersRef.current;
       if (!f.estacionesSeleccionadas || f.estacionesSeleccionadas.length === 0) {
         setData(null);
+        setIsLoading(false);
         return;
+      }
+
+      const requestController = new AbortController();
+      activeQueryControllerRef.current = requestController;
+      const abortFromParent = () => requestController.abort();
+      if (signal?.aborted) {
+        requestController.abort();
+      } else {
+        signal?.addEventListener('abort', abortFromParent, { once: true });
       }
 
       setIsLoading(true);
       setError(null);
+      setExportConfirmationRequired(false);
       try {
         const payload = buildPayload(f, overrideCampos);
-        const res = await consultarLocalizacion(payload, signal);
-        if (!signal?.aborted) {
+        const res = await consultarLocalizacion(payload, requestController.signal);
+        if (!requestController.signal.aborted) {
           setData(res);
           setPage(1);
           if (res.columnas.length > 0 && !sortField) {
@@ -218,7 +235,9 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
         if (err instanceof Error && err.name === 'AbortError') return;
         setError(err instanceof Error ? err.message : 'Error al consultar la localización.');
       } finally {
-        if (!signal?.aborted) {
+        signal?.removeEventListener('abort', abortFromParent);
+        if (activeQueryControllerRef.current === requestController) {
+          activeQueryControllerRef.current = null;
           setIsLoading(false);
         }
       }
@@ -261,7 +280,7 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
     setData(null);
     setError(null);
 
-    obtenerCatalogosLocalizacion(tipo)
+    obtenerCatalogosLocalizacion(tipo, queryController.signal)
       .then((cat) => {
         if (!isMounted) return;
         setCatalogos(cat);
@@ -294,7 +313,8 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
   useEffect(() => {
     if (tipo !== 'defectos') return;
     let isMounted = true;
-    obtenerBloquesPorSeccion(seccionManual || undefined)
+    const controller = new AbortController();
+    obtenerBloquesPorSeccion(seccionManual || undefined, controller.signal)
       .then((b) => {
         if (isMounted) {
           setBloquesDinamicos(b);
@@ -307,6 +327,7 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
       });
     return () => {
       isMounted = false;
+      controller.abort();
     };
   }, [tipo, seccionManual]);
 
@@ -321,7 +342,12 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
       return;
     }
     let isMounted = true;
-    obtenerElementosPorBloque(bloque, tipo === 'defectos' ? seccionManual || undefined : undefined)
+    const controller = new AbortController();
+    obtenerElementosPorBloque(
+      bloque,
+      tipo === 'defectos' ? seccionManual || undefined : undefined,
+      controller.signal
+    )
       .then((elems) => {
         if (isMounted) {
           setElementosDinamicos(elems);
@@ -334,6 +360,7 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
       });
     return () => {
       isMounted = false;
+      controller.abort();
     };
   }, [tipo, bloque, seccionManual]);
 
@@ -346,7 +373,8 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
       return;
     }
     let isMounted = true;
-    obtenerSubdefectosPorElemento(bloque, defecto, seccionManual || undefined)
+    const controller = new AbortController();
+    obtenerSubdefectosPorElemento(bloque, defecto, seccionManual || undefined, controller.signal)
       .then((subs) => {
         if (isMounted) {
           setSubdefectosDinamicos(subs);
@@ -359,6 +387,7 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
       });
     return () => {
       isMounted = false;
+      controller.abort();
     };
   }, [tipo, bloque, defecto, seccionManual]);
 
@@ -412,10 +441,20 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
     [ejecutarConsulta]
   );
 
-  const handleExportarExcel = useCallback(async () => {
+  const ejecutarExportacionExcel = useCallback(async () => {
     if (filters.alertaRangoFechas) return;
+    const totalRegistros = data?.kpis.totalRegistros ?? 0;
+    if (totalRegistros > MAX_FILAS_EXPORT_EXCEL) {
+      setExportError(
+        `La consulta contiene ${totalRegistros.toLocaleString('es-ES')} registros y supera el límite actual de ${MAX_FILAS_EXPORT_EXCEL.toLocaleString('es-ES')} filas por exportación. Reduzca el rango de fechas o añada filtros.`
+      );
+      setExportConfirmationRequired(false);
+      return;
+    }
+
     setIsExporting(true);
     setExportError(null);
+    setExportConfirmationRequired(false);
     try {
       const payload = buildPayload();
       await exportarLocalizacionExcel(payload);
@@ -424,19 +463,64 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
     } finally {
       setIsExporting(false);
     }
-  }, [filters.alertaRangoFechas, buildPayload]);
+  }, [data?.kpis.totalRegistros, filters.alertaRangoFechas, buildPayload]);
+
+  const handleExportarExcel = useCallback(() => {
+    if (filters.alertaRangoFechas || isLoading || isExporting || !data) return;
+    const totalRegistros = data.kpis.totalRegistros;
+    if (totalRegistros > MAX_FILAS_EXPORT_EXCEL) {
+      setExportError(
+        `La consulta contiene ${totalRegistros.toLocaleString('es-ES')} registros y supera el límite actual de ${MAX_FILAS_EXPORT_EXCEL.toLocaleString('es-ES')} filas por exportación. Reduzca el rango de fechas o añada filtros.`
+      );
+      setExportConfirmationRequired(false);
+      return;
+    }
+    if (totalRegistros > UMBRAL_AVISO_REGISTROS_ALTOS) {
+      setExportConfirmationRequired(true);
+      setExportError(null);
+      return;
+    }
+    void ejecutarExportacionExcel();
+  }, [data, ejecutarExportacionExcel, filters.alertaRangoFechas, isExporting, isLoading]);
+
+  const cancelarConsulta = useCallback(() => {
+    activeQueryControllerRef.current?.abort();
+  }, []);
 
   // Filtrado por texto libre en tabla y ordenación global previa a paginar
-  const filasFiltradasYOrdenadas = useMemo(() => {
-    const rawFilas = data?.filas ?? [];
-    if (rawFilas.length === 0) return [];
+  const camposBuscables = useMemo(() => {
+    const campos = data?.columnas ?? [];
+    return campos.filter((campo) => {
+      const nombre = campo.columnaExcel.toUpperCase();
+      const tipo = campo.tipoDato.toUpperCase();
+      const identificadorTecnico =
+        /^(COD|NUM)_/.test(nombre) ||
+        /MATRICULA|BASTIDOR|INSPECCION|FASE|RESULTADO/.test(nombre);
+      return tipo === 'C' || tipo === 'D' || tipo === 'F' || nombre.includes('FECHA') || identificadorTecnico;
+    });
+  }, [data?.columnas]);
 
-    const q = busqueda.trim().toLowerCase();
-    const filtradas = q
-      ? rawFilas.filter((fila) =>
-          Object.values(fila).some((val) => val !== null && val !== undefined && String(val).toLowerCase().includes(q))
-        )
-      : rawFilas;
+  const filasConTextoBusqueda = useMemo(() => {
+    if (camposBuscables.length === 0) return [];
+    return (data?.filas ?? []).map((fila) => ({
+      fila,
+      textoBusqueda: camposBuscables
+        .map((campo) => fila[campo.columnaExcel])
+        .filter((val) => val !== null && val !== undefined)
+        .map((val) => String(val).toLocaleLowerCase('es-ES'))
+        .join('\u0000'),
+    }));
+  }, [data?.filas, camposBuscables]);
+
+  const filasFiltradasYOrdenadas = useMemo(() => {
+    if (filasConTextoBusqueda.length === 0) return [];
+
+    const termino = busqueda.trim().toLocaleLowerCase('es-ES');
+    const filtradas = termino
+      ? filasConTextoBusqueda
+          .filter(({ textoBusqueda }) => textoBusqueda.includes(termino))
+          .map(({ fila }) => fila)
+      : filasConTextoBusqueda.map(({ fila }) => fila);
 
     if (!sortField) return filtradas;
 
@@ -481,7 +565,7 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
 
       return sortAsc ? sa.localeCompare(sb, 'es', { numeric: true }) : sb.localeCompare(sa, 'es', { numeric: true });
     });
-  }, [data?.filas, busqueda, sortField, sortAsc]);
+  }, [filasConTextoBusqueda, busqueda, sortField, sortAsc]);
 
   const totalFilas = filasFiltradasYOrdenadas.length;
   const totalPages = Math.max(1, Math.ceil(totalFilas / pageSize));
@@ -658,9 +742,13 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
     error,
     isExporting,
     exportError,
+    exportConfirmationRequired,
+    highVolumeWarningThreshold: UMBRAL_AVISO_REGISTROS_ALTOS,
+    maxExportRows: MAX_FILAS_EXPORT_EXCEL,
     // Tabla
     busqueda,
     setBusqueda,
+    camposBuscables,
     sortField,
     sortAsc,
     handleSort,
@@ -675,5 +763,8 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
     setSelectedRow,
     handleConsultar: () => ejecutarConsulta(),
     handleExportarExcel,
+    confirmarExportacionExcel: () => void ejecutarExportacionExcel(),
+    cancelarConfirmacionExportacion: () => setExportConfirmationRequired(false),
+    cancelarConsulta,
   };
 }

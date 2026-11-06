@@ -118,9 +118,7 @@ export async function consultarLocalizacion(
   return response.json();
 }
 
-export async function exportarLocalizacionExcel(
-  filtros: FiltrosLocalizacionRequest
-): Promise<void> {
+export async function exportarLocalizacionExcel(filtros: FiltrosLocalizacionRequest): Promise<void> {
   const response = await fetch(API_ENDPOINTS.INFORMES.LOCALIZACION_EXPORTAR, {
     method: 'POST',
     headers: {

@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Data;
 using System.Globalization;
+using System.IO;
 using System.Text;
 using CentralDatos.Application.Features.Informes.DTOs;
 using Microsoft.Extensions.Logging;
@@ -976,6 +977,10 @@ public sealed partial class OracleInformesRepository
         catch (OracleException oex) when (oex.Number == 12570 && cancellationToken.IsCancellationRequested)
         {
             throw new OperationCanceledException("Consulta de localización cancelada por el cliente.", oex, cancellationToken);
+        }
+        catch (IOException ioex) when (cancellationToken.IsCancellationRequested)
+        {
+            throw new OperationCanceledException("Consulta de localización cancelada por el cliente.", ioex, cancellationToken);
         }
         catch (OracleException oex) when (oex.Number is 12541 or 12571 or 3113 or 3114 && !cancellationToken.IsCancellationRequested)
         {

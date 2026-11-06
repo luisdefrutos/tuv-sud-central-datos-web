@@ -130,6 +130,12 @@ public sealed class InformesLocalizacionService : IInformesLocalizacionService
         }
 
         var raw = await _repository.EjecutarConsultaLocalizacionAsync(filtros, MaxFilasExportExcel, cancellationToken);
+        if (raw.TotalRegistros > MaxFilasExportExcel)
+        {
+            throw new ArgumentException(
+                $"La consulta contiene {raw.TotalRegistros:N0} registros y supera el límite actual de {MaxFilasExportExcel:N0} filas por exportación. Reduzca el rango de fechas o añada filtros.");
+        }
+        cancellationToken.ThrowIfCancellationRequested();
 
         var tipoNorm = (filtros.Tipo ?? "inspecciones").Trim().ToLowerInvariant();
         string nombreHoja = tipoNorm switch
@@ -159,6 +165,7 @@ public sealed class InformesLocalizacionService : IInformesLocalizacionService
         int rowIdx = 2;
         foreach (var fila in raw.Filas)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             for (int c = 0; c < numCols; c++)
             {
                 var colMeta = raw.Columnas[c];
@@ -213,6 +220,7 @@ public sealed class InformesLocalizacionService : IInformesLocalizacionService
         int filaInicioFiltros = raw.Filas.Count + 4;
         for (int z = 0; z < raw.FiltrosAplicados.Count; z++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var filterCell = ws.Cell(filaInicioFiltros + z, 1);
             filterCell.Value = raw.FiltrosAplicados[z];
             filterCell.Style.Font.Italic = true;
@@ -220,10 +228,13 @@ public sealed class InformesLocalizacionService : IInformesLocalizacionService
         }
 
         // Ajuste de ancho de columnas (con límite de filas muestreadas para no penalizar CPU en exportaciones grandes)
+        cancellationToken.ThrowIfCancellationRequested();
         ws.Columns(1, Math.Max(1, numCols)).AdjustToContents(1, Math.Min(ultimaFilaTabla, 500), 10, 55);
 
         using var ms = new MemoryStream();
+        cancellationToken.ThrowIfCancellationRequested();
         workbook.SaveAs(ms);
+        cancellationToken.ThrowIfCancellationRequested();
 
         string fileName = $"{nombreHoja}_{filtros.FechaInicio:yyyyMMdd}_{filtros.FechaFin:yyyyMMdd}.xlsx";
         return (ms.ToArray(), fileName);

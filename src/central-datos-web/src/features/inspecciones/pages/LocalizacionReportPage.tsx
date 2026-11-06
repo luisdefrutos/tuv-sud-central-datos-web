@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useRef, useCallback } from 'react';
-import { TsButton, TsCard, TsBadge, TsIcon } from '@tuvsud/design-system/react';
+import React, { startTransition, useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { TsAlert, TsButton, TsCard, TsBadge, TsIcon } from '@tuvsud/design-system/react';
 import { ReportPageHeader } from '../../informes/components/ReportPageHeader';
 import { ReportDateRangeAlert } from '../../informes/components/ReportDateRangeAlert';
 import { ReportFiltersBar } from '../../informes/components/ReportFiltersBar';
@@ -122,6 +122,107 @@ const labelStyle: React.CSSProperties = {
   marginBottom: '4px',
 };
 
+interface LocalizacionGridSearchProps {
+  value: string;
+  searchableFields: string[];
+  onSearchChange: (value: string) => void;
+}
+
+const LocalizacionGridSearch: React.FC<LocalizacionGridSearchProps> = ({
+  value,
+  searchableFields,
+  onSearchChange,
+}) => {
+  const [draft, setDraft] = useState(value);
+
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
+  useEffect(() => {
+    if (draft === value) return;
+    const timer = window.setTimeout(() => onSearchChange(draft), 180);
+    return () => window.clearTimeout(timer);
+  }, [draft, value, onSearchChange]);
+
+  const clearSearch = () => {
+    setDraft('');
+    onSearchChange('');
+  };
+
+  return (
+    <div style={{ width: '100%', maxWidth: '520px' }}>
+      <AppTooltip
+        title={value ? 'Filtro visual activo en la tabla' : 'Filtro rápido sobre los resultados cargados'}
+        subtitle="La búsqueda se aplica solo a las filas cargadas en el grid."
+        content={
+          searchableFields.length > 0
+            ? `Campos incluidos: ${searchableFields.join(', ')}`
+            : 'No hay columnas de texto, fecha o identificación seleccionadas para buscar.'
+        }
+        position="top"
+        style={{ display: 'block', width: '100%' }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            backgroundColor: '#ffffff',
+            border: '1.5px solid #cbd5e1',
+            borderRadius: '6px',
+            padding: '0 10px',
+            height: '36px',
+            boxSizing: 'border-box',
+          }}
+        >
+          <span style={{ color: '#64748b', marginRight: '8px', display: 'flex', alignItems: 'center' }}>
+            <TsIcon name="search" style={{ fontSize: '16px' }} />
+          </span>
+          <input
+            type="text"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder={
+              searchableFields.length > 0
+                ? `Buscar en ${searchableFields.slice(0, 3).join(', ')}${searchableFields.length > 3 ? '…' : ''}`
+                : 'No hay campos buscables seleccionados'
+            }
+            aria-label="Buscar en campos de texto, fecha e identificación del grid"
+            disabled={searchableFields.length === 0}
+            style={{
+              border: 'none',
+              outline: 'none',
+              width: '100%',
+              fontSize: '0.82rem',
+              color: '#0f172a',
+              backgroundColor: 'transparent',
+              fontWeight: 500,
+            }}
+          />
+          {draft && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              aria-label="Limpiar búsqueda"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#64748b',
+                cursor: 'pointer',
+                padding: '2px 4px',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <TsIcon name="close" style={{ fontSize: '14px' }} />
+            </button>
+          )}
+        </div>
+      </AppTooltip>
+    </div>
+  );
+};
+
 export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
   tipo,
   onNavigateHome,
@@ -134,12 +235,38 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
   const [activeCriteriaTab, setActiveCriteriaTab] = useState<'vehiculo' | 'titular'>('vehiculo');
   const [showChartSection, setShowChartSection] = useState(false);
   const [chartMode, setChartMode] = useState<'barras' | 'donut'>('barras');
-  const [hoveredRowIdx, setHoveredRowIdx] = useState<number | null>(null);
+  const [highVolumeNoticeDismissed, setHighVolumeNoticeDismissed] = useState(false);
 
   const gridTopRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    setHighVolumeNoticeDismissed(false);
+  }, [r.data]);
+
   const hayDatos = Boolean(r.data && r.data.filas.length > 0 && !r.filters.alertaRangoFechas);
+  const exportacionSuperaLimite = (r.data?.kpis.totalRegistros ?? 0) > r.maxExportRows;
   const columnasTabla = r.data?.columnas ?? [];
+  const handleGridSearchChange = useCallback(
+    (value: string) => {
+      startTransition(() => {
+        r.setBusqueda(value);
+        r.setPage(1);
+      });
+    },
+    [r.setBusqueda, r.setPage]
+  );
+  const searchableFieldNames = useMemo(
+    () => r.camposBuscables.map((campo) => campo.desCampo.toLocaleLowerCase('es-ES')),
+    [r.camposBuscables]
+  );
+  const resumenGrid = (
+    <>
+      Mostrando <strong>{r.filasPaginadas.length.toLocaleString('es-ES')}</strong> de{' '}
+      <strong>{r.totalFilas.toLocaleString('es-ES')}</strong> cargados de{' '}
+      <strong>{(r.data?.kpis.totalRegistros ?? 0).toLocaleString('es-ES')}</strong> encontrados
+      {' '}({columnasTabla.length} columnas)
+    </>
+  );
 
   const totalTableMinWidth = useMemo(() => {
     const sumCols = columnasTabla.reduce((acc, c) => acc + getColumnPixelWidth(c), 0);
@@ -282,6 +409,60 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
         </div>
       )}
 
+      {r.data &&
+        !r.isLoading &&
+        !r.exportConfirmationRequired &&
+        !highVolumeNoticeDismissed &&
+        r.data.kpis.totalRegistros > r.highVolumeWarningThreshold && (
+          <TsAlert
+            variant="warning"
+            open
+            closable
+            onTsAfterHide={() => setHighVolumeNoticeDismissed(true)}
+            heading="Consulta con un volumen elevado"
+          >
+            <span>
+              Se encontraron <strong>{r.data.kpis.totalRegistros.toLocaleString('es-ES')}</strong> registros. La tabla
+              muestra los primeros <strong>{r.data.kpis.mostrandoRegistrosGrid.toLocaleString('es-ES')}</strong>. Puede
+              {exportacionSuperaLimite
+                ? ` acotar los filtros: se ha deshabilitado la exportación porque supera el límite de ${r.maxExportRows.toLocaleString('es-ES')} registros.`
+                : ' acotar los filtros para reducir el tiempo de consulta y exportación.'}{' '}
+              Este aviso desaparece al cerrarlo o realizar otra consulta.
+            </span>
+          </TsAlert>
+        )}
+
+      {r.exportConfirmationRequired && r.data && (
+        <div
+          role="alert"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--ts-semantic-size-space-300, 0.5rem)',
+            padding: 'var(--ts-semantic-size-space-400, 0.75rem)',
+            border: '1px solid var(--ts-semantic-color-border-warning, #d97706)',
+            borderRadius: 'var(--ts-semantic-size-radius-200, 0.375rem)',
+            backgroundColor: 'var(--ts-semantic-color-surface-warning-subtle, #fffbeb)',
+            color: 'var(--ts-semantic-color-text-default, #0b253b)',
+            boxSizing: 'border-box',
+          }}
+        >
+          <strong>Confirmar exportación de gran volumen</strong>
+          <span>
+            Se van a exportar {r.data.kpis.totalRegistros.toLocaleString('es-ES')} registros. La generación puede
+            tardar. El aviso desaparecerá al cancelar o continuar.
+          </span>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <TsButton type="button" variant="secondary" size="small" onClick={r.cancelarConfirmacionExportacion}>
+              Cancelar
+            </TsButton>
+            <TsButton type="button" variant="primary" size="small" onClick={r.confirmarExportacionExcel}>
+              Continuar exportación
+            </TsButton>
+          </div>
+        </div>
+      )}
+
       {/* Acciones de la consulta fuera del contenedor de filtros */}
       <div
         className="cd-localizacion-actions"
@@ -310,9 +491,11 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
           title={`Exportar libro oficial (${cfg.hojaExcel}.xlsx)`}
           subtitle="Exportación íntegra según los filtros globales"
           content={
-            hayDatos
-              ? 'Genera el Excel con todos los registros de la consulta y los filtros aplicados, independientemente del buscador visual del grid.'
-              : 'Realice una consulta con datos para habilitar la exportación a Excel.'
+            exportacionSuperaLimite
+              ? `No se puede exportar: el resultado supera el límite actual de ${r.maxExportRows.toLocaleString('es-ES')} registros. Acote los filtros y vuelva a consultar.`
+              : hayDatos
+                ? 'Genera el Excel con los registros de la consulta y los filtros aplicados. Para más de 50.000 registros se solicitará confirmación.'
+                : 'Realice una consulta con datos para habilitar la exportación a Excel.'
           }
           position="bottom"
         >
@@ -322,13 +505,24 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
               variant="primary"
               size="medium"
               onClick={r.handleExportarExcel}
-              disabled={!hayDatos || r.isExporting || r.isLoading}
+              disabled={!hayDatos || exportacionSuperaLimite || r.isExporting || r.isLoading}
             >
               <TsIcon slot="prefix" name={r.isExporting ? 'hourglass_empty' : 'download'} />
               {r.isExporting ? 'Exportando...' : 'Exportar a Excel'}
             </TsButton>
           </span>
         </AppTooltip>
+        {exportacionSuperaLimite && (
+          <AppTooltip
+            title="Exportación no disponible"
+            content={`No se puede exportar: el resultado supera el límite actual de ${r.maxExportRows.toLocaleString('es-ES')} registros. Acote los filtros y vuelva a consultar.`}
+            position="bottom"
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--ts-semantic-color-text-subtle, #5c768d)', cursor: 'help' }}>
+              <TsIcon name="info" aria-label="Información sobre el límite de exportación" />
+            </span>
+          </AppTooltip>
+        )}
       </div>
 
       {/* 3. Barra Principal de Fechas, Sociedad, Estaciones, Fase y Único Botón "Consultar" */}
@@ -1066,7 +1260,7 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
             subtitle={r.data.kpis.truncadoEnGrid ? 'El grid está limitado para agilizar la navegación' : 'Total devuelto por la consulta SQL'}
             content={
               r.data.kpis.truncadoEnGrid
-                ? `Se han localizado ${r.data.kpis.totalRegistros.toLocaleString('es-ES')} registros. La tabla muestra los primeros ${r.data.kpis.mostrandoRegistrosGrid.toLocaleString('es-ES')} y Excel incluye el 100%.`
+              ? `Se han localizado ${r.data.kpis.totalRegistros.toLocaleString('es-ES')} registros. La tabla muestra los primeros ${r.data.kpis.mostrandoRegistrosGrid.toLocaleString('es-ES')}.`
                 : 'Total de registros devueltos por la consulta SQL y cargados en la tabla.'
             }
             position="top"
@@ -1077,8 +1271,8 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
                 value={r.data.kpis.totalRegistros.toLocaleString('es-ES')}
                 subtitle={
                   r.data.kpis.truncadoEnGrid
-                    ? `Mostrando ${r.data.kpis.mostrandoRegistrosGrid.toLocaleString('es-ES')} en tabla (100% en Excel)`
-                    : '100% cargados en tabla interactiva'
+                    ? `Mostrando ${r.data.kpis.mostrandoRegistrosGrid.toLocaleString('es-ES')} en tabla`
+                    : 'Registros cargados en tabla interactiva'
                 }
                 icon="assignment"
                 variant="primary"
@@ -1312,82 +1506,16 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: '1 1 320px', minWidth: 0 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <h3 style={{ margin: 0, fontSize: '0.96rem', fontWeight: 700, color: '#0b253b' }}>
-                  Listado Detallado ({cfg.hojaExcel})
+                  Listado detallado (inspecciones localizadas)
                 </h3>
-                <span style={{ fontSize: '0.76rem', color: '#64748b' }}>
-                  Mostrando <strong>{r.filasPaginadas.length.toLocaleString('es-ES')}</strong> de{' '}
-                  <strong>{r.totalFilas.toLocaleString('es-ES')}</strong> registros ({columnasTabla.length} columnas)
-                </span>
+                <span style={{ fontSize: '0.76rem', color: '#64748b' }}>{resumenGrid}</span>
               </div>
 
-              <div style={{ width: '100%', maxWidth: '520px' }}>
-                <AppTooltip
-                  title={r.busqueda ? 'Filtro visual activo en la tabla' : 'Filtro rápido sobre los resultados cargados'}
-                  subtitle={
-                    r.busqueda
-                      ? `Filtrando en pantalla por: "${r.busqueda}"`
-                      : 'Nota: La exportación a Excel siempre exporta según los filtros globales superiores'
-                  }
-                  content="Escriba matrícula, bastidor, estación, fecha o cualquier valor para filtrar al instante las filas cargadas en memoria."
-                  position="top"
-                  style={{ display: 'block', width: '100%' }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      backgroundColor: '#ffffff',
-                      border: '1.5px solid #cbd5e1',
-                      borderRadius: '6px',
-                      padding: '0 10px',
-                      height: '36px',
-                      boxSizing: 'border-box',
-                    }}
-                  >
-                    <span style={{ color: '#64748b', marginRight: '8px', display: 'flex', alignItems: 'center' }}>
-                      <TsIcon name="search" style={{ fontSize: '16px' }} />
-                    </span>
-                    <input
-                      type="text"
-                      value={r.busqueda}
-                      onChange={(e) => {
-                        r.setBusqueda(e.target.value);
-                        r.setPage(1);
-                      }}
-                      placeholder="Filtrar en tabla por matrícula, bastidor, estación, titular..."
-                      style={{
-                        border: 'none',
-                        outline: 'none',
-                        width: '100%',
-                        fontSize: '0.82rem',
-                        color: '#0f172a',
-                        backgroundColor: 'transparent',
-                        fontWeight: 500,
-                      }}
-                    />
-                    {r.busqueda && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          r.setBusqueda('');
-                          r.setPage(1);
-                        }}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#94a3b8',
-                          cursor: 'pointer',
-                          padding: '2px 4px',
-                          display: 'flex',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <TsIcon name="close" style={{ fontSize: '14px' }} />
-                      </button>
-                    )}
-                  </div>
-                </AppTooltip>
-              </div>
+              <LocalizacionGridSearch
+                value={r.busqueda}
+                searchableFields={searchableFieldNames}
+                onSearchChange={handleGridSearchChange}
+              />
             </div>
 
             {/* Derecha: Selector de "Registros por página" (la paginación queda únicamente abajo) */}
@@ -1560,19 +1688,11 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
                     </td>
                   </tr>
                 ) : (
-                  r.filasPaginadas.map((fila, rIdx) => {
-                    const isHovered = hoveredRowIdx === rIdx;
-                    const baseBg = rIdx % 2 === 0 ? '#ffffff' : '#f8fafc';
-                    const rowBg = isHovered ? '#edf5ff' : baseBg;
-                    return (
+                  r.filasPaginadas.map((fila, rIdx) => (
                       <tr
-                        key={rIdx}
-                        onMouseEnter={() => setHoveredRowIdx(rIdx)}
-                        onMouseLeave={() => setHoveredRowIdx(null)}
+                        key={`${r.page}-${rIdx}`}
                         style={{
-                          backgroundColor: rowBg,
                           borderBottom: '1px solid #e2e8f0',
-                          transition: 'background-color 0.15s ease',
                         }}
                       >
                         {/* 1ª Celda fija: acceso a la ficha del registro */}
@@ -1583,9 +1703,7 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
                             position: 'sticky',
                             left: 0,
                             zIndex: 2,
-                            backgroundColor: rowBg,
                             boxShadow: '2px 0 5px rgba(0, 0, 0, 0.06)',
-                            transition: 'background-color 0.15s ease',
                           }}
                         >
                           <AppTooltip
@@ -1654,8 +1772,7 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
                           );
                         })}
                       </tr>
-                    );
-                  })
+                  ))
                 )}
               </tbody>
             </table>
@@ -1663,21 +1780,33 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
 
           {/* Barra de Paginación Inferior Homogénea (con Scroll-Top automático al cambiar de página) */}
           {r.totalFilas > 0 && (
-            <ReportPaginationBar
-              page={r.page}
-              totalPaginas={r.totalPages}
-              pageSize={r.pageSize}
-              totalFilas={r.totalFilas}
-              unidadRegistros="registros"
-              onPageChange={handleBottomPageChange}
-              onPageSizeChange={(newSize) => {
-                r.setPageSize(newSize);
-                r.setPage(1);
-                setTimeout(() => {
-                  gridTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 40);
-              }}
-            />
+            <>
+              <div
+                style={{
+                  padding: '0.65rem 1.25rem',
+                  color: '#64748b',
+                  fontSize: '0.76rem',
+                  borderTop: '1px solid #e2e8f0',
+                }}
+              >
+                {resumenGrid}
+              </div>
+              <ReportPaginationBar
+                page={r.page}
+                totalPaginas={r.totalPages}
+                pageSize={r.pageSize}
+                totalFilas={r.totalFilas}
+                unidadRegistros="registros"
+                onPageChange={handleBottomPageChange}
+                onPageSizeChange={(newSize) => {
+                  r.setPageSize(newSize);
+                  r.setPage(1);
+                  setTimeout(() => {
+                    gridTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 40);
+                }}
+              />
+            </>
           )}
 
           {/* Pie de Filtros Aplicados: ajustado al ancho del grid, estaciones una por línea (código - nombre) */}
@@ -1909,9 +2038,11 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
         }
         message={
           r.isExporting
-            ? 'Extrayendo registros de Oracle Central y estampando columnas seleccionadas y resumen de filtros aplicados...'
+            ? 'Generando el archivo Excel en el servidor. Esta operación no se puede cancelar de forma segura mientras se serializa el libro...'
             : 'Ejecutando consulta parametrizada sobre las estaciones ITV seleccionadas...'
         }
+        onCancel={r.isLoading ? r.cancelarConsulta : undefined}
+        cancelLabel="Cancelar consulta"
       />
     </div>
   );

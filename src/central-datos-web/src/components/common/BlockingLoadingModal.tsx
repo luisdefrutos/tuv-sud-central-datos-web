@@ -1,10 +1,12 @@
 import React from 'react';
-import { TsSpinner } from '@tuvsud/design-system/react';
+import { TsButton, TsSpinner } from '@tuvsud/design-system/react';
 
 export interface BlockingLoadingModalProps {
   isOpen: boolean;
   title: string;
   message?: string;
+  onCancel?: () => void;
+  cancelLabel?: string;
 }
 
 /**
@@ -16,6 +18,8 @@ export const BlockingLoadingModal: React.FC<BlockingLoadingModalProps> = ({
   isOpen,
   title,
   message,
+  onCancel,
+  cancelLabel = 'Cancelar',
 }) => {
   if (!isOpen) return null;
 
@@ -82,6 +86,11 @@ export const BlockingLoadingModal: React.FC<BlockingLoadingModalProps> = ({
             </div>
           )}
         </div>
+        {onCancel && (
+          <TsButton type="button" variant="secondary" size="medium" onClick={onCancel}>
+            {cancelLabel}
+          </TsButton>
+        )}
       </div>
     </div>
   );
