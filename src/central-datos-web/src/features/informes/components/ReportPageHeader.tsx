@@ -6,16 +6,18 @@ export interface ReportPageHeaderProps {
   subtitle?: string;
   icon?: string;
   breadcrumbItemText: string;
+  parentBreadcrumbText?: string;
+  backButtonText?: string;
   onNavigateHome?: () => void;
   onNavigateToInformes?: () => void;
   children?: React.ReactNode;
 }
 
 /**
- * Cabecera oficial estandarizada para todas las páginas de informes.
+ * Cabecera oficial estandarizada para todas las páginas de informes y localización.
  * Cumple el punto 6 del Estándar Oficial de Informes:
- * - Miga de pan de navegación oficial (Inicio > Informes > [Nombre del Informe]).
- * - Botón de retorno "← Volver a Informes".
+ * - Miga de pan de navegación oficial (Inicio > Informes/Inspecciones > [Nombre del Informe]).
+ * - Botón de retorno "← Volver a Informes/Inspecciones".
  * - Título y subtítulo descriptivos limpios sin insignias redundantes ("Oficial").
  * - Contenedor flexible de botones de acción a la derecha.
  */
@@ -24,6 +26,8 @@ export const ReportPageHeader: React.FC<ReportPageHeaderProps> = ({
   subtitle,
   icon,
   breadcrumbItemText,
+  parentBreadcrumbText = 'Informes',
+  backButtonText = '← Volver a Informes',
   onNavigateHome,
   onNavigateToInformes,
   children,
@@ -51,7 +55,7 @@ export const ReportPageHeader: React.FC<ReportPageHeaderProps> = ({
             onClick={onNavigateToInformes || onNavigateHome}
             style={{ cursor: 'pointer', color: '#0046ad', fontWeight: 600 }}
           >
-            Informes
+            {parentBreadcrumbText}
           </TsBreadcrumbItem>
           <TsBreadcrumbItem active>{breadcrumbItemText}</TsBreadcrumbItem>
         </TsBreadcrumb>
@@ -62,7 +66,7 @@ export const ReportPageHeader: React.FC<ReportPageHeaderProps> = ({
           onClick={onNavigateToInformes || onNavigateHome}
           style={{ fontSize: '0.82rem' }}
         >
-          ← Volver a Informes
+          {backButtonText}
         </TsButton>
       </div>
 
