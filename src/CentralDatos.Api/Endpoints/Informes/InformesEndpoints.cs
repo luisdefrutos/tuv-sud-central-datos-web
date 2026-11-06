@@ -687,6 +687,136 @@ public static class InformesEndpoints
         .WithName("ExportarEnviosRecordatoriosExcel")
         .WithSummary("Genera y descarga el libro Excel multi-pestaña (RESUMEN_GLOBAL, ENVIOS_SMS, ENVIOS_EMAIL) de recordatorios");
 
+        // 32. Catálogos y columnas dinámicas para los 4 módulos de Localización (Inspecciones, Defectos, Elementos, Mediciones)
+        group.MapGet("/localizacion/catalogos/{tipo}", async (
+            string tipo,
+            [FromServices] IInformesLocalizacionService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var catalogos = await service.ObtenerCatalogosAsync(tipo, ct);
+                return Results.Ok(catalogos);
+            }
+            catch (OperationCanceledException)
+            {
+                return Results.StatusCode(499);
+            }
+        })
+        .WithName("ObtenerCatalogosLocalizacion")
+        .WithSummary("Obtiene las columnas dinámicas (CAMPOS_*LOCALIZADOS) y combos maestros para el módulo de localización indicado");
+
+        // 33. Combos en cascada de Localización: Bloques por sección manual
+        group.MapGet("/localizacion/bloques", async (
+            [FromQuery] string? seccionManual,
+            [FromServices] IInformesLocalizacionService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var bloques = await service.ObtenerBloquesPorSeccionAsync(seccionManual, ct);
+                return Results.Ok(bloques);
+            }
+            catch (OperationCanceledException)
+            {
+                return Results.StatusCode(499);
+            }
+        })
+        .WithName("ObtenerBloquesLocalizacion")
+        .WithSummary("Obtiene los bloques del manual de inspección filtrados opcionalmente por sección");
+
+        // 34. Combos en cascada de Localización: Elementos/Defectos por bloque y sección
+        group.MapGet("/localizacion/elementos/{bloque}", async (
+            string bloque,
+            [FromQuery] string? seccionManual,
+            [FromServices] IInformesLocalizacionService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var elementos = await service.ObtenerElementosPorBloqueAsync(bloque, seccionManual, ct);
+                return Results.Ok(elementos);
+            }
+            catch (OperationCanceledException)
+            {
+                return Results.StatusCode(499);
+            }
+        })
+        .WithName("ObtenerElementosLocalizacion")
+        .WithSummary("Obtiene los puntos/elementos de un bloque específico");
+
+        // 35. Combos en cascada de Localización: Subdefectos y números por bloque y defecto
+        group.MapGet("/localizacion/subdefectos/{bloque}/{defecto}", async (
+            string bloque,
+            string defecto,
+            [FromQuery] string? seccionManual,
+            [FromServices] IInformesLocalizacionService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var subdefectos = await service.ObtenerSubdefectosAsync(bloque, defecto, seccionManual, ct);
+                return Results.Ok(subdefectos);
+            }
+            catch (OperationCanceledException)
+            {
+                return Results.StatusCode(499);
+            }
+        })
+        .WithName("ObtenerSubdefectosLocalizacion")
+        .WithSummary("Obtiene los subdefectos y números de un bloque y elemento específicos");
+
+        // 36. Consulta dinámica de Localización (Inspecciones, Defectos, Elementos, Mediciones)
+        group.MapPost("/localizacion/consultar", async (
+            [FromBody] FiltrosLocalizacionRequestDto filtros,
+            [FromServices] IInformesLocalizacionService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var resultado = await service.ConsultarLocalizacionAsync(filtros, ct);
+                return Results.Ok(resultado);
+            }
+            catch (OperationCanceledException)
+            {
+                return Results.StatusCode(499);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .WithName("ConsultarLocalizacion")
+        .WithSummary("Ejecuta la búsqueda dinámica de localización con selección de columnas y criterios avanzados");
+
+        // 37. Exportación oficial a Excel de Localización (con pie de filtros aplicados fiel a escritorio)
+        group.MapPost("/localizacion/exportar-excel", async (
+            [FromBody] FiltrosLocalizacionRequestDto filtros,
+            [FromServices] IInformesLocalizacionService service,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var (archivoBytes, nombreFichero) = await service.ExportarExcelAsync(filtros, ct);
+
+                return Results.File(
+                    archivoBytes,
+                    contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileDownloadName: nombreFichero);
+            }
+            catch (OperationCanceledException)
+            {
+                return Results.StatusCode(499);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { errorMessage = ex.Message });
+            }
+        })
+        .RequireRateLimiting("excel-export-policy")
+        .WithName("ExportarLocalizacionExcel")
+        .WithSummary("Genera y descarga el libro Excel oficial de localización con las columnas activas y resumen de filtros aplicados");
+
         return app;
     }
 }

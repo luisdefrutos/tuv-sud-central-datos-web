@@ -61,6 +61,7 @@ export interface ReportKpiCardProps {
   textColor?: string;
   tooltipItems?: DetalleElementoTooltip[];
   tooltipSubtitle?: string;
+  showTooltips?: boolean;
 }
 
 const BORDER_COLORS: Record<string, string> = {
@@ -87,8 +88,29 @@ export const ReportKpiCard: React.FC<ReportKpiCardProps> = ({
   textColor,
   tooltipItems,
   tooltipSubtitle,
+  showTooltips = true,
 }) => {
   const activeBorderColor = BORDER_COLORS[variant] || BORDER_COLORS.neutral;
+  const iconElement = icon ? (
+    <span
+      style={{
+        fontSize: '1.25rem',
+        lineHeight: 1,
+        width: '32px',
+        height: '32px',
+        borderRadius: '50%',
+        backgroundColor: '#f1f5f9',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: showTooltips ? 'help' : 'default',
+        color: activeBorderColor,
+      }}
+      aria-hidden="true"
+    >
+      <TsIcon name={getMaterialIconName(icon)} size={18} />
+    </span>
+  ) : null;
 
   return (
     <TsCard
@@ -118,7 +140,7 @@ export const ReportKpiCard: React.FC<ReportKpiCardProps> = ({
         >
           {title}
         </span>
-        {icon && (
+        {iconElement && showTooltips ? (
           <AppTooltip
             title={title}
             badge={String(value)}
@@ -128,26 +150,9 @@ export const ReportKpiCard: React.FC<ReportKpiCardProps> = ({
             items={tooltipItems}
             position="top"
           >
-            <span
-              style={{
-                fontSize: '1.25rem',
-                lineHeight: 1,
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                backgroundColor: '#f1f5f9',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'help',
-                color: activeBorderColor,
-              }}
-              aria-hidden="true"
-            >
-              <TsIcon name={getMaterialIconName(icon)} size={18} />
-            </span>
+            {iconElement}
           </AppTooltip>
-        )}
+        ) : iconElement}
       </div>
 
       <div style={{ marginTop: '0.4rem' }}>
@@ -163,7 +168,7 @@ export const ReportKpiCard: React.FC<ReportKpiCardProps> = ({
 
             return (
               <div
-                title={strVal}
+                title={showTooltips ? strVal : undefined}
                 style={{
                   fontSize: isTextualLong ? '0.98rem' : 'clamp(1.4rem, 2.2vw, 1.85rem)',
                   fontWeight: isTextualLong ? 700 : 800,

@@ -74,6 +74,12 @@ export const API_ENDPOINTS = {
     ENVIOS_RECORDATORIOS_PLANTILLAS: `${BASE_URL}/api/v1/informes/envios-recordatorios/plantillas`,
     ENVIOS_RECORDATORIOS_CONSULTAR: `${BASE_URL}/api/v1/informes/envios-recordatorios/consultar`,
     ENVIOS_RECORDATORIOS_EXPORTAR: `${BASE_URL}/api/v1/informes/envios-recordatorios/exportar-excel`,
+    LOCALIZACION_CATALOGOS: `${BASE_URL}/api/v1/informes/localizacion/catalogos`,
+    LOCALIZACION_BLOQUES: `${BASE_URL}/api/v1/informes/localizacion/bloques`,
+    LOCALIZACION_ELEMENTOS: `${BASE_URL}/api/v1/informes/localizacion/elementos`,
+    LOCALIZACION_SUBDEFECTOS: `${BASE_URL}/api/v1/informes/localizacion/subdefectos`,
+    LOCALIZACION_CONSULTAR: `${BASE_URL}/api/v1/informes/localizacion/consultar`,
+    LOCALIZACION_EXPORTAR: `${BASE_URL}/api/v1/informes/localizacion/exportar-excel`,
   },
   DOCS: {
     SWAGGER: `${BASE_URL}/swagger`,

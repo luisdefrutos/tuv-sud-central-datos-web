@@ -4,6 +4,77 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.29.3] - 06/11/2026 - *Validación de navegación y selectores de Localización*
+
+### 🛠️ Robustez
+* Se verificó el registro de los cuatro localizadores en el hub, menú y enrutamiento hash.
+* Los errores al cargar bloques, elementos y subdefectos dependientes ahora se muestran en la página, en lugar de dejar vacíos los combos sin explicación.
+
+## [2.29.2] - 06/11/2026 - *Ajustes finales de disposición en Localización*
+
+### 🎨 Interfaz
+* Se sitúan las acciones de selección de campos y exportación fuera de la caja de filtros, alineadas a la derecha y en una misma fila.
+* Se eliminan las referencias visibles a formularios `frmCriterios...` de los subtítulos.
+* Los KPI conservan sus tooltips personalizados, pero no son clicables.
+* Se aumenta el espacio entre el título y el contador del listado, y el donut ocupa todo el ancho disponible igual que el gráfico de barras.
+
+## [2.29.1] - 06/11/2026 - *Ajustes de usabilidad en Localización*
+
+### 🎨 Interfaz de Localización
+* Se trasladan **"Seleccionar campos"** y **"Exportar a Excel"** a la derecha de la barra de filtros, justo encima de **"Consultar"**.
+* Los KPI quedan como indicadores informativos, sin acción de clic, y conservan sus tooltips descriptivos.
+* En el grid se conserva la cabecera **"Ficha"** y se cambia la acción de cada fila a **"Ver"**, con fondo blanco, borde y texto azules.
+* El gráfico por estación ocupa el ancho completo de la misma región que las tarjetas KPI.
+* Se mantiene el título del listado **"Listado Detallado (INSPECCIONES_LOCALIZADAS)"**.
+
+## [2.29.0] - 06/11/2026 - *Implementación Completa del Menú 3. Inspecciones (Localización de Inspecciones, Defectos, Elementos y Mediciones)*
+
+### 🎨 Estandarización Visual y Ajustes UI/UX en Localización (`LocalizacionReportPage.tsx`, `LocalizacionColumnSelectorModal.tsx`, `ReportDonutChart.tsx`, `AppTooltip.tsx`)
+* **Botones y Filtros Generales**:
+  * Agrupación de los botones *"Seleccionar campos"* y *"Exportar a Excel"* en la esquina superior derecha (`ReportPageHeader`).
+  * Fusión de *"Consultar"* y *"Filtrar Grid"* en un único botón **"Consultar"** que aplica todos los criterios de búsqueda.
+  * División de los criterios avanzados en 2 pestañas independientes (**1. Datos Vehículo y Vencimiento** y **2. Titular / Cliente Facturación**), cada una con contador de filtros activos y botón *"Limpiar filtro"* propio.
+  * Mejora del 4º KPI (*"Criterios de Búsqueda Activos"*) con tooltip desglosado y navegación por clic al pie de filtros, donde las estaciones se muestran concatenando código y nombre (`0202 - ALBACETE`).
+* **Modal "Seleccionar campos"**:
+  * Cabecera en azul corporativo más claro (`#0046ad` -> `#1d63c8`), corrección del espaciado en la etiqueta *"14 de 81 columnas seleccionadas"* y botones *Cancelar / Aceptar* estandarizados abajo a la derecha.
+* **Grid "Listado Detallado (INSPECCIONES_LOCALIZADAS)"**:
+  * Cabecera unificada en azul `#0046ad` (`.cd-table-th`), efecto hover `#edf5ff` y columna **"Ficha"** (botón azul) fijada como **primera columna inamovible (`sticky left: 0`)**.
+  * Controles superiores con buscador a la izquierda y paginador superior + selector de *"Registros por página"* agrupados a la derecha.
+  * Iconos de ordenación (`SortIndicator`) visibles en todas las cabeceras con ordenación cronológica para fechas `DD/MM/YYYY` y *scroll-top* automático hacia el inicio de la tabla al paginar desde el control inferior.
+* **Gráficos, Tooltips y Exportación Excel**:
+  * Inclusión de iconos estándar (`bar_chart`, `pie_chart`), tooltips con fondo azul corporativo suave (`#eff6ff`), barras de ranking con colores diferenciados por sociedad (**ATISAE** `#0046ad` y **CAL** `#00875a`), leyenda derecha con scroll vertical compacto en el gráfico circular y exportación Excel basada exclusivamente en los filtros globales.
+* **Segunda iteración (contención y KPIs accionables)**:
+  * Los 4 KPIs ejecutan una acción al hacer clic (ir al listado y enfocar buscador, abrir ranking por estación, abrir selector de campos, ir al pie de filtros) con realce visual de la sección destino y soporte de teclado.
+  * Buscador situado bajo el título *"Listado Detallado"*; arriba a la derecha solo *"Registros por página"*; paginación únicamente abajo.
+  * El grid ya no desborda la pantalla: contenedor al 100 % con scroll interno horizontal y vertical, cabecera sticky y columna *"Ficha"* fija.
+  * Pie de filtros ajustado al ancho del grid con las estaciones una por línea (`Código - Nombre`) en columnas responsivas.
+
+### 🚀 Nuevas Funcionalidades (Menú 3. Inspecciones)
+* **Motor Unificado de Localización Conducido por Metadatos (`OracleInformesRepository.Localizacion.cs` e `InformesLocalizacionService.cs`)**:
+  * Implementación completa en backend `.NET 10` de los 4 módulos de localización del legado (`frmCriteriosLocalizacion.vb`, `frmCriteriosLocalizacionDefectos.vb`, `frmCriteriosLocalizacionElementos.vb` y `frmCriteriosLocalizacionMediciones.vb`):
+    1. **Localización de Inspecciones (`loc-inspecciones`)**: Metadatos `CAMPOS_INSPECCIONESLOCALIZADAS`, filtros de vehículo, servicio, inspección, fase, inspector/mecanógrafo, tarifas, cupones y opción *"Sin insp. periódica posterior"* (`NOT EXISTS`).
+    2. **Localización de Defectos (`loc-defectos`)**: Metadatos `CAMPOS_DEFECTOSLOCALIZADOS`, combos en cascada de Bloque, Defecto y Subdefecto (`BLOQUE_DEFECTO`, `DEFECTO`, `SUBDEFECTO`), calificación (`DL`, `DG`, `DMG`) y ubicación.
+    3. **Localización de Elementos (`loc-elementos`)**: Metadatos `CAMPOS_ELEMENTOSLOCALIZADOS`, combos en cascada de Bloque y Elemento (`ELEMENTO`) sobre `INSPECCION_ELEMENTO`.
+    4. **Localización de Mediciones (`loc-mediciones`)**: Metadatos `CAMPOS_MEDICIONESLOCALIZADAS`, umbrales técnicos (`>=` / `<=`) de frenado (eficacia servicio, estacionamiento, secundario), emisiones gasolina (CO ralentí, CO acelerado, Lambda), opacidad diésel, sonómetro y kilometraje/OBD.
+  * **Prevención de Cuellos de Botella SQL y Web**:
+    * Uso 100% parametrizado con `OracleParameter` (eliminación de *Hard Parsing* y conversión segura del comodín `*` a `LIKE`).
+    * Inclusión condicional del `LEFT JOIN` a `LISTA_DEFECTOS` (`LISTAGG`) únicamente cuando el usuario selecciona dicha columna.
+    * Ordenación ordinal dinámica en consultas `SELECT DISTINCT` para evitar errores `ORA-01791` al personalizar columnas.
+    * Caché en memoria (`ConcurrentDictionary`) para los catálogos de columnas, tipos de vehículo, servicios, tipos de inspección, tarifas y bloques.
+* **Exportación Oficial Excel 1:1 con la Aplicación de Escritorio (`ClosedXML`)**:
+  * Hojas nombradas exactamente igual que en el legado (`INSPECCIONES_LOCALIZADAS`, `DEFECTOS_LOCALIZADOS`, `ELEMENTOS_LOCALIZADOS`, `MEDICIONES_LOCALIZADAS`).
+  * Exportación exclusiva de los campos marcados por el usuario en el selector de columnas (`ENCABEZADO_TABLA`), saneamiento de `FECHA_ULTIMA_ITV < 1980` y estampado del bloque `"Filtros aplicados en la búsqueda:"` en la fila `Rows.Count + 4`, columna `A`.
+* **Interfaz Web React 19 + TÜV SÜD Algorithm Design System (`InspeccionesHubPage.tsx` y `LocalizacionReportPage.tsx`)**:
+  * Nuevo Hub de **3. Inspecciones** con tarjetas de acceso directo y navegación persistente ante `F5` (`#/modulo/inspecciones/...`).
+  * Selector modal interactivo de columnas (`LocalizacionColumnSelectorModal.tsx`) con buscador instantáneo y restauración a los valores por defecto de Oracle (`POR_DEFECTO = -1`).
+  * Filtros avanzados colapsables, inicialización de fechas Ayer-Hoy fiel al escritorio, 4 KPIs ejecutivos, gráficos de barras y donut y tabla paginada responsiva.
+* **Optimización del Manejador Global de Excepciones y Auditoría (`Program.cs`)**:
+  * Distinción automática entre cancelaciones de cliente (`OperationCanceledException` / `ORA-01013` por `AbortController` o `F5` -> `HTTP 499` con nivel `Information`) y excepciones no controladas reales (`HTTP 500` con nivel `Error`).
+  * Enriquecimiento del log de errores en disco (`logs/central-datos-YYYYMMDD.log`) con identidad completa del operador JWT (`Usuario`, `IdEmpleado`, `Rol`, `IP`, `Método` y `Ruta`).
+  * Persistencia *fail-safe* de errores no controlados en `CENTRALITV.LOG_AUDITORIA_WEB` (`Accion = 'ERROR_SISTEMA'`) siempre que el error no sea una caída de red/listener de la propia base de datos Oracle.
+
+---
+
 ## [2.28.1] - 05/11/2026 - *Corrección de Enrutamiento Dual Local/IIS, Endpoints de SMS/EMAILs y Reseteo de Sesión al Cerrar Sesión*
 
 ### 🛠️ Correcciones (Bugfixes)
@@ -1072,4 +1143,3 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
   * Integración del sistema de diseño corporativo **TÜV SÜD Algorithm Design System** (`@tuvsud/design-system`).
   * Configuración de tokens semánticos CSS y tipografía oficial `TUV SUD Pro`.
 * Primer prototipo visual del monitor de estaciones ITV.
-

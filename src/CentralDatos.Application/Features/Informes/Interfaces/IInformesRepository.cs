@@ -119,4 +119,28 @@ public interface IInformesRepository
     Task<IReadOnlyList<DTOs.FilaDetalleEnviosRecordatoriosDto>> ObtenerDetalleEnviosRecordatoriosAsync(
         DTOs.FiltrosEnviosRecordatoriosRequestDto filtros,
         CancellationToken cancellationToken = default);
+
+    Task<DTOs.CatalogosLocalizacionResponseDto> ObtenerCatalogosLocalizacionAsync(
+        string tipo,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<DTOs.OpcionComboLocalizacionDto>> ObtenerBloquesLocalizacionAsync(
+        string? seccionManual,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<DTOs.OpcionComboLocalizacionDto>> ObtenerElementosLocalizacionAsync(
+        string bloque,
+        string? seccionManual = null,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<DTOs.SubdefectoLocalizacionDto>> ObtenerSubdefectosLocalizacionAsync(
+        string bloque,
+        string defecto,
+        string? seccionManual = null,
+        CancellationToken cancellationToken = default);
+
+    Task<DTOs.ResultadoEjecucionLocalizacionRaw> EjecutarConsultaLocalizacionAsync(
+        DTOs.FiltrosLocalizacionRequestDto filtros,
+        int maxFilasRetorno,
+        CancellationToken cancellationToken = default);
 }

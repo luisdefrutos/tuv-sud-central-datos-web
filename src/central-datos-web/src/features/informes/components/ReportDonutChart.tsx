@@ -133,6 +133,9 @@ export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
   return (
     <TsCard
       style={{
+        width: '100%',
+        minWidth: 0,
+        boxSizing: 'border-box',
         padding: 'clamp(1rem, 2vw, 1.25rem) clamp(0.75rem, 2vw, 1.5rem)',
         backgroundColor: '#ffffff',
         borderRadius: '8px',
@@ -153,9 +156,11 @@ export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
         style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-around',
+          justifyContent: 'space-evenly',
           flexWrap: 'wrap',
           gap: '1.5rem',
+          width: '100%',
+          boxSizing: 'border-box',
         }}
       >
         {/* Gráfico Donut SVG */}
@@ -300,15 +305,19 @@ export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
           </div>
         </div>
 
-        {/* Leyenda interactiva al lado con AppTooltip corporativo */}
+        {/* Leyenda interactiva a la derecha con scroll vertical compacto */}
         <div
+          className="cd-touch-scroll"
           style={{
-            flex: '1 1 240px',
+            flex: '1 1 260px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '8px',
-            maxHeight: '260px',
+            gap: '4px',
+            maxHeight: '205px',
             overflowY: 'auto',
+            paddingRight: '8px',
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#0046ad #f1f5f9',
           }}
         >
           {slices.map((slice, index) => {
@@ -372,17 +381,21 @@ export const ReportDonutChart: React.FC<ReportDonutChartProps> = ({
                     <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>
                       {valueFormatter(slice.valor)}
                     </span>
-                    <TsBadge
-                      variant="neutral"
+                    <span
                       style={{
                         fontSize: '0.72rem',
                         fontWeight: 700,
-                        minWidth: '42px',
+                        minWidth: '46px',
                         textAlign: 'center',
+                        padding: '2px 7px',
+                        borderRadius: '999px',
+                        backgroundColor: '#eff6ff',
+                        color: '#0046ad',
+                        border: '1px solid #bfdbfe',
                       }}
                     >
                       {slice.pct.toFixed(1)}%
-                    </TsBadge>
+                    </span>
                   </div>
                 </div>
               </AppTooltip>

@@ -225,12 +225,12 @@ export const AppTooltip: React.FC<AppTooltipProps> = ({
               zIndex: 999999,
               maxWidth: typeof maxWidth === 'number' ? `min(calc(100vw - 28px), ${maxWidth}px)` : maxWidth,
               minWidth: title || (items && items.length > 0) ? '300px' : 'auto',
-              backgroundColor: '#ffffff', // Fondo Blanco Corporativo
-              color: '#1e293b', // Texto Oscuro de Alta Legibilidad
+              background: 'linear-gradient(180deg, #eff6ff 0%, #ffffff 42px)', // Fondo Azul Suave Corporativo Unificado
+              color: '#0b253b', // Texto Azul Oscuro Corporativo
               borderRadius: '8px',
               padding: title || items ? '12px 14px' : '8px 12px',
-              boxShadow: '0 10px 25px -4px rgba(0, 70, 173, 0.16), 0 8px 16px -4px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(0, 70, 173, 0.1)',
-              border: '1px solid #cbd5e1',
+              boxShadow: '0 10px 25px -4px rgba(0, 70, 173, 0.2), 0 8px 16px -4px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(0, 70, 173, 0.18)',
+              border: '1px solid #bfdbfe',
               borderTop: `3px solid ${effectiveAccent}`,
               pointerEvents: 'auto', // Permite interactuar y hacer scroll
               fontFamily: 'var(--ts-font-family-sans, "TUV SUD Pro", system-ui, -apple-system, sans-serif)',

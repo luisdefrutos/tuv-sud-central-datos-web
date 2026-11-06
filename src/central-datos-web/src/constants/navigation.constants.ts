@@ -30,7 +30,7 @@ export interface MenuGroup {
 }
 
 /** Pantallas ya migradas a la web (resto muestran la ficha "en migración") */
-export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion', 'facturacion-excel', 'num-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'cupon-descuento', 'miner-datos-globales', 'control-obd-no-coincidentes', 'inspecciones-rango-horario', 'defectologia-volumen', 'volumen-defectos', 'clientes-volumen', 'recordatorios-enviados', 'recordatorios-totales', 'envios-recordatorios'] as const;
+export const IMPLEMENTED_SCREENS = ['ultima-fecha', 'facturacion', 'facturacion-excel', 'num-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'cupon-descuento', 'miner-datos-globales', 'control-obd-no-coincidentes', 'inspecciones-rango-horario', 'defectologia-volumen', 'volumen-defectos', 'clientes-volumen', 'recordatorios-enviados', 'recordatorios-totales', 'envios-recordatorios', 'loc-inspecciones', 'loc-defectos', 'loc-elementos', 'loc-mediciones'] as const;
 
 export const DESKTOP_MENUS: MenuGroup[] = [
   {
@@ -118,10 +118,31 @@ export const DESKTOP_MENUS: MenuGroup[] = [
     id: 'inspecciones',
     label: 'Inspecciones',
     items: [
-      { id: 'loc-inspecciones', label: 'Localización inspecciones' },
-      { id: 'loc-defectos', label: 'Localización defectos', separatorBefore: true },
-      { id: 'loc-elementos', label: 'Localización elementos' },
-      { id: 'loc-mediciones', label: 'Localización mediciones' },
+      {
+        id: 'loc-inspecciones',
+        label: 'Localización inspecciones',
+        icon: 'directions_car',
+        descripcion: 'Explorador dinámico multi-estación de inspecciones con filtros avanzados de vehículo, titular, facturación, vencimientos y selección de columnas exportables.',
+      },
+      {
+        id: 'loc-defectos',
+        label: 'Localización defectos',
+        icon: 'warning',
+        separatorBefore: true,
+        descripcion: 'Búsqueda y auditoría detallada de defectos detectados filtrando por sección del manual, bloque, elemento, subdefecto y características del vehículo.',
+      },
+      {
+        id: 'loc-elementos',
+        label: 'Localización elementos',
+        icon: 'build',
+        descripcion: 'Consulta técnica de elementos e hitos verificados en línea de inspección por bloque reglamentario, estación y tipología de vehículo.',
+      },
+      {
+        id: 'loc-mediciones',
+        label: 'Localización mediciones',
+        icon: 'analytics',
+        descripcion: 'Explotación técnica de valores de medición en línea (frenómetro, emisiones, alineación, OBD y pesos) con clasificación MINER y selector de magnitudes.',
+      },
     ],
   },
   {

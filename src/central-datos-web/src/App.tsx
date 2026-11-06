@@ -20,6 +20,8 @@ import { ClientesVolumenReportPage } from './features/informes/pages/ClientesVol
 import { EnviosTotalesReportPage } from './features/informes/pages/EnviosTotalesReportPage';
 import { EnviosEnviadosReportPage } from './features/informes/pages/EnviosEnviadosReportPage';
 import { InformesHubPage } from './features/informes/pages/InformesHubPage';
+import { InspeccionesHubPage } from './features/inspecciones/pages/InspeccionesHubPage';
+import { LocalizacionReportPage } from './features/inspecciones/pages/LocalizacionReportPage';
 import { DESKTOP_MENUS, findMenuItem } from './constants/navigation.constants';
 import { UI_CONSTANTS } from './constants/ui.constants';
 import {
@@ -43,7 +45,7 @@ function AppContent() {
       if (itemId === 'volumen-defectos') itemId = 'defectologia-volumen';
       if (itemId) {
         const { group } = findMenuItem(itemId);
-        const autoGroup = group?.id || (['facturacion', 'facturacion-excel', 'num-inspecciones', 'numero-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'sin-inspector', 'cupon-descuento', 'miner-datos-globales', 'control-obd-no-coincidentes', 'bastidores-obd-no-coincidentes', 'inspecciones-rango-horario', 'rango-horario', 'defectologia-volumen', 'volumen-defectos', 'clientes-volumen', 'recordatorios-enviados', 'recordatorios-totales', 'envios-recordatorios', 'informes'].includes(itemId) ? 'informes' : 'aplicacion');
+        const autoGroup = group?.id || (itemId === 'inspecciones' ? 'inspecciones' : ['facturacion', 'facturacion-excel', 'num-inspecciones', 'numero-inspecciones', 'duracion-promedio', 'defecto-obd', 'control-sin-inspector', 'sin-inspector', 'cupon-descuento', 'miner-datos-globales', 'control-obd-no-coincidentes', 'bastidores-obd-no-coincidentes', 'inspecciones-rango-horario', 'rango-horario', 'defectologia-volumen', 'volumen-defectos', 'clientes-volumen', 'recordatorios-enviados', 'recordatorios-totales', 'envios-recordatorios', 'informes'].includes(itemId) ? 'informes' : 'aplicacion');
         return { itemId, groupId: autoGroup };
       }
     }
@@ -552,9 +554,75 @@ function AppContent() {
           />
         )}
 
+        {/* CASO D.2: Catálogo / Hub del Menú 3. Inspecciones */}
+        {activeGroupId === 'inspecciones' && (activeItemId === null || activeItemId === 'inspecciones') && (
+          <InspeccionesHubPage
+            onSelectModule={(moduleId) => handleSelectItem(moduleId, 'inspecciones')}
+            onNavigateHome={handleGoHome}
+          />
+        )}
+
+        {/* CASO D.3: Los 4 Módulos de Localización del Menú 3. Inspecciones */}
+        {activeItemId === 'loc-inspecciones' && (
+          <ErrorBoundary fallbackTitle="Error en Localización de Inspecciones">
+            <LocalizacionReportPage
+              tipo="inspecciones"
+              onNavigateHome={handleGoHome}
+              onNavigateToInspecciones={() => {
+                setActiveGroupId('inspecciones');
+                setActiveItemId('inspecciones');
+              }}
+            />
+          </ErrorBoundary>
+        )}
+
+        {activeItemId === 'loc-defectos' && (
+          <ErrorBoundary fallbackTitle="Error en Localización de Defectos">
+            <LocalizacionReportPage
+              tipo="defectos"
+              onNavigateHome={handleGoHome}
+              onNavigateToInspecciones={() => {
+                setActiveGroupId('inspecciones');
+                setActiveItemId('inspecciones');
+              }}
+            />
+          </ErrorBoundary>
+        )}
+
+        {activeItemId === 'loc-elementos' && (
+          <ErrorBoundary fallbackTitle="Error en Localización de Elementos">
+            <LocalizacionReportPage
+              tipo="elementos"
+              onNavigateHome={handleGoHome}
+              onNavigateToInspecciones={() => {
+                setActiveGroupId('inspecciones');
+                setActiveItemId('inspecciones');
+              }}
+            />
+          </ErrorBoundary>
+        )}
+
+        {activeItemId === 'loc-mediciones' && (
+          <ErrorBoundary fallbackTitle="Error en Localización de Mediciones">
+            <LocalizacionReportPage
+              tipo="mediciones"
+              onNavigateHome={handleGoHome}
+              onNavigateToInspecciones={() => {
+                setActiveGroupId('inspecciones');
+                setActiveItemId('inspecciones');
+              }}
+            />
+          </ErrorBoundary>
+        )}
+
         {/* CASO E: Resto de Módulos de la Aplicación de Escritorio con su correspondiente miga de pan */}
         {activeItemId !== null &&
           activeItemId !== 'informes' &&
+          activeItemId !== 'inspecciones' &&
+          activeItemId !== 'loc-inspecciones' &&
+          activeItemId !== 'loc-defectos' &&
+          activeItemId !== 'loc-elementos' &&
+          activeItemId !== 'loc-mediciones' &&
           activeItemId !== 'ultima-fecha' &&
           activeItemId !== 'facturacion' &&
           activeItemId !== 'facturacion-excel' &&
