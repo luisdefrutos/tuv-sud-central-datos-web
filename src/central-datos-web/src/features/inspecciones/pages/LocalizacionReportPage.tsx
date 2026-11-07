@@ -111,6 +111,7 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
 
   const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
   const [activeCriteriaTab, setActiveCriteriaTab] = useState<'vehiculo' | 'titular'>('vehiculo');
+  const [activePersonCriteriaTab, setActivePersonCriteriaTab] = useState<'titular' | 'facturacion'>('titular');
   const [showChartSection, setShowChartSection] = useState(true);
   const [chartMode, setChartMode] = useState<'barras' | 'donut'>('barras');
   const gridTopRef = useRef<HTMLDivElement>(null);
@@ -560,7 +561,7 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
                 }}
               >
                 <TsIcon name="person" size={16} />
-                <span>2. Titular / Cliente Facturación</span>
+                <span>{tipo === 'inspecciones' ? '2. Titular / Facturación' : '2. Titular'}</span>
                 {r.activeTitularFacturaFiltersCount > 0 && (
                   <span
                     style={{
@@ -639,6 +640,7 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
               {(tipo === 'defectos' || tipo === 'mediciones') && (
                 <div
                   style={{
+                    order: tipo === 'mediciones' ? 2 : 1,
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
                     gap: '0.75rem',
@@ -804,6 +806,7 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
               {/* Campos de Identificación y Clasificación del Vehículo */}
               <div
                 style={{
+                  order: tipo === 'mediciones' ? 1 : 2,
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))',
                   gap: '0.75rem',
@@ -812,7 +815,7 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
                 {tipo === 'inspecciones' && (
                   <>
                     <div>
-                      <label style={labelStyle}>Matrícula (*)</label>
+                      <label style={labelStyle}>Matrícula</label>
                       <input
                         type="text"
                         value={r.matricula}
@@ -823,7 +826,7 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
                       />
                     </div>
                     <div>
-                      <label style={labelStyle}>Nº Bastidor VIN (*)</label>
+                      <label style={labelStyle}>Nº Bastidor VIN</label>
                       <input
                         type="text"
                         value={r.bastidor}
@@ -837,7 +840,7 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
                 )}
 
                 <div>
-                  <label style={labelStyle}>Marca (*)</label>
+                  <label style={labelStyle}>Marca</label>
                   <input
                     type="text"
                     value={r.marca}
@@ -925,7 +928,7 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
                 {tipo === 'inspecciones' && (
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <label style={labelStyle}>Homologación (*)</label>
+                      <label style={labelStyle}>Homologación</label>
                       <label style={{ fontSize: '0.7rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer' }}>
                         <input
                           type="checkbox"
@@ -1004,175 +1007,216 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
             </div>
           )}
 
-          {/* CAJA 2: DATOS DEL TITULAR Y CLIENTE DE FACTURACIÓN */}
           {activeCriteriaTab === 'titular' && (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(185px, 1fr))',
-                gap: '0.75rem',
-                padding: '0.75rem',
-                backgroundColor: '#f8fafc',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
-              }}
-            >
-              <div>
-                <label style={labelStyle}>CIF / NIF Titular (*)</label>
-                <input
-                  type="text"
-                  value={r.cifTitular}
-                  onChange={(e) => r.setCifTitular(e.target.value)}
-                  onKeyDown={handleKeyDownInput}
-                  placeholder="CIF o NIF titular"
-                  style={inputStyle}
-                />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {tipo === 'inspecciones' && (
+                <div
+                  role="tablist"
+                  aria-label="Criterios de titular"
+                  style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}
+                >
+                  {([
+                    ['titular', 'Titular'],
+                    ['facturacion', 'Cliente de facturación'],
+                  ] as const).map(([tab, label]) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      role="tab"
+                      aria-selected={activePersonCriteriaTab === tab}
+                      onClick={() => setActivePersonCriteriaTab(tab)}
+                      style={{
+                        border: '1px solid var(--ts-semantic-color-border-base-default, #cbd5e1)',
+                        borderRadius: 'var(--ts-semantic-size-radius-xl, 8px)',
+                        backgroundColor:
+                          activePersonCriteriaTab === tab
+                            ? 'var(--ts-semantic-color-surface-brand-blue, #0046ad)'
+                            : 'var(--ts-semantic-color-surface-base-default, #ffffff)',
+                        color:
+                          activePersonCriteriaTab === tab
+                            ? 'var(--ts-semantic-color-text-inverted-default, #ffffff)'
+                            : 'var(--ts-semantic-color-text-base-default, #334155)',
+                        padding: '0.4rem 0.75rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(185px, 1fr))',
+                  gap: '0.75rem',
+                  padding: '0.75rem',
+                  backgroundColor: 'var(--ts-semantic-color-surface-neutral-default, #f8fafc)',
+                  borderRadius: 'var(--ts-semantic-size-radius-xl, 8px)',
+                  border: '1px solid var(--ts-semantic-color-border-base-default, #e2e8f0)',
+                }}
+              >
+                {tipo !== 'inspecciones' || activePersonCriteriaTab === 'titular' ? (
+                  <>
+                    <div>
+                      <label style={labelStyle}>{tipo === 'inspecciones' ? 'NIF Titular' : 'NIF'}</label>
+                      <input
+                        type="text"
+                        value={r.cifTitular}
+                        onChange={(e) => r.setCifTitular(e.target.value)}
+                        onKeyDown={handleKeyDownInput}
+                        placeholder="NIF titular"
+                        style={inputStyle}
+                      />
+                    </div>
+                    {tipo === 'inspecciones' && (
+                      <>
+                        <div>
+                          <label style={labelStyle}>Apellidos</label>
+                          <input
+                            type="text"
+                            value={r.apellidosTitular}
+                            onChange={(e) => r.setApellidosTitular(e.target.value)}
+                            onKeyDown={handleKeyDownInput}
+                            placeholder="Apellidos titular"
+                            style={inputStyle}
+                          />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Código postal</label>
+                          <input
+                            type="text"
+                            value={r.cpTitular}
+                            onChange={(e) => r.setCpTitular(e.target.value)}
+                            onKeyDown={handleKeyDownInput}
+                            placeholder="Ej.: 28*"
+                            style={inputStyle}
+                          />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Provincia</label>
+                          <select
+                            value={r.provinciaTitular}
+                            onChange={(e) => r.setProvinciaTitular(e.target.value)}
+                            style={inputStyle}
+                          >
+                            <option value="">Todas</option>
+                            {(r.catalogos?.provincias ?? []).map((p) => (
+                              <option key={p.codigo} value={p.descripcion}>{p.descripcion}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Email</label>
+                          <input
+                            type="text"
+                            value={r.emailTitular}
+                            onChange={(e) => r.setEmailTitular(e.target.value)}
+                            onKeyDown={handleKeyDownInput}
+                            placeholder="Email titular"
+                            style={inputStyle}
+                          />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Teléfono</label>
+                          <input
+                            type="text"
+                            value={r.telefonoTitular}
+                            onChange={(e) => r.setTelefonoTitular(e.target.value)}
+                            onKeyDown={handleKeyDownInput}
+                            placeholder="Teléfono"
+                            style={inputStyle}
+                          />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Teléfono 2</label>
+                          <input
+                            type="text"
+                            value={r.telefonoTitular2}
+                            onChange={(e) => r.setTelefonoTitular2(e.target.value)}
+                            onKeyDown={handleKeyDownInput}
+                            placeholder="Teléfono alternativo"
+                            style={inputStyle}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <label style={labelStyle}>NIF/CIF Factura</label>
+                      <input
+                        type="text"
+                        value={r.cifFactura}
+                        onChange={(e) => r.setCifFactura(e.target.value)}
+                        onKeyDown={handleKeyDownInput}
+                        placeholder="NIF/CIF facturación"
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Razón social / apellidos</label>
+                      <input
+                        type="text"
+                        value={r.razonSocialFactura}
+                        onChange={(e) => r.setRazonSocialFactura(e.target.value)}
+                        onKeyDown={handleKeyDownInput}
+                        placeholder="Razón social"
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Código postal</label>
+                      <input
+                        type="text"
+                        value={r.cpFactura}
+                        onChange={(e) => r.setCpFactura(e.target.value)}
+                        onKeyDown={handleKeyDownInput}
+                        placeholder="Código postal"
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Provincia</label>
+                      <select
+                        value={r.provinciaFactura}
+                        onChange={(e) => r.setProvinciaFactura(e.target.value)}
+                        style={inputStyle}
+                      >
+                        <option value="">Todas</option>
+                        {(r.catalogos?.provincias ?? []).map((p) => (
+                          <option key={p.codigo} value={p.descripcion}>{p.descripcion}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Email</label>
+                      <input
+                        type="text"
+                        value={r.emailFactura}
+                        onChange={(e) => r.setEmailFactura(e.target.value)}
+                        onKeyDown={handleKeyDownInput}
+                        placeholder="Email facturación"
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Teléfono</label>
+                      <input
+                        type="text"
+                        value={r.telefonoFactura}
+                        onChange={(e) => r.setTelefonoFactura(e.target.value)}
+                        onKeyDown={handleKeyDownInput}
+                        placeholder="Teléfono facturación"
+                        style={inputStyle}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
-
-              <>
-                  <div>
-                    <label style={labelStyle}>Apellidos / Nombre Titular (*)</label>
-                    <input
-                      type="text"
-                      value={r.apellidosTitular}
-                      onChange={(e) => r.setApellidosTitular(e.target.value)}
-                      onKeyDown={handleKeyDownInput}
-                      placeholder="Apellidos titular"
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>C.P. Titular (*)</label>
-                    <input
-                      type="text"
-                      value={r.cpTitular}
-                      onChange={(e) => r.setCpTitular(e.target.value)}
-                      onKeyDown={handleKeyDownInput}
-                      placeholder="Ej: 28*"
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Provincia Titular</label>
-                    <select
-                      value={r.provinciaTitular}
-                      onChange={(e) => r.setProvinciaTitular(e.target.value)}
-                      style={inputStyle}
-                    >
-                      <option value="">Todas</option>
-                      {(r.catalogos?.provincias ?? []).map((p) => (
-                        <option key={p.codigo} value={p.descripcion}>
-                          {p.descripcion}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Email Titular (*)</label>
-                    <input
-                      type="text"
-                      value={r.emailTitular}
-                      onChange={(e) => r.setEmailTitular(e.target.value)}
-                      onKeyDown={handleKeyDownInput}
-                      placeholder="Email titular"
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Teléfono 1 Titular (*)</label>
-                    <input
-                      type="text"
-                      value={r.telefonoTitular}
-                      onChange={(e) => r.setTelefonoTitular(e.target.value)}
-                      onKeyDown={handleKeyDownInput}
-                      placeholder="Teléfono 1"
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Teléfono 2 Titular (*)</label>
-                    <input
-                      type="text"
-                      value={r.telefonoTitular2}
-                      onChange={(e) => r.setTelefonoTitular2(e.target.value)}
-                      onKeyDown={handleKeyDownInput}
-                      placeholder="Teléfono 2"
-                      style={inputStyle}
-                    />
-                  </div>
-
-                  {/* Facturación inmediata */}
-                  <div>
-                    <label style={labelStyle}>CIF Cliente Factura (*)</label>
-                    <input
-                      type="text"
-                      value={r.cifFactura}
-                      onChange={(e) => r.setCifFactura(e.target.value)}
-                      onKeyDown={handleKeyDownInput}
-                      placeholder="CIF factura"
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Razón Social Factura (*)</label>
-                    <input
-                      type="text"
-                      value={r.razonSocialFactura}
-                      onChange={(e) => r.setRazonSocialFactura(e.target.value)}
-                      onKeyDown={handleKeyDownInput}
-                      placeholder="Razón social"
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>C.P. Factura (*)</label>
-                    <input
-                      type="text"
-                      value={r.cpFactura}
-                      onChange={(e) => r.setCpFactura(e.target.value)}
-                      onKeyDown={handleKeyDownInput}
-                      placeholder="C.P. factura"
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Provincia Factura</label>
-                    <select
-                      value={r.provinciaFactura}
-                      onChange={(e) => r.setProvinciaFactura(e.target.value)}
-                      style={inputStyle}
-                    >
-                      <option value="">Todas</option>
-                      {(r.catalogos?.provincias ?? []).map((p) => (
-                        <option key={p.codigo} value={p.descripcion}>
-                          {p.descripcion}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Email Factura (*)</label>
-                    <input
-                      type="text"
-                      value={r.emailFactura}
-                      onChange={(e) => r.setEmailFactura(e.target.value)}
-                      onKeyDown={handleKeyDownInput}
-                      placeholder="Email factura"
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Teléfono Factura (*)</label>
-                    <input
-                      type="text"
-                      value={r.telefonoFactura}
-                      onChange={(e) => r.setTelefonoFactura(e.target.value)}
-                      onKeyDown={handleKeyDownInput}
-                      placeholder="Teléfono factura"
-                      style={inputStyle}
-                    />
-                  </div>
-              </>
             </div>
           )}
         </div>

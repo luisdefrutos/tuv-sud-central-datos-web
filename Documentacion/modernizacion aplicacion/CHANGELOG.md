@@ -4,6 +4,13 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.29.27] - 07/11/2026 - *Paridad de criterios y límite del grid de Mediciones*
+
+### 🐛 Correcciones y rendimiento
+* Mediciones limita a 5.000 las filas de detalle del grid y calcula total y distribución por estación respetando la proyección `DISTINCT`; la optimización debe validarse con un plan y carga Oracle representativos.
+* Inspecciones separa los criterios de Titular y Cliente de Facturación; los demás localizadores de inspección muestran y envían solo el NIF del titular, conforme a sus formularios legacy.
+* En Mediciones, los criterios de vehículo se presentan antes de Sección Manual y MINER; se eliminaron marcas de obligatoriedad de filtros opcionales.
+
 ## [2.29.26] - 07/11/2026 - *Exportación asíncrona de Localización*
 
 ### ⚡ Rendimiento y fiabilidad

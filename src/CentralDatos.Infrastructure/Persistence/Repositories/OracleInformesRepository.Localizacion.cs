@@ -777,6 +777,14 @@ public sealed partial class OracleInformesRepository
                            ON CENTRALITV.INSPECCION.Id_Cliente_Facturacion = CENTRALITV.CLIENTES.Id_Cliente
                           AND CENTRALITV.INSPECCION.CodEstacion = CENTRALITV.CLIENTES.CodEstacion"
             : string.Empty;
+        string fromMediciones = $@"
+                    FROM CENTRALITV.INSPECCION
+                    {joinClienteFactura}
+                    INNER JOIN CENTRALITV.INSPECCION_MEDICIONES
+                            ON CENTRALITV.INSPECCION.CODINSPECCION = CENTRALITV.INSPECCION_MEDICIONES.CODINSPECCION
+                           AND CENTRALITV.INSPECCION.CODESTACION = CENTRALITV.INSPECCION_MEDICIONES.CODESTACION
+                    WHERE CENTRALITV.INSPECCION.ANULADA = 0
+                    {whereClause}";
 
         string sqlFinal;
         switch (tipoNorm)
@@ -834,13 +842,7 @@ public sealed partial class OracleInformesRepository
             case "mediciones":
                 sqlFinal = $@"
                     SELECT DISTINCT {selectExpressions}
-                    FROM CENTRALITV.INSPECCION
-                    {joinClienteFactura}
-                    INNER JOIN CENTRALITV.INSPECCION_MEDICIONES
-                            ON CENTRALITV.INSPECCION.CODINSPECCION = CENTRALITV.INSPECCION_MEDICIONES.CODINSPECCION
-                           AND CENTRALITV.INSPECCION.CODESTACION = CENTRALITV.INSPECCION_MEDICIONES.CODESTACION
-                    WHERE CENTRALITV.INSPECCION.ANULADA = 0
-                    {whereClause}
+                    {fromMediciones}
                     {orderBySql}";
                 break;
 
@@ -888,7 +890,7 @@ public sealed partial class OracleInformesRepository
                 break;
         }
 
-        bool limitarDetalleGrid = (tipoNorm is "elementos" or "defectos") &&
+        bool limitarDetalleGrid = (tipoNorm is "elementos" or "defectos" or "mediciones") &&
             maxFilasRetorno == 5000 &&
             onRow == null;
         if (limitarDetalleGrid)
@@ -987,6 +989,20 @@ public sealed partial class OracleInformesRepository
                         WHERE CENTRALITV.INSPECCION.ANULADA = 0
                         {whereClause}
                         GROUP BY CENTRALITV.INSPECCION.CODESTACION",
+                    "mediciones" when idxEstacion >= 0 => $@"
+                        SELECT COD_ESTACION_GRAFICO, COUNT(*)
+                        FROM (
+                            SELECT DISTINCT {selectExpressions},
+                                   CENTRALITV.INSPECCION.CODESTACION AS COD_ESTACION_GRAFICO
+                            {fromMediciones}
+                        )
+                        GROUP BY COD_ESTACION_GRAFICO",
+                    "mediciones" => $@"
+                        SELECT COUNT(*)
+                        FROM (
+                            SELECT DISTINCT {selectExpressions}
+                            {fromMediciones}
+                        )",
                     _ => throw new InvalidOperationException($"No existe una agregación por estación para {tipoNorm}.")
                 };
                 LogSqlEjecutada(
@@ -1005,7 +1021,14 @@ public sealed partial class OracleInformesRepository
                 }
 
                 await using var statsReader = await statsCommand.ExecuteReaderAsync(cancellationToken);
-                while (await statsReader.ReadAsync(cancellationToken))
+                if (tipoNorm == "mediciones" && idxEstacion < 0)
+                {
+                    if (await statsReader.ReadAsync(cancellationToken))
+                    {
+                        totalEstadistico = Convert.ToInt32(statsReader.GetValue(0), CultureInfo.InvariantCulture);
+                    }
+                }
+                else while (await statsReader.ReadAsync(cancellationToken))
                 {
                     var rawEstacion = Convert.ToString(statsReader.GetValue(0))?.Trim() ?? string.Empty;
                     var count = Convert.ToInt32(statsReader.GetValue(1), CultureInfo.InvariantCulture);

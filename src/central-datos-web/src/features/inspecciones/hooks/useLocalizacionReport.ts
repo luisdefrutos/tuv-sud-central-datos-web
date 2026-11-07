@@ -141,18 +141,18 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
         homologacion: esInspecciones ? homologacion.trim() || undefined : undefined,
         homologacionDistinto: esInspecciones && homologacionDistinto,
         bastidor: esInspecciones ? bastidor.trim() || undefined : undefined,
-        apellidosTitular: esElementos ? undefined : apellidosTitular.trim() || undefined,
-        cpTitular: esElementos ? undefined : cpTitular.trim() || undefined,
-        provinciaTitular: esElementos ? undefined : provinciaTitular || undefined,
-        emailTitular: esElementos ? undefined : emailTitular.trim() || undefined,
-        telefonoTitular: esElementos ? undefined : telefonoTitular.trim() || undefined,
-        telefonoTitular2: esElementos ? undefined : telefonoTitular2.trim() || undefined,
-        cifFactura: esElementos ? undefined : cifFactura.trim() || undefined,
-        razonSocialFactura: esElementos ? undefined : razonSocialFactura.trim() || undefined,
-        cpFactura: esElementos ? undefined : cpFactura.trim() || undefined,
-        provinciaFactura: esElementos ? undefined : provinciaFactura || undefined,
-        emailFactura: esElementos ? undefined : emailFactura.trim() || undefined,
-        telefonoFactura: esElementos ? undefined : telefonoFactura.trim() || undefined,
+        apellidosTitular: esInspecciones ? apellidosTitular.trim() || undefined : undefined,
+        cpTitular: esInspecciones ? cpTitular.trim() || undefined : undefined,
+        provinciaTitular: esInspecciones ? provinciaTitular || undefined : undefined,
+        emailTitular: esInspecciones ? emailTitular.trim() || undefined : undefined,
+        telefonoTitular: esInspecciones ? telefonoTitular.trim() || undefined : undefined,
+        telefonoTitular2: esInspecciones ? telefonoTitular2.trim() || undefined : undefined,
+        cifFactura: esInspecciones ? cifFactura.trim() || undefined : undefined,
+        razonSocialFactura: esInspecciones ? razonSocialFactura.trim() || undefined : undefined,
+        cpFactura: esInspecciones ? cpFactura.trim() || undefined : undefined,
+        provinciaFactura: esInspecciones ? provinciaFactura || undefined : undefined,
+        emailFactura: esInspecciones ? emailFactura.trim() || undefined : undefined,
+        telefonoFactura: esInspecciones ? telefonoFactura.trim() || undefined : undefined,
         seccionManual: esDefectos || esMediciones ? seccionManual || undefined : undefined,
         bloque: esDefectos || esElementos ? bloque || undefined : undefined,
         defecto: esDefectos || esElementos ? defecto || undefined : undefined,
@@ -635,6 +635,7 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
   const activeTitularFacturaFiltersCount = useMemo(() => {
     let count = 0;
     if (cifTitular.trim()) count++;
+    if (tipo !== 'inspecciones') return count;
     if (apellidosTitular.trim()) count++;
     if (cpTitular.trim()) count++;
     if (provinciaTitular) count++;
@@ -648,6 +649,7 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
     if (telefonoFactura.trim()) count++;
     return count;
   }, [
+    tipo,
     cifTitular,
     apellidosTitular,
     cpTitular,
