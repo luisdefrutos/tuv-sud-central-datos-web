@@ -22,6 +22,7 @@ import { EnviosEnviadosReportPage } from './features/informes/pages/EnviosEnviad
 import { InformesHubPage } from './features/informes/pages/InformesHubPage';
 import { InspeccionesHubPage } from './features/inspecciones/pages/InspeccionesHubPage';
 import { LocalizacionReportPage } from './features/inspecciones/pages/LocalizacionReportPage';
+import { InspeccionesDefectosPage } from './features/inspecciones/pages/InspeccionesDefectosPage';
 import { DESKTOP_MENUS, findMenuItem } from './constants/navigation.constants';
 import { UI_CONSTANTS } from './constants/ui.constants';
 import {
@@ -578,8 +579,7 @@ function AppContent() {
 
         {activeItemId === 'loc-defectos' && (
           <ErrorBoundary fallbackTitle="Error en Localización de Defectos">
-            <LocalizacionReportPage
-              tipo="defectos"
+            <InspeccionesDefectosPage
               onNavigateHome={handleGoHome}
               onNavigateToInspecciones={() => {
                 setActiveGroupId('inspecciones');

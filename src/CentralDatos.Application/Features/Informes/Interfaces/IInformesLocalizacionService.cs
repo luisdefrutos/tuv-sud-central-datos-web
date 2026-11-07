@@ -27,7 +27,7 @@ public interface IInformesLocalizacionService
         FiltrosLocalizacionRequestDto filtros,
         CancellationToken cancellationToken = default);
 
-    Task<(byte[] Content, string FileName)> ExportarExcelAsync(
+    Task<(Stream Content, string FileName)> ExportarExcelAsync(
         FiltrosLocalizacionRequestDto filtros,
         CancellationToken cancellationToken = default);
 }

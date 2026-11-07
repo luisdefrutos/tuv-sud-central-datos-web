@@ -119,7 +119,7 @@ export async function consultarLocalizacion(
 }
 
 export async function exportarLocalizacionExcel(filtros: FiltrosLocalizacionRequest): Promise<void> {
-  const response = await fetch(API_ENDPOINTS.INFORMES.LOCALIZACION_EXPORTAR, {
+  const startResponse = await fetch(API_ENDPOINTS.INFORMES.LOCALIZACION_EXPORTAR, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -127,43 +127,54 @@ export async function exportarLocalizacionExcel(filtros: FiltrosLocalizacionRequ
     body: JSON.stringify(filtros),
   });
 
-  if (response.status === 429) {
-    throw new Error('Hay otras exportaciones pesadas en curso en el servidor. Inténtelo de nuevo en unos segundos.');
+  if (startResponse.status === 429) {
+    throw new Error('Hay varias exportaciones pendientes en el servidor. Inténtelo de nuevo en unos minutos.');
   }
 
-  if (!response.ok) {
-    let errorMessage = `Error al generar el archivo Excel (${response.status})`;
-    try {
-      const errorData = await response.json();
-      if (errorData?.errorMessage) {
-        errorMessage = errorData.errorMessage;
-      }
-    } catch {
-      // Ignorar si no es JSON
+  if (!startResponse.ok) {
+    throw new Error(await getExportErrorMessage(startResponse, `Error al iniciar la exportación (${startResponse.status})`));
+  }
+
+  const startData: { jobId?: string } = await startResponse.json();
+  if (!startData.jobId) {
+    throw new Error('El servidor no devolvió el identificador de la exportación.');
+  }
+
+  const jobUrl = `${API_ENDPOINTS.INFORMES.LOCALIZACION_EXPORTAR}/${encodeURIComponent(startData.jobId)}`;
+  while (true) {
+    const statusResponse = await fetch(jobUrl, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    });
+    if (!statusResponse.ok) {
+      throw new Error(await getExportErrorMessage(statusResponse, `No se pudo consultar el estado de la exportación (${statusResponse.status})`));
     }
-    throw new Error(errorMessage);
-  }
 
-  const blob = await response.blob();
-  const contentDisposition = response.headers.get('content-disposition');
-  let filename = `LOCALIZACION_${filtros.tipo.toUpperCase()}_${filtros.fechaInicio.replace(/-/g, '')}.xlsx`;
-
-  if (contentDisposition) {
-    const matchUtf8 = contentDisposition.match(/filename\*=UTF-8''([^;\n]+)/i);
-    const matchAscii = contentDisposition.match(/filename="?([^";\n]+)"?/i);
-    if (matchUtf8?.[1]) {
-      filename = decodeURIComponent(matchUtf8[1]);
-    } else if (matchAscii?.[1]) {
-      filename = matchAscii[1];
+    const job: { status?: string; errorMessage?: string } = await statusResponse.json();
+    if (job.status === 'failed') {
+      throw new Error(job.errorMessage || 'No se pudo generar el archivo Excel.');
     }
+    if (job.status === 'completed') break;
+    if (job.status !== 'queued' && job.status !== 'processing') {
+      throw new Error(`El servidor devolvió un estado de exportación desconocido: ${job.status ?? 'vacío'}.`);
+    }
+    await new Promise((resolve) => window.setTimeout(resolve, 2000));
   }
 
-  const url = window.URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', filename);
+  link.href = `${jobUrl}/descargar`;
+  link.download = '';
+  link.rel = 'noopener';
   document.body.appendChild(link);
   link.click();
   link.remove();
-  window.URL.revokeObjectURL(url);
+}
+
+async function getExportErrorMessage(response: Response, fallback: string): Promise<string> {
+  try {
+    const errorData: { errorMessage?: string; detail?: string; title?: string } = await response.json();
+    return errorData.errorMessage || errorData.detail || errorData.title || fallback;
+  } catch {
+    return fallback;
+  }
 }

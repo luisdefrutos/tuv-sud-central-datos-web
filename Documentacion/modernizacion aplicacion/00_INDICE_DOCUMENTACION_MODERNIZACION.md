@@ -39,6 +39,8 @@
 | **29** | [29_dossier_ejecutivo_direccion_ventajas_web_y_catalogo_informes.md](./29_dossier_ejecutivo_direccion_ventajas_web_y_catalogo_informes.md) | **Dossier Ejecutivo para Dirección de Negocio ITV**: Comparativa estratégica Web vs. Escritorio en 6 dimensiones de negocio y catálogo funcional detallado de las pantallas implementadas. |
 | **30** | [30_modulo_localizacion_inspecciones_defectos_elementos_mediciones.md](./30_modulo_localizacion_inspecciones_defectos_elementos_mediciones.md) | **Módulo de Localización (`3. Inspecciones`: Inspecciones, Defectos, Elementos y Mediciones)**: Motor unificado conducido por metadatos (`CAMPOS_*LOCALIZADOS`), proyección dinámica segura, combos en cascada, selector modal de columnas y exportación Excel 1:1 con trazabilidad de filtros aplicados. |
 | **31** | [31_plan_optimizacion_localizacion_inspecciones.md](./31_plan_optimizacion_localizacion_inspecciones.md) | **Plan de optimización de Localización de Inspecciones**: diagnóstico del recorrido completo Oracle/API/Excel, hipótesis pendientes de medir, propuesta de consulta acotada y límite de exportación con prevalidación, fases, pruebas y decisiones previas a implementación. |
+| **32** | [skill-inspecciones-ui/SKILL.md](./skill-inspecciones-ui/SKILL.md) | **Skill de unificación visual de Inspecciones**: criterios compartidos para KPI, grid, cabeceras, paginación, gráficos, tipografía y posición de acciones, manteniendo específicos los filtros y datos de cada pantalla. |
+| **33** | [skill-inspecciones-volumen-datos/SKILL.md](./skill-inspecciones-volumen-datos/SKILL.md) | **Skill de volumen y exportación de Inspecciones**: límites del grid y Excel, avisos claros para resultados parciales, confirmación de exportaciones grandes y bloqueo sobre el máximo permitido. |
 
 ---
 
@@ -50,3 +52,5 @@ Copia sincronizada de las especificaciones de Skills oficiales para Antigravity:
 - [skill-tuv-sud-algorithm-ds/SKILL.md](./skill-tuv-sud-algorithm-ds/SKILL.md) — Reglas de implementación frontend para agentes y desarrolladores.
 - [skill-tuv-sud-algorithm-ds/references/tokens-and-utilities.md](./skill-tuv-sud-algorithm-ds/references/tokens-and-utilities.md) — Referencia completa de tokens semánticos CSS y utilidades `ts-*`.
 - [skill-tuv-sud-algorithm-ds/references/components-catalog.md](./skill-tuv-sud-algorithm-ds/references/components-catalog.md) — Catálogo detallado de los 84 componentes oficiales `@tuvsud/design-system/react`.
+- [skill-inspecciones-ui/SKILL.md](./skill-inspecciones-ui/SKILL.md) — Estilo y disposición comunes de las pantallas del módulo Inspecciones.
+- [skill-inspecciones-volumen-datos/SKILL.md](./skill-inspecciones-volumen-datos/SKILL.md) — Comportamiento común para resultados del grid, límites de volumen y exportaciones Excel.

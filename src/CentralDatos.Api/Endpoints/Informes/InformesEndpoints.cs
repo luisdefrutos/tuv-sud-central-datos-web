@@ -790,32 +790,71 @@ public static class InformesEndpoints
         .WithSummary("Ejecuta la búsqueda dinámica de localización con selección de columnas y criterios avanzados");
 
         // 37. Exportación oficial a Excel de Localización (con pie de filtros aplicados fiel a escritorio)
-        group.MapPost("/localizacion/exportar-excel", async (
+        group.MapPost("/localizacion/exportar-excel", (
             [FromBody] FiltrosLocalizacionRequestDto filtros,
-            [FromServices] IInformesLocalizacionService service,
-            CancellationToken ct) =>
+            [FromServices] LocalizacionExportJobQueue jobs,
+            HttpContext context) =>
         {
-            try
+            if (!jobs.TryEnqueue(filtros, LocalizacionExportJobQueue.GetOwner(context.User), out var jobId))
             {
-                var (archivoBytes, nombreFichero) = await service.ExportarExcelAsync(filtros, ct);
+                return Results.Problem(
+                    statusCode: StatusCodes.Status429TooManyRequests,
+                    title: "Cola de exportación llena",
+                    detail: "Hay varias exportaciones de Localización pendientes. Inténtelo de nuevo en unos minutos.");
+            }
 
-                return Results.File(
-                    archivoBytes,
-                    contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    fileDownloadName: nombreFichero);
-            }
-            catch (OperationCanceledException)
-            {
-                return Results.StatusCode(499);
-            }
-            catch (ArgumentException ex)
-            {
-                return Results.BadRequest(new { errorMessage = ex.Message });
-            }
+            return Results.Accepted(
+                $"/api/v1/informes/localizacion/exportar-excel/{jobId}",
+                new { jobId });
         })
         .RequireRateLimiting("excel-export-policy")
         .WithName("ExportarLocalizacionExcel")
-        .WithSummary("Genera y descarga el libro Excel oficial de localización con las columnas activas y resumen de filtros aplicados");
+        .WithSummary("Inicia en segundo plano la generación del libro Excel de Localización");
+
+        group.MapGet("/localizacion/exportar-excel/{jobId:guid}", (
+            Guid jobId,
+            [FromServices] LocalizacionExportJobQueue jobs,
+            HttpContext context) =>
+        {
+            var status = jobs.GetStatus(jobId, LocalizacionExportJobQueue.GetOwner(context.User));
+            return status is null ? Results.NotFound() : Results.Ok(status);
+        })
+        .WithName("ConsultarEstadoExportacionLocalizacion")
+        .WithSummary("Consulta el estado de una exportación de Localización");
+
+        group.MapGet("/localizacion/exportar-excel/{jobId:guid}/descargar", (
+            Guid jobId,
+            [FromServices] LocalizacionExportJobQueue jobs,
+            HttpContext context) =>
+        {
+            var file = jobs.GetCompletedFile(jobId, LocalizacionExportJobQueue.GetOwner(context.User));
+            if (file is null)
+            {
+                return Results.NotFound();
+            }
+
+            try
+            {
+                var stream = new FileStream(file.Value.Path, new FileStreamOptions
+                {
+                    Mode = FileMode.Open,
+                    Access = FileAccess.Read,
+                    Share = FileShare.Read,
+                    BufferSize = 1024 * 64,
+                    Options = FileOptions.SequentialScan,
+                });
+                return Results.File(
+                    stream,
+                    contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileDownloadName: file.Value.FileName);
+            }
+            catch (FileNotFoundException)
+            {
+                return Results.NotFound();
+            }
+        })
+        .WithName("DescargarExportacionLocalizacion")
+        .WithSummary("Descarga el archivo Excel de Localización una vez completado");
 
         return app;
     }

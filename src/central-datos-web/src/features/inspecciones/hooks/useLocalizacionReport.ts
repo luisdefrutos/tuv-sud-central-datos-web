@@ -20,7 +20,7 @@ import type {
 } from '../types/localizacion.types';
 
 const UMBRAL_AVISO_REGISTROS_ALTOS = 50_000;
-const MAX_FILAS_EXPORT_EXCEL = 150_000;
+const MAX_FILAS_EXPORT_EXCEL = 300_000;
 
 export function useLocalizacionReport(tipo: TipoLocalizacion) {
   // En frmCriteriosLocalizacion*.vb las fechas por defecto son Ayer (Now - 1 día) a Hoy (Now)
@@ -98,6 +98,10 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
 
   const buildPayload = useCallback(
     (overrideFilters?: ReportFilterValues, overrideCampos?: number[]): FiltrosLocalizacionRequest => {
+      const esInspecciones = tipo === 'inspecciones';
+      const esDefectos = tipo === 'defectos';
+      const esElementos = tipo === 'elementos';
+      const esMediciones = tipo === 'mediciones';
       const f = overrideFilters ?? {
         fechaInicio: filtersRef.current.fechaInicio,
         fechaFin: filtersRef.current.fechaFin,
@@ -109,7 +113,7 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
 
       let subdefectoVal: string | undefined;
       let numeroDefectoVal: string | undefined;
-      if (subdefectoKey && subdefectoKey.includes('|')) {
+      if (esDefectos && subdefectoKey && subdefectoKey.includes('|')) {
         const [sd, num] = subdefectoKey.split('|');
         subdefectoVal = sd || undefined;
         numeroDefectoVal = num || undefined;
@@ -130,31 +134,31 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
         construccion: construccion || undefined,
         utilizacion: utilizacion || undefined,
         cifTitular: cifTitular.trim() || undefined,
-        fechaVencInicio: fechaVencInicio || null,
-        fechaVencFin: fechaVencFin || null,
-        excluirInspeccionadosPost: (Boolean(fechaVencInicio || fechaVencFin)) && excluirInspeccionadosPost,
-        matricula: matricula.trim() || undefined,
-        homologacion: homologacion.trim() || undefined,
-        homologacionDistinto,
-        bastidor: bastidor.trim() || undefined,
-        apellidosTitular: apellidosTitular.trim() || undefined,
-        cpTitular: cpTitular.trim() || undefined,
-        provinciaTitular: provinciaTitular || undefined,
-        emailTitular: emailTitular.trim() || undefined,
-        telefonoTitular: telefonoTitular.trim() || undefined,
-        telefonoTitular2: telefonoTitular2.trim() || undefined,
-        cifFactura: cifFactura.trim() || undefined,
-        razonSocialFactura: razonSocialFactura.trim() || undefined,
-        cpFactura: cpFactura.trim() || undefined,
-        provinciaFactura: provinciaFactura || undefined,
-        emailFactura: emailFactura.trim() || undefined,
-        telefonoFactura: telefonoFactura.trim() || undefined,
-        seccionManual: seccionManual || undefined,
-        bloque: bloque || undefined,
-        defecto: defecto || undefined,
+        fechaVencInicio: esInspecciones ? fechaVencInicio || null : null,
+        fechaVencFin: esInspecciones ? fechaVencFin || null : null,
+        excluirInspeccionadosPost: esInspecciones && Boolean(fechaVencInicio || fechaVencFin) && excluirInspeccionadosPost,
+        matricula: esInspecciones ? matricula.trim() || undefined : undefined,
+        homologacion: esInspecciones ? homologacion.trim() || undefined : undefined,
+        homologacionDistinto: esInspecciones && homologacionDistinto,
+        bastidor: esInspecciones ? bastidor.trim() || undefined : undefined,
+        apellidosTitular: esElementos ? undefined : apellidosTitular.trim() || undefined,
+        cpTitular: esElementos ? undefined : cpTitular.trim() || undefined,
+        provinciaTitular: esElementos ? undefined : provinciaTitular || undefined,
+        emailTitular: esElementos ? undefined : emailTitular.trim() || undefined,
+        telefonoTitular: esElementos ? undefined : telefonoTitular.trim() || undefined,
+        telefonoTitular2: esElementos ? undefined : telefonoTitular2.trim() || undefined,
+        cifFactura: esElementos ? undefined : cifFactura.trim() || undefined,
+        razonSocialFactura: esElementos ? undefined : razonSocialFactura.trim() || undefined,
+        cpFactura: esElementos ? undefined : cpFactura.trim() || undefined,
+        provinciaFactura: esElementos ? undefined : provinciaFactura || undefined,
+        emailFactura: esElementos ? undefined : emailFactura.trim() || undefined,
+        telefonoFactura: esElementos ? undefined : telefonoFactura.trim() || undefined,
+        seccionManual: esDefectos || esMediciones ? seccionManual || undefined : undefined,
+        bloque: esDefectos || esElementos ? bloque || undefined : undefined,
+        defecto: esDefectos || esElementos ? defecto || undefined : undefined,
         subdefecto: subdefectoVal,
         numeroDefecto: numeroDefectoVal,
-        tiposVehiculoMiner: tiposVehiculoMiner.length > 0 ? tiposVehiculoMiner : undefined,
+        tiposVehiculoMiner: esMediciones && tiposVehiculoMiner.length > 0 ? tiposVehiculoMiner : undefined,
       };
     },
     [
@@ -512,19 +516,17 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
     }));
   }, [data?.filas, camposBuscables]);
 
-  const filasFiltradasYOrdenadas = useMemo(() => {
+  const textoBusquedaPorFila = useMemo(
+    () => new Map(filasConTextoBusqueda.map(({ fila, textoBusqueda }) => [fila, textoBusqueda])),
+    [filasConTextoBusqueda]
+  );
+
+  const filasOrdenadas = useMemo(() => {
     if (filasConTextoBusqueda.length === 0) return [];
 
-    const termino = busqueda.trim().toLocaleLowerCase('es-ES');
-    const filtradas = termino
-      ? filasConTextoBusqueda
-          .filter(({ textoBusqueda }) => textoBusqueda.includes(termino))
-          .map(({ fila }) => fila)
-      : filasConTextoBusqueda.map(({ fila }) => fila);
+    if (!sortField) return filasConTextoBusqueda.map(({ fila }) => fila);
 
-    if (!sortField) return filtradas;
-
-    return [...filtradas].sort((a, b) => {
+    return filasConTextoBusqueda.map(({ fila }) => fila).sort((a, b) => {
       const va = a[sortField];
       const vb = b[sortField];
       if (va === vb) return 0;
@@ -563,17 +565,24 @@ export function useLocalizacionReport(tipo: TipoLocalizacion) {
         return sortAsc ? numA - numB : numB - numA;
       }
 
-      return sortAsc ? sa.localeCompare(sb, 'es', { numeric: true }) : sb.localeCompare(sa, 'es', { numeric: true });
+      return sa.localeCompare(sb, 'es', { numeric: true }) * (sortAsc ? 1 : -1);
     });
-  }, [filasConTextoBusqueda, busqueda, sortField, sortAsc]);
+  }, [filasConTextoBusqueda, sortField, sortAsc]);
 
-  const totalFilas = filasFiltradasYOrdenadas.length;
+  const filasFiltradas = useMemo(() => {
+    const termino = busqueda.trim().toLocaleLowerCase('es-ES');
+    if (!termino) return filasOrdenadas;
+
+    return filasOrdenadas.filter((fila) => textoBusquedaPorFila.get(fila)?.includes(termino));
+  }, [filasOrdenadas, textoBusquedaPorFila, busqueda]);
+
+  const totalFilas = filasFiltradas.length;
   const totalPages = Math.max(1, Math.ceil(totalFilas / pageSize));
 
   const filasPaginadas = useMemo(() => {
     const start = (page - 1) * pageSize;
-    return filasFiltradasYOrdenadas.slice(start, start + pageSize);
-  }, [filasFiltradasYOrdenadas, page, pageSize]);
+    return filasFiltradas.slice(start, start + pageSize);
+  }, [filasFiltradas, page, pageSize]);
 
   const handleSort = useCallback(
     (colKey: string) => {

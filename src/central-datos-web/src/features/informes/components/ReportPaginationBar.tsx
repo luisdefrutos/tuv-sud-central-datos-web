@@ -10,6 +10,8 @@ export interface ReportPaginationBarProps {
   onPageSizeChange: (newPageSize: number) => void;
   pageSizeOptions?: number[];
   unidadRegistros?: string;
+  totalEncontrados?: number;
+  showPageSizeSelector?: boolean;
 }
 
 /**
@@ -28,6 +30,8 @@ export const ReportPaginationBar: React.FC<ReportPaginationBarProps> = ({
   onPageSizeChange,
   pageSizeOptions = [25, 50, 100, 200, 500],
   unidadRegistros = 'registros',
+  totalEncontrados,
+  showPageSizeSelector = true,
 }) => {
   if (totalFilas <= 0) return null;
 
@@ -48,7 +52,10 @@ export const ReportPaginationBar: React.FC<ReportPaginationBarProps> = ({
       {/* 1. Resumen Textual */}
       <div style={{ color: '#64748b' }}>
         Página <span style={{ fontWeight: 700, color: '#1e293b' }}>{page}</span> de{' '}
-        <span style={{ fontWeight: 700, color: '#1e293b' }}>{totalPaginas}</span> ({totalFilas.toLocaleString('es-ES')} {unidadRegistros} en total)
+        <span style={{ fontWeight: 700, color: '#1e293b' }}>{totalPaginas}</span>{' '}
+        {totalEncontrados === undefined
+          ? `(${totalFilas.toLocaleString('es-ES')} ${unidadRegistros} en total)`
+          : `(${totalFilas.toLocaleString('es-ES')} ${totalFilas === 1 ? 'registro mostrado' : `${unidadRegistros} mostrados`} de ${totalEncontrados.toLocaleString('es-ES')} encontrados)`}
       </div>
 
       {/* 2. Controles de Navegación de Página */}
@@ -108,7 +115,7 @@ export const ReportPaginationBar: React.FC<ReportPaginationBarProps> = ({
       </div>
 
       {/* 3. Selector de Registros por Página Homogéneo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      {showPageSizeSelector && <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <label
           htmlFor="report-page-size-select"
           style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 500, cursor: 'pointer' }}
@@ -137,8 +144,7 @@ export const ReportPaginationBar: React.FC<ReportPaginationBarProps> = ({
             </option>
           ))}
         </select>
-      </div>
+      </div>}
     </div>
   );
 };
-

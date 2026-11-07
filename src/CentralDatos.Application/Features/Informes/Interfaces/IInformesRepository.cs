@@ -142,5 +142,7 @@ public interface IInformesRepository
     Task<DTOs.ResultadoEjecucionLocalizacionRaw> EjecutarConsultaLocalizacionAsync(
         DTOs.FiltrosLocalizacionRequestDto filtros,
         int maxFilasRetorno,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        Func<IReadOnlyList<DTOs.ColumnaResultadoLocalizacionDto>, IReadOnlyList<string>, CancellationToken, Task>? onMetadata = null,
+        Func<IReadOnlyList<object?>, CancellationToken, Task>? onRow = null);
 }

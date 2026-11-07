@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Data;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Text;
@@ -77,9 +78,12 @@ public sealed partial class OracleInformesRepository
                 WHERE Activo = -1
                 ORDER BY IdCampo",
             "elementos" => @"
-                SELECT IdCampo, NVL(DesCampo, Columna_Excel) AS DesCampo, Campo_SQL, Columna_Excel, NVL(Columna_Excel_TipoDato, 'C') AS TipoDato, NVL(Por_Defecto, 0) AS PorDefecto, 'ELEMENTOS' AS CategoriaCampo
+                SELECT IdCampo, NVL(DesCampo, Columna_Excel) AS DesCampo, Campo_SQL, Columna_Excel, NVL(Columna_Excel_TipoDato, 'C') AS TipoDato,
+                       CASE WHEN NVL(Por_Defecto, 0) = -1 AND NVL(Activo_Gerencia, 0) = -1 THEN -1 ELSE 0 END AS PorDefecto,
+                       'ELEMENTOS' AS CategoriaCampo
                 FROM CENTRALITV.CAMPOS_ELEMENTOSLOCALIZADOS
-                WHERE (NVL(Activo_Gerencia, 0) = -1 OR NVL(Activo_Central, 0) = -1)
+                WHERE NVL(Activo_Central, 0) = -1
+                   OR (NVL(Activo_Gerencia, 0) = -1 AND NVL(Por_Defecto, 0) = -1)
                 ORDER BY IdCampo",
             "mediciones" => @"
                 SELECT IdCampo, NVL(DesCampo, Columna_Excel) AS DesCampo, Campo_SQL, Columna_Excel, NVL(Columna_Excel_TipoDato, 'C') AS TipoDato, NVL(Por_Defecto, 0) AS PorDefecto, NVL(Categoria_Campo, 'MEDICIONES') AS CategoriaCampo
@@ -365,7 +369,9 @@ public sealed partial class OracleInformesRepository
     public async Task<ResultadoEjecucionLocalizacionRaw> EjecutarConsultaLocalizacionAsync(
         FiltrosLocalizacionRequestDto filtros,
         int maxFilasRetorno,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Func<IReadOnlyList<ColumnaResultadoLocalizacionDto>, IReadOnlyList<string>, CancellationToken, Task>? onMetadata = null,
+        Func<IReadOnlyList<object?>, CancellationToken, Task>? onRow = null)
     {
         var tipoNorm = NormalizarTipoLocalizacion(filtros.Tipo);
         var catalogoColumnas = await ObtenerColumnasMetadataAsync(tipoNorm, cancellationToken);
@@ -426,9 +432,11 @@ public sealed partial class OracleInformesRepository
             return notCondition ? $"NOT ({expr})" : expr;
         }
 
-        // Fecha Inspección (siempre desde 00:00:00 hasta 23:59:59)
+        // El localizador legacy de Elementos compara la fecha final con TO_DATE(fecha), es decir, a medianoche.
         var fIni = filtros.FechaInicio.Date;
-        var fFin = filtros.FechaFin.Date.AddDays(1).AddSeconds(-1);
+        var fFin = tipoNorm == "elementos"
+            ? filtros.FechaFin.Date
+            : filtros.FechaFin.Date.AddDays(1).AddSeconds(-1);
         var pFIni = NextParam("fIni", fIni, OracleDbType.Date);
         var pFFin = NextParam("fFin", fFin, OracleDbType.Date);
 
@@ -607,95 +615,92 @@ public sealed partial class OracleInformesRepository
             filtrosAplicados.Add($"CIF TITULAR: {filtros.CifTitular.Trim().ToUpperInvariant()}");
         }
 
-        // Filtros exclusivos de Titular y Facturación en Localización de Inspecciones
-        if (tipoNorm == "inspecciones")
+        // Filtros de titular y cliente de facturación comunes a las localizaciones
+        if (!string.IsNullOrWhiteSpace(filtros.CifFactura))
         {
-            if (!string.IsNullOrWhiteSpace(filtros.CifFactura))
-            {
-                var c1 = BuildStringCondition("CENTRALITV.INSPECCION.CIFFACTURA", filtros.CifFactura.ToUpperInvariant());
-                var c2 = BuildStringCondition("CENTRALITV.CLIENTES.CIF_Cliente", filtros.CifFactura.ToUpperInvariant());
-                whereSb.Append($" AND CENTRALITV.INSPECCION.Desea_Factura_Inmediata = -1 AND ((CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NULL AND {c1}) OR (CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NOT NULL AND {c2}))");
-                filtrosAplicados.Add($"CIF FACTURA: {filtros.CifFactura.Trim().ToUpperInvariant()}");
-            }
+            var c1 = BuildStringCondition("CENTRALITV.INSPECCION.CIFFACTURA", filtros.CifFactura.ToUpperInvariant());
+            var c2 = BuildStringCondition("CENTRALITV.CLIENTES.CIF_Cliente", filtros.CifFactura.ToUpperInvariant());
+            whereSb.Append($" AND CENTRALITV.INSPECCION.Desea_Factura_Inmediata = -1 AND ((CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NULL AND {c1}) OR (CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NOT NULL AND {c2}))");
+            filtrosAplicados.Add($"CIF FACTURA: {filtros.CifFactura.Trim().ToUpperInvariant()}");
+        }
 
-            if (!string.IsNullOrWhiteSpace(filtros.ApellidosTitular))
-            {
-                whereSb.Append($" AND {BuildStringCondition("CENTRALITV.INSPECCION.APELLIDOS", filtros.ApellidosTitular.ToUpperInvariant())}");
-                filtrosAplicados.Add($"APELLIDOS: {filtros.ApellidosTitular.Trim()}");
-            }
+        if (!string.IsNullOrWhiteSpace(filtros.ApellidosTitular))
+        {
+            whereSb.Append($" AND {BuildStringCondition("CENTRALITV.INSPECCION.APELLIDOS", filtros.ApellidosTitular.ToUpperInvariant())}");
+            filtrosAplicados.Add($"APELLIDOS: {filtros.ApellidosTitular.Trim()}");
+        }
 
-            if (!string.IsNullOrWhiteSpace(filtros.RazonSocialFactura))
-            {
-                var c1 = BuildStringCondition("CENTRALITV.INSPECCION.APELLIDOS", filtros.RazonSocialFactura.ToUpperInvariant());
-                var c2 = BuildStringCondition("CENTRALITV.CLIENTES.APELLIDO1 || ' ' || CENTRALITV.CLIENTES.APELLIDO2", filtros.RazonSocialFactura.ToUpperInvariant());
-                var c3 = BuildStringCondition("CENTRALITV.CLIENTES.RAZON_SOCIAL", filtros.RazonSocialFactura.ToUpperInvariant());
-                whereSb.Append($" AND CENTRALITV.INSPECCION.Desea_Factura_Inmediata = -1 AND ((CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NULL AND {c1}) OR (CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NOT NULL AND ({c2} OR {c3})))");
-                filtrosAplicados.Add($"RAZÓN SOCIAL FACTURA: {filtros.RazonSocialFactura.Trim()}");
-            }
+        if (!string.IsNullOrWhiteSpace(filtros.RazonSocialFactura))
+        {
+            var c1 = BuildStringCondition("CENTRALITV.INSPECCION.APELLIDOS", filtros.RazonSocialFactura.ToUpperInvariant());
+            var c2 = BuildStringCondition("CENTRALITV.CLIENTES.APELLIDO1 || ' ' || CENTRALITV.CLIENTES.APELLIDO2", filtros.RazonSocialFactura.ToUpperInvariant());
+            var c3 = BuildStringCondition("CENTRALITV.CLIENTES.RAZON_SOCIAL", filtros.RazonSocialFactura.ToUpperInvariant());
+            whereSb.Append($" AND CENTRALITV.INSPECCION.Desea_Factura_Inmediata = -1 AND ((CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NULL AND {c1}) OR (CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NOT NULL AND ({c2} OR {c3})))");
+            filtrosAplicados.Add($"RAZÓN SOCIAL FACTURA: {filtros.RazonSocialFactura.Trim()}");
+        }
 
-            if (!string.IsNullOrWhiteSpace(filtros.CpTitular))
-            {
-                whereSb.Append($" AND {BuildStringCondition("CENTRALITV.INSPECCION.DP", filtros.CpTitular)}");
-                filtrosAplicados.Add($"CP TITULAR: {filtros.CpTitular.Trim()}");
-            }
+        if (!string.IsNullOrWhiteSpace(filtros.CpTitular))
+        {
+            whereSb.Append($" AND {BuildStringCondition("CENTRALITV.INSPECCION.DP", filtros.CpTitular)}");
+            filtrosAplicados.Add($"CP TITULAR: {filtros.CpTitular.Trim()}");
+        }
 
-            if (!string.IsNullOrWhiteSpace(filtros.CpFactura))
-            {
-                var c1 = BuildStringCondition("CENTRALITV.INSPECCION.DP", filtros.CpFactura);
-                var c2 = BuildStringCondition("CENTRALITV.CLIENTES.CP", filtros.CpFactura);
-                whereSb.Append($" AND CENTRALITV.INSPECCION.Desea_Factura_Inmediata = -1 AND ((CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NULL AND {c1}) OR (CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NOT NULL AND {c2}))");
-                filtrosAplicados.Add($"CP FACTURA: {filtros.CpFactura.Trim()}");
-            }
+        if (!string.IsNullOrWhiteSpace(filtros.CpFactura))
+        {
+            var c1 = BuildStringCondition("CENTRALITV.INSPECCION.DP", filtros.CpFactura);
+            var c2 = BuildStringCondition("CENTRALITV.CLIENTES.CP", filtros.CpFactura);
+            whereSb.Append($" AND CENTRALITV.INSPECCION.Desea_Factura_Inmediata = -1 AND ((CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NULL AND {c1}) OR (CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NOT NULL AND {c2}))");
+            filtrosAplicados.Add($"CP FACTURA: {filtros.CpFactura.Trim()}");
+        }
 
-            if (!string.IsNullOrWhiteSpace(filtros.EmailTitular))
-            {
-                whereSb.Append($" AND {BuildStringCondition("UPPER(CENTRALITV.INSPECCION.EMail)", filtros.EmailTitular.ToUpperInvariant())}");
-                filtrosAplicados.Add($"Email Titular: {filtros.EmailTitular.Trim()}");
-            }
+        if (!string.IsNullOrWhiteSpace(filtros.EmailTitular))
+        {
+            whereSb.Append($" AND {BuildStringCondition("UPPER(CENTRALITV.INSPECCION.EMail)", filtros.EmailTitular.ToUpperInvariant())}");
+            filtrosAplicados.Add($"Email Titular: {filtros.EmailTitular.Trim()}");
+        }
 
-            if (!string.IsNullOrWhiteSpace(filtros.EmailFactura))
-            {
-                var c1 = BuildStringCondition("UPPER(CENTRALITV.INSPECCION.EMail)", filtros.EmailFactura.ToUpperInvariant());
-                var c2 = BuildStringCondition("UPPER(CENTRALITV.CLIENTES.Email)", filtros.EmailFactura.ToUpperInvariant());
-                whereSb.Append($" AND CENTRALITV.INSPECCION.Desea_Factura_Inmediata = -1 AND ((CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NULL AND {c1}) OR (CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NOT NULL AND {c2}))");
-                filtrosAplicados.Add($"Email Factura: {filtros.EmailFactura.Trim()}");
-            }
+        if (!string.IsNullOrWhiteSpace(filtros.EmailFactura))
+        {
+            var c1 = BuildStringCondition("UPPER(CENTRALITV.INSPECCION.EMail)", filtros.EmailFactura.ToUpperInvariant());
+            var c2 = BuildStringCondition("UPPER(CENTRALITV.CLIENTES.Email)", filtros.EmailFactura.ToUpperInvariant());
+            whereSb.Append($" AND CENTRALITV.INSPECCION.Desea_Factura_Inmediata = -1 AND ((CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NULL AND {c1}) OR (CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NOT NULL AND {c2}))");
+            filtrosAplicados.Add($"Email Factura: {filtros.EmailFactura.Trim()}");
+        }
 
-            if (!string.IsNullOrWhiteSpace(filtros.ProvinciaTitular))
-            {
-                whereSb.Append($" AND {BuildStringCondition("CENTRALITV.INSPECCION.PROVINCIA", filtros.ProvinciaTitular)}");
-                filtrosAplicados.Add($"PROVINCIA TITULAR: {filtros.ProvinciaTitular.Trim()}");
-            }
+        if (!string.IsNullOrWhiteSpace(filtros.ProvinciaTitular))
+        {
+            whereSb.Append($" AND {BuildStringCondition("CENTRALITV.INSPECCION.PROVINCIA", filtros.ProvinciaTitular)}");
+            filtrosAplicados.Add($"PROVINCIA TITULAR: {filtros.ProvinciaTitular.Trim()}");
+        }
 
-            if (!string.IsNullOrWhiteSpace(filtros.ProvinciaFactura))
-            {
-                var c1 = BuildStringCondition("CENTRALITV.INSPECCION.PROVINCIA", filtros.ProvinciaFactura);
-                var c2 = BuildStringCondition("CENTRALITV.CLIENTES.PROVINCIA", filtros.ProvinciaFactura);
-                whereSb.Append($" AND CENTRALITV.INSPECCION.Desea_Factura_Inmediata = -1 AND ((CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NULL AND {c1}) OR (CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NOT NULL AND {c2}))");
-                filtrosAplicados.Add($"PROVINCIA FACTURA: {filtros.ProvinciaFactura.Trim()}");
-            }
+        if (!string.IsNullOrWhiteSpace(filtros.ProvinciaFactura))
+        {
+            var c1 = BuildStringCondition("CENTRALITV.INSPECCION.PROVINCIA", filtros.ProvinciaFactura);
+            var c2 = BuildStringCondition("CENTRALITV.CLIENTES.PROVINCIA", filtros.ProvinciaFactura);
+            whereSb.Append($" AND CENTRALITV.INSPECCION.Desea_Factura_Inmediata = -1 AND ((CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NULL AND {c1}) OR (CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NOT NULL AND {c2}))");
+            filtrosAplicados.Add($"PROVINCIA FACTURA: {filtros.ProvinciaFactura.Trim()}");
+        }
 
-            if (!string.IsNullOrWhiteSpace(filtros.TelefonoTitular))
-            {
-                whereSb.Append($" AND {BuildStringCondition("CENTRALITV.INSPECCION.Telefono", filtros.TelefonoTitular)}");
-                filtrosAplicados.Add($"Teléfono Titular: {filtros.TelefonoTitular.Trim()}");
-            }
+        if (!string.IsNullOrWhiteSpace(filtros.TelefonoTitular))
+        {
+            whereSb.Append($" AND {BuildStringCondition("CENTRALITV.INSPECCION.Telefono", filtros.TelefonoTitular)}");
+            filtrosAplicados.Add($"Teléfono Titular: {filtros.TelefonoTitular.Trim()}");
+        }
 
-            if (!string.IsNullOrWhiteSpace(filtros.TelefonoTitular2))
-            {
-                whereSb.Append($" AND {BuildStringCondition("CENTRALITV.INSPECCION.Telefono2", filtros.TelefonoTitular2)}");
-                filtrosAplicados.Add($"Teléfono Titular 2: {filtros.TelefonoTitular2.Trim()}");
-            }
+        if (!string.IsNullOrWhiteSpace(filtros.TelefonoTitular2))
+        {
+            whereSb.Append($" AND {BuildStringCondition("CENTRALITV.INSPECCION.Telefono2", filtros.TelefonoTitular2)}");
+            filtrosAplicados.Add($"Teléfono Titular 2: {filtros.TelefonoTitular2.Trim()}");
+        }
 
-            if (!string.IsNullOrWhiteSpace(filtros.TelefonoFactura))
-            {
-                var c1 = BuildStringCondition("CENTRALITV.INSPECCION.Telefono", filtros.TelefonoFactura);
-                var c2 = BuildStringCondition("CENTRALITV.INSPECCION.Telefono2", filtros.TelefonoFactura);
-                var c3 = BuildStringCondition("CENTRALITV.CLIENTES.Telefono1", filtros.TelefonoFactura);
-                var c4 = BuildStringCondition("CENTRALITV.CLIENTES.Telefono2", filtros.TelefonoFactura);
-                whereSb.Append($" AND CENTRALITV.INSPECCION.Desea_Factura_Inmediata = -1 AND ((CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NULL AND ({c1} OR {c2})) OR (CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NOT NULL AND ({c3} OR {c4})))");
-                filtrosAplicados.Add($"Teléfono Factura: {filtros.TelefonoFactura.Trim()}");
-            }
+        if (!string.IsNullOrWhiteSpace(filtros.TelefonoFactura))
+        {
+            var c1 = BuildStringCondition("CENTRALITV.INSPECCION.Telefono", filtros.TelefonoFactura);
+            var c2 = BuildStringCondition("CENTRALITV.INSPECCION.Telefono2", filtros.TelefonoFactura);
+            var c3 = BuildStringCondition("CENTRALITV.CLIENTES.Telefono1", filtros.TelefonoFactura);
+            var c4 = BuildStringCondition("CENTRALITV.CLIENTES.Telefono2", filtros.TelefonoFactura);
+            whereSb.Append($" AND CENTRALITV.INSPECCION.Desea_Factura_Inmediata = -1 AND ((CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NULL AND ({c1} OR {c2})) OR (CENTRALITV.INSPECCION.Id_Cliente_Facturacion IS NOT NULL AND ({c3} OR {c4})))");
+            filtrosAplicados.Add($"Teléfono Factura: {filtros.TelefonoFactura.Trim()}");
         }
 
         // Filtros específicos de Defectos, Elementos y Mediciones
@@ -759,14 +764,32 @@ public sealed partial class OracleInformesRepository
         if (idxEstacion >= 0) ordenPartes.Add((idxEstacion + 1).ToString());
         if (idxFechaInsp >= 0 && idxFechaInsp != idxEstacion) ordenPartes.Add($"{idxFechaInsp + 1} ASC");
         string orderBySql = ordenPartes.Count > 0 ? $" ORDER BY {string.Join(", ", ordenPartes)}" : string.Empty;
+        bool requiereClienteFactura =
+            !string.IsNullOrWhiteSpace(filtros.CifFactura) ||
+            !string.IsNullOrWhiteSpace(filtros.RazonSocialFactura) ||
+            !string.IsNullOrWhiteSpace(filtros.CpFactura) ||
+            !string.IsNullOrWhiteSpace(filtros.EmailFactura) ||
+            !string.IsNullOrWhiteSpace(filtros.ProvinciaFactura) ||
+            !string.IsNullOrWhiteSpace(filtros.TelefonoFactura);
+        string joinClienteFactura = requiereClienteFactura
+            ? @"
+                    LEFT JOIN CENTRALITV.CLIENTES
+                           ON CENTRALITV.INSPECCION.Id_Cliente_Facturacion = CENTRALITV.CLIENTES.Id_Cliente
+                          AND CENTRALITV.INSPECCION.CodEstacion = CENTRALITV.CLIENTES.CodEstacion"
+            : string.Empty;
 
         string sqlFinal;
         switch (tipoNorm)
         {
             case "defectos":
                 sqlFinal = $@"
-                    SELECT {selectExpressions}
+                    SELECT /*+ LEADING(INSPECCION INSPECCION_DEFECTOS DEFECTOSSUB_SECCION)
+                               INDEX(INSPECCION P17_INSPECCION P31_INSPECCION)
+                               USE_NL(INSPECCION_DEFECTOS)
+                               USE_NL(DEFECTOSSUB_SECCION) */
+                           {selectExpressions}
                     FROM CENTRALITV.INSPECCION
+                    {joinClienteFactura}
                     INNER JOIN CENTRALITV.INSPECCION_DEFECTOS
                             ON CENTRALITV.INSPECCION.CODESTACION = CENTRALITV.INSPECCION_DEFECTOS.CODESTACION
                            AND CENTRALITV.INSPECCION.CODINSPECCION = CENTRALITV.INSPECCION_DEFECTOS.CODINSPECCION
@@ -787,8 +810,14 @@ public sealed partial class OracleInformesRepository
 
             case "elementos":
                 sqlFinal = $@"
-                    SELECT {selectExpressions}
+                    SELECT /*+ LEADING(INSPECCION INSPECCION_ELEMENTOS DEFECTOS)
+                               INDEX(INSPECCION P17_INSPECCION P31_INSPECCION)
+                               USE_NL(INSPECCION_ELEMENTOS)
+                               USE_NL(DEFECTOS) */
+                           {selectExpressions},
+                           CENTRALITV.INSPECCION.CODESTACION AS COD_ESTACION_GRAFICO
                     FROM CENTRALITV.INSPECCION
+                    {joinClienteFactura}
                     INNER JOIN CENTRALITV.INSPECCION_ELEMENTOS
                             ON CENTRALITV.INSPECCION.CODESTACION = CENTRALITV.INSPECCION_ELEMENTOS.CODESTACION
                            AND CENTRALITV.INSPECCION.CODINSPECCION = CENTRALITV.INSPECCION_ELEMENTOS.CODINSPECCION
@@ -806,6 +835,7 @@ public sealed partial class OracleInformesRepository
                 sqlFinal = $@"
                     SELECT DISTINCT {selectExpressions}
                     FROM CENTRALITV.INSPECCION
+                    {joinClienteFactura}
                     INNER JOIN CENTRALITV.INSPECCION_MEDICIONES
                             ON CENTRALITV.INSPECCION.CODINSPECCION = CENTRALITV.INSPECCION_MEDICIONES.CODINSPECCION
                            AND CENTRALITV.INSPECCION.CODESTACION = CENTRALITV.INSPECCION_MEDICIONES.CODESTACION
@@ -858,7 +888,32 @@ public sealed partial class OracleInformesRepository
                 break;
         }
 
+        bool limitarDetalleGrid = (tipoNorm is "elementos" or "defectos") &&
+            maxFilasRetorno == 5000 &&
+            onRow == null;
+        if (limitarDetalleGrid)
+        {
+            sqlFinal = $"SELECT * FROM ({sqlFinal}) WHERE ROWNUM <= 5000";
+        }
+
         LogSqlEjecutada($"LOCALIZACION_{tipoNorm.ToUpperInvariant()}", sqlFinal, fIni, fFin);
+        var executionTimer = Stopwatch.StartNew();
+
+        IReadOnlyList<ColumnaResultadoLocalizacionDto> colsDto = columnasSeleccionadas.Select(c => new ColumnaResultadoLocalizacionDto(
+            IdCampo: c.IdCampo,
+            ColumnaExcel: c.ColumnaExcel,
+            DesCampo: c.DesCampo,
+            TipoDato: c.TipoDato,
+            CategoriaCampo: c.CategoriaCampo
+        )).ToList();
+
+        int totalEstadistico = 0;
+        long? estadisticasElapsedMs = null;
+        long detalleReaderElapsedMs = 0;
+        long detalleFetchElapsedMs = 0;
+        var conteoEstacionesEstadistico = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        bool usarEstadisticasSeparadas = limitarDetalleGrid;
+        bool metadataEnviada = false;
 
         // 4. Ejecución con reintento ante errores transitorios de red y blindaje ORA-12570
         async Task<ResultadoEjecucionLocalizacionRaw> EjecutarInternoAsync(bool esReintento = false)
@@ -883,22 +938,117 @@ public sealed partial class OracleInformesRepository
                 cmd.Parameters.Add(new OracleParameter(p.ParameterName, p.OracleDbType) { Value = p.Value });
             }
 
-            var filas = new List<Dictionary<string, object?>>();
+            if (usarEstadisticasSeparadas)
+            {
+                var statsTimer = Stopwatch.StartNew();
+                totalEstadistico = 0;
+                conteoEstacionesEstadistico.Clear();
+                var sqlEstadisticas = tipoNorm switch
+                {
+                    "elementos" => $@"
+                        SELECT /*+ LEADING(INSPECCION INSPECCION_ELEMENTOS DEFECTOS)
+                                   INDEX(INSPECCION P17_INSPECCION P31_INSPECCION)
+                                   USE_NL(INSPECCION_ELEMENTOS)
+                                   USE_NL(DEFECTOS) */
+                               CENTRALITV.INSPECCION.CODESTACION, COUNT(*)
+                        FROM CENTRALITV.INSPECCION
+                        INNER JOIN CENTRALITV.INSPECCION_ELEMENTOS
+                                ON CENTRALITV.INSPECCION.CODESTACION = CENTRALITV.INSPECCION_ELEMENTOS.CODESTACION
+                               AND CENTRALITV.INSPECCION.CODINSPECCION = CENTRALITV.INSPECCION_ELEMENTOS.CODINSPECCION
+                        INNER JOIN CENTRALITV.DEFECTOS
+                                ON CENTRALITV.DEFECTOS.CODESTACION = CENTRALITV.INSPECCION_ELEMENTOS.CODESTACION
+                               AND CENTRALITV.DEFECTOS.BLOQUE = CENTRALITV.INSPECCION_ELEMENTOS.BLOQUE
+                               AND CENTRALITV.DEFECTOS.DEFECTO = CENTRALITV.INSPECCION_ELEMENTOS.DEFECTO
+                               AND CENTRALITV.DEFECTOS.CODIDIOMA = 'ESP'
+                        WHERE CENTRALITV.INSPECCION.ANULADA = 0
+                        {whereClause}
+                        GROUP BY CENTRALITV.INSPECCION.CODESTACION",
+                    "defectos" => $@"
+                        SELECT /*+ LEADING(INSPECCION INSPECCION_DEFECTOS DEFECTOSSUB_SECCION)
+                                   INDEX(INSPECCION P17_INSPECCION P31_INSPECCION)
+                                   USE_NL(INSPECCION_DEFECTOS)
+                                   USE_NL(DEFECTOSSUB_SECCION) */
+                               CENTRALITV.INSPECCION.CODESTACION, COUNT(*)
+                        FROM CENTRALITV.INSPECCION
+                        {joinClienteFactura}
+                        INNER JOIN CENTRALITV.INSPECCION_DEFECTOS
+                                ON CENTRALITV.INSPECCION.CODESTACION = CENTRALITV.INSPECCION_DEFECTOS.CODESTACION
+                               AND CENTRALITV.INSPECCION.CODINSPECCION = CENTRALITV.INSPECCION_DEFECTOS.CODINSPECCION
+                        INNER JOIN CENTRALITV.DEFECTOSSUB_SECCION
+                                ON CENTRALITV.INSPECCION.CODSECCION = CENTRALITV.DEFECTOSSUB_SECCION.CODSECCION
+                               AND CENTRALITV.INSPECCION_DEFECTOS.BLOQUE = CENTRALITV.DEFECTOSSUB_SECCION.BLOQUE
+                               AND CENTRALITV.INSPECCION_DEFECTOS.DEFECTO = CENTRALITV.DEFECTOSSUB_SECCION.DEFECTO
+                               AND CENTRALITV.INSPECCION_DEFECTOS.SUBDEFECTO = CENTRALITV.DEFECTOSSUB_SECCION.SUBDEFECTO
+                               AND CENTRALITV.INSPECCION_DEFECTOS.NUMERO = CENTRALITV.DEFECTOSSUB_SECCION.NUMERO
+                               AND CENTRALITV.INSPECCION_DEFECTOS.LEVE = CENTRALITV.DEFECTOSSUB_SECCION.LEVE
+                               AND CENTRALITV.INSPECCION_DEFECTOS.GRAVE = CENTRALITV.DEFECTOSSUB_SECCION.GRAVE
+                               AND CENTRALITV.INSPECCION_DEFECTOS.MUYGRAVE = CENTRALITV.DEFECTOSSUB_SECCION.MUYGRAVE
+                               AND CENTRALITV.DEFECTOSSUB_SECCION.CODIDIOMA = 'ESP'
+                        WHERE CENTRALITV.INSPECCION.ANULADA = 0
+                        {whereClause}
+                        GROUP BY CENTRALITV.INSPECCION.CODESTACION",
+                    _ => throw new InvalidOperationException($"No existe una agregación por estación para {tipoNorm}.")
+                };
+                LogSqlEjecutada(
+                    $"LOCALIZACION_{tipoNorm.ToUpperInvariant()}_ESTADISTICAS",
+                    sqlEstadisticas,
+                    fIni,
+                    fFin);
+                await using var statsCommand = connection.CreateCommand();
+                statsCommand.BindByName = true;
+                statsCommand.CommandText = sqlEstadisticas;
+                statsCommand.CommandType = CommandType.Text;
+                statsCommand.CommandTimeout = 120;
+                foreach (var p in parametros)
+                {
+                    statsCommand.Parameters.Add(new OracleParameter(p.ParameterName, p.OracleDbType) { Value = p.Value });
+                }
+
+                await using var statsReader = await statsCommand.ExecuteReaderAsync(cancellationToken);
+                while (await statsReader.ReadAsync(cancellationToken))
+                {
+                    var rawEstacion = Convert.ToString(statsReader.GetValue(0))?.Trim() ?? string.Empty;
+                    var count = Convert.ToInt32(statsReader.GetValue(1), CultureInfo.InvariantCulture);
+                    totalEstadistico += count;
+                    if (!string.IsNullOrWhiteSpace(rawEstacion))
+                    {
+                        conteoEstacionesEstadistico[rawEstacion.PadLeft(4, '0')] = count;
+                    }
+                }
+                estadisticasElapsedMs = statsTimer.ElapsedMilliseconds;
+            }
+
+            var filas = new List<Dictionary<string, object?>>(Math.Min(maxFilasRetorno, 5000));
             var conteoEstaciones = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            int totalRegistros = 0;
+            int totalRegistros = usarEstadisticasSeparadas ? totalEstadistico : 0;
             bool truncado = false;
 
+            var readTimer = Stopwatch.StartNew();
+            long? firstRowElapsedMs = null;
+            if (onMetadata != null && !metadataEnviada)
+            {
+                await onMetadata(colsDto, filtrosAplicados, cancellationToken);
+                metadataEnviada = true;
+            }
+            var readerOpenTimer = Stopwatch.StartNew();
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            detalleReaderElapsedMs = readerOpenTimer.ElapsedMilliseconds;
             int numCols = columnasSeleccionadas.Count;
+            int idxEstacionLector = idxEstacion >= 0 ? idxEstacion : tipoNorm == "elementos" ? numCols : -1;
+            var detailFetchTimer = Stopwatch.StartNew();
 
             while (await reader.ReadAsync(cancellationToken))
             {
-                totalRegistros++;
+                firstRowElapsedMs ??= readTimer.ElapsedMilliseconds;
+                if (!usarEstadisticasSeparadas)
+                {
+                    totalRegistros++;
+                }
 
                 // Contabilizar por estación si la columna está proyectada
-                if (idxEstacion >= 0 && !reader.IsDBNull(idxEstacion))
+                if (!usarEstadisticasSeparadas && idxEstacionLector >= 0 && !reader.IsDBNull(idxEstacionLector))
                 {
-                    var rawEst = Convert.ToString(reader.GetValue(idxEstacion))?.Trim() ?? string.Empty;
+                    var rawEst = Convert.ToString(reader.GetValue(idxEstacionLector))?.Trim() ?? string.Empty;
                     if (!string.IsNullOrWhiteSpace(rawEst))
                     {
                         var codEstPad = rawEst.PadLeft(4, '0');
@@ -906,65 +1056,66 @@ public sealed partial class OracleInformesRepository
                     }
                 }
 
-                if (filas.Count < maxFilasRetorno)
+                if (onRow != null)
+                {
+                    var valores = new object?[numCols];
+                    for (int j = 0; j < numCols; j++)
+                    {
+                        valores[j] = NormalizarValorColumna(reader, j, columnasSeleccionadas[j]);
+                    }
+                    await onRow(valores, cancellationToken);
+                    if (filas.Count < maxFilasRetorno)
+                    {
+                        var fila = new Dictionary<string, object?>(numCols, StringComparer.OrdinalIgnoreCase);
+                        for (int j = 0; j < numCols; j++)
+                        {
+                            fila[columnasSeleccionadas[j].ColumnaExcel] = valores[j];
+                        }
+                        filas.Add(fila);
+                    }
+                }
+                else if (filas.Count < maxFilasRetorno)
                 {
                     var fila = new Dictionary<string, object?>(numCols, StringComparer.OrdinalIgnoreCase);
                     for (int j = 0; j < numCols; j++)
                     {
-                        var colMeta = columnasSeleccionadas[j];
-                        if (reader.IsDBNull(j))
-                        {
-                            fila[colMeta.ColumnaExcel] = null;
-                            continue;
-                        }
-
-                        var rawVal = reader.GetValue(j);
-
-                        // Regla de negocio legacy: FECHA_ULTIMA_ITV anterior a 1980 se limpia a NULL
-                        if (colMeta.ColumnaExcel.Equals("FECHA_ULTIMA_ITV", StringComparison.OrdinalIgnoreCase) &&
-                            rawVal is DateTime dtUltima && dtUltima.Year < 1980)
-                        {
-                            fila[colMeta.ColumnaExcel] = null;
-                            continue;
-                        }
-
-                        if (rawVal is DateTime dtVal)
-                        {
-                            fila[colMeta.ColumnaExcel] = dtVal.TimeOfDay.TotalSeconds > 0
-                                ? dtVal.ToString("dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture)
-                                : dtVal.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
-                        }
-                        else if (rawVal is decimal decVal)
-                        {
-                            fila[colMeta.ColumnaExcel] = decVal;
-                        }
-                        else
-                        {
-                            fila[colMeta.ColumnaExcel] = Convert.ToString(rawVal)?.Trim();
-                        }
+                        fila[columnasSeleccionadas[j].ColumnaExcel] =
+                            NormalizarValorColumna(reader, j, columnasSeleccionadas[j]);
                     }
                     filas.Add(fila);
                 }
-                else
+                else if (!usarEstadisticasSeparadas)
                 {
                     truncado = true;
                 }
             }
+            detalleFetchElapsedMs = detailFetchTimer.ElapsedMilliseconds;
 
-            var colsDto = columnasSeleccionadas.Select(c => new ColumnaResultadoLocalizacionDto(
-                IdCampo: c.IdCampo,
-                ColumnaExcel: c.ColumnaExcel,
-                DesCampo: c.DesCampo,
-                TipoDato: c.TipoDato,
-                CategoriaCampo: c.CategoriaCampo
-            )).ToList();
+            if (usarEstadisticasSeparadas)
+            {
+                truncado = totalRegistros > filas.Count;
+            }
+
+            _logger.LogInformation(
+                "Localización {Tipo}: consulta Oracle completada en {ElapsedMs} ms; estadísticas {StatsElapsedMs} ms; apertura detalle {DetailReaderElapsedMs} ms; lectura detalle {DetailFetchElapsedMs} ms; primera fila en {FirstRowElapsedMs} ms; filas leídas {TotalRows}, retenidas {StoredRows}, columnas {ColumnCount}, límite {RowLimit}, truncado {Truncated}.",
+                tipoNorm,
+                executionTimer.ElapsedMilliseconds,
+                estadisticasElapsedMs,
+                detalleReaderElapsedMs,
+                detalleFetchElapsedMs,
+                firstRowElapsedMs,
+                totalRegistros,
+                filas.Count,
+                numCols,
+                maxFilasRetorno,
+                truncado);
 
             return new ResultadoEjecucionLocalizacionRaw(
                 TotalRegistros: totalRegistros,
                 Columnas: colsDto,
                 Filas: filas,
                 FiltrosAplicados: filtrosAplicados,
-                ConteoPorEstacion: conteoEstaciones,
+                ConteoPorEstacion: usarEstadisticasSeparadas ? conteoEstacionesEstadistico : conteoEstaciones,
                 TotalColumnasDisponibles: catalogoColumnas.Count,
                 Truncado: truncado
             );
@@ -982,10 +1133,52 @@ public sealed partial class OracleInformesRepository
         {
             throw new OperationCanceledException("Consulta de localización cancelada por el cliente.", ioex, cancellationToken);
         }
-        catch (OracleException oex) when (oex.Number is 12541 or 12571 or 3113 or 3114 && !cancellationToken.IsCancellationRequested)
+        catch (OracleException oex) when (
+            onRow is null &&
+            (oex.Number is 12541 or 12571 or 3113 or 3114) &&
+            !cancellationToken.IsCancellationRequested)
         {
             _logger.LogWarning(oex, "Reintentando consulta de localización ({Tipo}) tras desconexión transitoria Oracle...", tipoNorm);
             return await EjecutarInternoAsync(esReintento: true);
         }
+        catch (OracleException oex)
+        {
+            _logger.LogError(
+                oex,
+                "Consulta de localización {Tipo} falló tras {ElapsedMs} ms (ORA-{OracleError}).",
+                tipoNorm,
+                executionTimer.ElapsedMilliseconds,
+                oex.Number);
+            throw;
+        }
+    }
+
+    private static object? NormalizarValorColumna(
+        OracleDataReader reader,
+        int ordinal,
+        CampoLocalizacionDto colMeta)
+    {
+        if (reader.IsDBNull(ordinal))
+        {
+            return null;
+        }
+
+        var rawVal = reader.GetValue(ordinal);
+        if (colMeta.ColumnaExcel.Equals("FECHA_ULTIMA_ITV", StringComparison.OrdinalIgnoreCase) &&
+            rawVal is DateTime dtUltima && dtUltima.Year < 1980)
+        {
+            return null;
+        }
+
+        if (rawVal is DateTime dtVal)
+        {
+            return dtVal.TimeOfDay.TotalSeconds > 0
+                ? dtVal.ToString("dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture)
+                : dtVal.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+        }
+
+        return rawVal is decimal
+            ? rawVal
+            : Convert.ToString(rawVal)?.Trim();
     }
 }

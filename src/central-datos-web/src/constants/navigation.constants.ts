@@ -126,10 +126,10 @@ export const DESKTOP_MENUS: MenuGroup[] = [
       },
       {
         id: 'loc-defectos',
-        label: 'Localización defectos',
+        label: 'Inspecciones defectos',
         icon: 'warning',
         separatorBefore: true,
-        descripcion: 'Búsqueda y auditoría detallada de defectos detectados filtrando por sección del manual, bloque, elemento, subdefecto y características del vehículo.',
+        descripcion: 'Consulta de inspecciones y defectos por estación, fecha, titular, vehículo y criterios del manual.',
       },
       {
         id: 'loc-elementos',

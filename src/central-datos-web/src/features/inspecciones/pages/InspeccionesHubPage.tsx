@@ -15,8 +15,8 @@ export interface InspeccionesHubPageProps {
 }
 
 /**
- * Catálogo / Hub Principal del Menú 3. Inspecciones (Localización Dinámica ITV)
- * Muestra las 4 herramientas de localización técnica basadas en metadatos (CAMPOS_*LOCALIZADOS).
+ * Catálogo / Hub Principal del Menú 3. Inspecciones
+ * Ofrece el localizador de inspecciones y las pantallas técnicas asociadas.
  */
 export const InspeccionesHubPage: React.FC<InspeccionesHubPageProps> = ({
   onSelectModule,

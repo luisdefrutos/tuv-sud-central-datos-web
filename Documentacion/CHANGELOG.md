@@ -4,6 +4,146 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 
 ---
 
+## [2.29.26] - 07/11/2026 - *Exportación asíncrona de Localización*
+
+### ⚡ Rendimiento y fiabilidad
+* La exportación XLSX se genera como trabajo en segundo plano y el navegador consulta el estado para descargar el archivo al terminar, evitando mantener abierta la petición inicial durante la lectura de Oracle y la escritura del libro.
+* La cola acotada rechaza nuevas solicitudes con HTTP 429 cuando está llena; los archivos temporales se conservan hasta dos horas y se limpian periódicamente.
+* No se afirma que la exportación de 193.000 filas ya esté verificada: falta prueba con Oracle y entorno representativos.
+
+## [2.29.25] - 07/11/2026 - *Corrección ORA-00911 en Localización*
+
+### 🐛 Correcciones
+* Se renombró el alias auxiliar de estación para que sea válido como identificador Oracle sin comillas y se cambió el límite de detalle de `FETCH FIRST` a `ROWNUM` en una subconsulta.
+
+## [2.29.24] - 07/11/2026 - *Diagnóstico de cuellos de botella en Localización*
+
+### ⚡ Rendimiento y observabilidad
+* Elementos y Defectos limitan en Oracle las filas de detalle del grid a 5.000 y calculan el total/conteo por estación con una consulta agregada; Defectos incorpora hints para guiar el acceso desde INSPECCION y sus índices de fecha.
+* La lectura de Localización registra por separado el tiempo del agregado, apertura del cursor y lectura del detalle para distinguir fases lentas en Oracle.
+* La exportación de Localización envía valores posicionales al escritor XLSX en vez de crear un diccionario por registro y registra duración, filas y tamaño del archivo.
+* Se documenta que la consulta agregada por estación más la consulta limitada del grid recorren los joins por separado; la validación del plan y cualquier ajuste adicional requieren métricas Oracle reales.
+
+## [2.29.23] - 07/11/2026 - *Gráficos por estación y exportación Excel en streaming*
+
+### ⚡ Rendimiento y capacidad
+* Localización de Elementos calcula el total y la distribución por estación con una consulta agregada y limita a 5.000 las filas de detalle que devuelve el grid.
+* Las gráficas de barras/circular quedan visibles inicialmente y la consulta proyecta el código de estación aunque no se seleccione como columna.
+* El máximo de exportación Excel sube a 300.000 filas; el archivo se escribe con OpenXML en un temporal y las filas se transfieren desde Oracle sin retenerlas todas en memoria.
+
+### 📚 Documentación
+* Se actualizaron ambas skills de Inspecciones con el nuevo límite y la generación XLSX en streaming.
+
+## [2.29.22] - 07/11/2026 - *Diagnóstico y plan de consulta de Localización de Elementos*
+
+### ⚡ Rendimiento y diagnóstico
+* La consulta de Elementos guía Oracle desde INSPECCION por los índices de fecha y usa nested loops para los joins con elementos y defectos.
+* El backend registra el tiempo hasta la primera fila, duración de lectura, filas leídas/guardadas y errores Oracle para localizar el tramo lento sin registrar valores de filtros.
+
+## [2.29.21] - 06/11/2026 - *Alineación de Localización de Elementos con escritorio*
+
+### 🎨 Experiencia de usuario
+* Localización de Elementos presenta los criterios del formulario de escritorio en paneles organizados y conserva los componentes comunes de KPI, grid, ficha y exportación.
+* Los filtros exclusivos de otras localizaciones ya no se aplican silenciosamente a Elementos.
+
+### 📊 Datos y exportación
+* La consulta de columnas reproduce los campos disponibles y predeterminados del localizador de escritorio; grid y Excel comparten criterios y proyección.
+* La fecha final de Elementos conserva la comparación a medianoche del formulario legacy para mantener la paridad de registros.
+
+### 📚 Documentación
+* La skill de Inspecciones documenta los filtros, el disparo de consulta y la selección de campos de Elementos.
+
+## [2.29.20] - 06/11/2026 - *Restauración del estilo histórico de la ficha de Inspecciones*
+
+### 🎨 Experiencia de usuario
+* La ficha compartida recupera el diseño que tenía Localización antes de unificarla: cabecera degradada, tarjetas de campos y pie originales.
+* Defectos, Localización, Elementos y Mediciones conservan una presentación única mediante `InspectionRecordDetailModal`.
+
+### 📚 Documentación
+* La skill visual establece el modal histórico de Localización como referencia común.
+
+## [2.29.19] - 06/11/2026 - *Unificación de la ficha técnica de Inspecciones*
+
+### 🎨 Experiencia de usuario
+* La ficha técnica de Inspecciones Defectos adopta el mismo diseño y comportamiento que Localización.
+* Las pantallas de Inspecciones comparten un único componente de ficha para mantener encabezado, campos y cierre consistentes.
+
+### 📚 Documentación
+* La skill de Inspecciones define el uso común de `InspectionRecordDetailModal`.
+
+## [2.29.18] - 06/11/2026 - *Trazabilidad de filtros en informes de Inspecciones*
+
+### 🎨 Experiencia de usuario
+* Inspecciones Defectos muestra bajo el grid los filtros utilizados, igual que Localización; Elementos y Mediciones mantienen el mismo pie al compartir su pantalla.
+
+### 📚 Documentación
+* La skill de Inspecciones especifica la ubicación y reutilización del pie de filtros aplicados.
+
+## [2.29.17] - 06/11/2026 - *Resumen compacto de volumen y exportación*
+
+### 🎨 Experiencia de usuario
+* Se elimina el aviso permanente que duplicaba los contadores del grid; el aviso de más de 50.000 se convierte en confirmación modal al pulsar Excel.
+* El icono informativo junto al botón Excel solo aparece cuando se supera el máximo exportable de 150.000 filas.
+* Localización y Defectos comparten el mismo componente de acción Excel y confirmación.
+
+### 📚 Documentación
+* La skill de volumen define el resumen compacto en el grid, el icono contextual de límite y el diálogo de confirmación.
+
+## [2.29.16] - 06/11/2026 - *Claridad de límites y exportación en Inspecciones*
+
+### 🎨 Experiencia de usuario
+* Localización y Defectos comparten un aviso estructurado que distingue registros encontrados, cargados en el grid y exportables en Excel.
+* El aviso aparece al superar las filas cargadas; Excel confirma más de 50.000 registros y se bloquea por encima de 150.000.
+* Los errores y la confirmación de exportación usan el mismo patrón visual en ambas pantallas.
+
+### 📚 Documentación
+* Se añade la skill `inspecciones-volumen-datos` con límites y reglas compartidas para comunicar volúmenes y exportación.
+
+## [2.29.15] - 06/11/2026 - *Unificación de separadores y límites del grid*
+
+### 🎨 Experiencia de usuario
+* Las tablas de Localización y Defectos muestran separadores horizontales iguales y eliminan las líneas verticales de las celdas.
+
+### 📚 Documentación
+* La skill de Inspecciones documenta los límites funcionales: 5.000 filas cargadas en el grid, selector por página hasta 500 y Excel hasta 150.000 filas.
+
+## [2.29.14] - 06/11/2026 - *Unificación visual de pantallas de Inspecciones*
+
+### 🎨 Experiencia de usuario
+* Inspecciones defectos adopta la presentación KPI independiente sin borde exterior duplicado, y unifica la tipografía, cabeceras, filas y controles del grid con Localización.
+* Los gráficos comparten posición, selector y textos para mostrar u ocultar en ambas pantallas.
+
+### 📚 Documentación
+* Se incorpora la skill `inspecciones-ui` para mantener consistentes los elementos visuales comunes sin forzar que todas las pantallas compartan los mismos filtros.
+
+## [2.29.13] - 06/11/2026 - *Unificación del grid de inspecciones defectos*
+
+### 🎨 Experiencia de usuario
+* Inspecciones defectos comparte con Localización la barra de búsqueda, los contadores de filas cargadas/encontradas, la paginación, la ordenación y el hover del grid.
+* Se fijan las cabeceras durante el scroll y se sitúan «Seleccionar campos» y «Exportar a Excel» a la derecha, antes de los filtros de consulta.
+
+### 📚 Datos y exportación
+* La consulta de defectos usa los mismos joins principales que la aplicación de escritorio. La paridad exacta aún requiere validar una exportación comparable en Oracle: el escritorio filtra la fecha final hasta medianoche, mientras la web incluye el día completo, y la web limita Excel a 150.000 filas.
+
+## [2.29.12] - 06/11/2026 - *Diseño completo de inspecciones defectos*
+
+### 🎨 Experiencia de usuario
+* Los KPI de inspecciones defectos se muestran siempre en un recuadro independiente, con tooltips informativos personalizados y sin ser clicables.
+* Los gráficos por estación ocupan un recuadro separado y tienen su propio control para mostrar u ocultar el contenido.
+* Los filtros técnicos se compactan en paneles responsivos y el grid ajusta el ancho y la lectura de las cabeceras, conservando el acceso a todos los campos mediante scroll horizontal.
+
+## [2.29.11] - 06/11/2026 - *Pantalla independiente de inspecciones defectos*
+
+### 🎨 Experiencia de usuario
+* El segundo acceso del módulo Inspecciones abre una pantalla propia de inspecciones defectos, adaptada a la interfaz web y basada en los criterios de la aplicación de escritorio.
+* La nueva pantalla reúne estación, fechas, fase, NIF, datos del vehículo, filtros de sección/bloque/elemento/defecto, selección de columnas, consulta, tabla paginada y exportación.
+
+## [2.29.10] - 06/11/2026 - *Filtros de titular y búsqueda del grid*
+
+### 🎨 Experiencia de usuario
+* Se muestran los filtros de titular y cliente de facturación en todas las localizaciones y se aplican también en el backend.
+* La búsqueda del grid filtra sobre el orden ya calculado; evita volver a ordenar todas las filas cada vez que cambia el texto y reduce el debounce a 100 ms.
+
 ## [2.29.9] - 06/11/2026 - *Prueba de avisos y cancelación en Localización*
 
 ### 🎨 Experiencia de usuario

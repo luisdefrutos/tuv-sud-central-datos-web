@@ -1,8 +1,12 @@
+using System.Diagnostics;
 using System.Globalization;
+using System.Xml;
 using CentralDatos.Application.Features.Informes.Common;
 using CentralDatos.Application.Features.Informes.DTOs;
 using CentralDatos.Application.Features.Informes.Interfaces;
-using ClosedXML.Excel;
+using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.Extensions.Logging;
 
 namespace CentralDatos.Application.Features.Informes.Services;
@@ -10,7 +14,7 @@ namespace CentralDatos.Application.Features.Informes.Services;
 public sealed class InformesLocalizacionService : IInformesLocalizacionService
 {
     private const int MaxFilasGridWeb = 5000;
-    private const int MaxFilasExportExcel = 150000;
+    private const int MaxFilasExportExcel = 300000;
 
     private readonly IInformesRepository _repository;
     private readonly ILogger<InformesLocalizacionService> _logger;
@@ -118,7 +122,7 @@ public sealed class InformesLocalizacionService : IInformesLocalizacionService
         );
     }
 
-    public async Task<(byte[] Content, string FileName)> ExportarExcelAsync(
+    public async Task<(Stream Content, string FileName)> ExportarExcelAsync(
         FiltrosLocalizacionRequestDto filtros,
         CancellationToken cancellationToken = default)
     {
@@ -129,14 +133,6 @@ public sealed class InformesLocalizacionService : IInformesLocalizacionService
             ReportDateRangeValidator.Validar(filtros.FechaVencInicio.Value, filtros.FechaVencFin.Value);
         }
 
-        var raw = await _repository.EjecutarConsultaLocalizacionAsync(filtros, MaxFilasExportExcel, cancellationToken);
-        if (raw.TotalRegistros > MaxFilasExportExcel)
-        {
-            throw new ArgumentException(
-                $"La consulta contiene {raw.TotalRegistros:N0} registros y supera el límite actual de {MaxFilasExportExcel:N0} filas por exportación. Reduzca el rango de fechas o añada filtros.");
-        }
-        cancellationToken.ThrowIfCancellationRequested();
-
         var tipoNorm = (filtros.Tipo ?? "inspecciones").Trim().ToLowerInvariant();
         string nombreHoja = tipoNorm switch
         {
@@ -146,97 +142,270 @@ public sealed class InformesLocalizacionService : IInformesLocalizacionService
             _ => "INSPECCIONES_LOCALIZADAS"
         };
 
-        using var workbook = new XLWorkbook();
-        var ws = workbook.Worksheets.Add(nombreHoja);
+        string tempPath = Path.Combine(Path.GetTempPath(), $"localizacion-{Guid.NewGuid():N}.xlsx");
+        int numCols = 0;
+        int filaActual = 1;
+        int filasExportadas = 0;
+        var exportTimer = Stopwatch.StartNew();
+        IReadOnlyList<ColumnaResultadoLocalizacionDto> columnas = Array.Empty<ColumnaResultadoLocalizacionDto>();
+        IReadOnlyList<string> filtrosAplicados = Array.Empty<string>();
 
-        int numCols = raw.Columnas.Count;
-
-        // 1. Cabeceras oficiales de columna (Fila 1)
-        for (int c = 0; c < numCols; c++)
+        try
         {
-            var cell = ws.Cell(1, c + 1);
-            cell.Value = raw.Columnas[c].ColumnaExcel;
-            cell.Style.Font.Bold = true;
-            cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#F1F5F9");
-            cell.Style.Font.FontColor = XLColor.FromHtml("#0B253B");
-        }
-
-        // 2. Volcado de filas de datos
-        int rowIdx = 2;
-        foreach (var fila in raw.Filas)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            for (int c = 0; c < numCols; c++)
+            await using (var output = new FileStream(tempPath, new FileStreamOptions
             {
-                var colMeta = raw.Columnas[c];
-                if (!fila.TryGetValue(colMeta.ColumnaExcel, out var val) || val == null)
+                Mode = FileMode.CreateNew,
+                Access = FileAccess.ReadWrite,
+                Share = FileShare.None,
+                BufferSize = 1024 * 64,
+                Options = FileOptions.SequentialScan,
+            }))
+            using (var document = SpreadsheetDocument.Create(output, SpreadsheetDocumentType.Workbook, true))
+            {
+                var workbookPart = document.AddWorkbookPart();
+                workbookPart.Workbook = new Workbook();
+                var stylesPart = workbookPart.AddNewPart<WorkbookStylesPart>();
+                stylesPart.Stylesheet = CreateStylesheet();
+                stylesPart.Stylesheet.Save();
+
+                var worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
+                var sheets = workbookPart.Workbook.AppendChild(new Sheets());
+                sheets.Append(new Sheet
                 {
-                    continue;
+                    Id = workbookPart.GetIdOfPart(worksheetPart),
+                    SheetId = 1,
+                    Name = nombreHoja,
+                });
+
+                using (var writer = OpenXmlWriter.Create(worksheetPart))
+                {
+                    writer.WriteStartElement(new Worksheet());
+                    writer.WriteStartElement(new SheetViews());
+                    writer.WriteStartElement(new SheetView { WorkbookViewId = 0 });
+                    writer.WriteElement(new Pane
+                    {
+                        VerticalSplit = 1,
+                        TopLeftCell = "A2",
+                        ActivePane = PaneValues.BottomLeft,
+                        State = PaneStateValues.Frozen,
+                    });
+                    writer.WriteEndElement();
+                    writer.WriteEndElement();
+
+                    await _repository.EjecutarConsultaLocalizacionAsync(
+                        filtros,
+                        maxFilasRetorno: 0,
+                        cancellationToken,
+                        onMetadata: (columnasConsulta, filtrosConsulta, _) =>
+                        {
+                            columnas = columnasConsulta;
+                            filtrosAplicados = filtrosConsulta;
+                            numCols = columnas.Count;
+
+                            writer.WriteStartElement(new Columns());
+                            for (int i = 0; i < numCols; i++)
+                            {
+                                writer.WriteElement(new Column
+                                {
+                                    Min = (uint)(i + 1),
+                                    Max = (uint)(i + 1),
+                                    Width = Math.Clamp(columnas[i].ColumnaExcel.Length + 4, 14, 42),
+                                    CustomWidth = true,
+                                });
+                            }
+                            writer.WriteEndElement();
+
+                            writer.WriteStartElement(new SheetData());
+                            writer.WriteStartElement(new Row { RowIndex = 1 });
+                            for (int i = 0; i < numCols; i++)
+                            {
+                                WriteInlineStringCell(writer, CellReference(i, 1), columnas[i].ColumnaExcel, 1);
+                            }
+                            writer.WriteEndElement();
+                            return Task.CompletedTask;
+                        },
+                        onRow: (fila, token) =>
+                        {
+                            token.ThrowIfCancellationRequested();
+                            if (filasExportadas >= MaxFilasExportExcel)
+                            {
+                                throw new ArgumentException(
+                                    $"La consulta supera el límite de {MaxFilasExportExcel:N0} registros por exportación. Reduzca el rango de fechas o añada filtros.");
+                            }
+
+                            filasExportadas++;
+                            filaActual++;
+                            writer.WriteStartElement(new Row { RowIndex = (uint)filaActual });
+                            for (int i = 0; i < numCols; i++)
+                            {
+                                var col = columnas[i];
+                                var value = fila[i];
+                                if (value != null)
+                                {
+                                    WriteDataCell(writer, CellReference(i, filaActual), col, value);
+                                }
+                            }
+                            writer.WriteEndElement();
+                            return Task.CompletedTask;
+                        });
+
+                    if (filtrosAplicados.Count > 0)
+                    {
+                        filaActual += 2;
+                        foreach (var filtro in filtrosAplicados)
+                        {
+                            cancellationToken.ThrowIfCancellationRequested();
+                            filaActual++;
+                            writer.WriteStartElement(new Row { RowIndex = (uint)filaActual });
+                            WriteInlineStringCell(writer, CellReference(0, filaActual), filtro, 4);
+                            writer.WriteEndElement();
+                        }
+                    }
+
+                    int ultimaFilaDatos = filasExportadas + 1;
+                    writer.WriteEndElement();
+                    if (numCols > 0 && filasExportadas > 0)
+                    {
+                        writer.WriteElement(new AutoFilter
+                        {
+                            Reference = $"A1:{CellReference(numCols - 1, ultimaFilaDatos)}",
+                        });
+                    }
+
+                    writer.WriteEndElement();
                 }
 
-                var cell = ws.Cell(rowIdx, c + 1);
-                if (val is decimal decVal)
-                {
-                    cell.Value = decVal;
-                }
-                else if (val is int intVal)
-                {
-                    cell.Value = intVal;
-                }
-                else if (val is double dblVal)
-                {
-                    cell.Value = dblVal;
-                }
-                else
-                {
-                    var strVal = Convert.ToString(val, CultureInfo.InvariantCulture) ?? string.Empty;
-                    if ((colMeta.TipoDato.Equals("N", StringComparison.OrdinalIgnoreCase) ||
-                         colMeta.TipoDato.Equals("E", StringComparison.OrdinalIgnoreCase) ||
-                         colMeta.TipoDato.Equals("M", StringComparison.OrdinalIgnoreCase)) &&
-                        decimal.TryParse(strVal, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsedDec))
-                    {
-                        cell.Value = parsedDec;
-                    }
-                    else
-                    {
-                        cell.Value = strVal;
-                    }
-                }
+                workbookPart.Workbook.Save();
+                cancellationToken.ThrowIfCancellationRequested();
+                await output.FlushAsync(cancellationToken);
             }
-            rowIdx++;
-        }
 
-        int ultimaFilaTabla = Math.Max(1, rowIdx - 1);
-        if (numCols > 0)
+            var downloadStream = new FileStream(tempPath, new FileStreamOptions
+            {
+                Mode = FileMode.Open,
+                Access = FileAccess.Read,
+                Share = FileShare.Read,
+                BufferSize = 1024 * 64,
+                Options = FileOptions.SequentialScan,
+            });
+            _logger.LogInformation(
+                "Exportación de Localización {Tipo}: completada en {ElapsedMs} ms; filas {Rows}; archivo {FileSizeBytes} bytes.",
+                tipoNorm,
+                exportTimer.ElapsedMilliseconds,
+                filasExportadas,
+                downloadStream.Length);
+            return (downloadStream, $"{nombreHoja}_{filtros.FechaInicio:yyyyMMdd}_{filtros.FechaFin:yyyyMMdd}.xlsx");
+        }
+        catch
         {
-            var tableRange = ws.Range(1, 1, ultimaFilaTabla, numCols);
-            tableRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-            tableRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
-            tableRange.Style.Border.OutsideBorderColor = XLColor.FromHtml("#CBD5E1");
-            tableRange.Style.Border.InsideBorderColor = XLColor.FromHtml("#E2E8F0");
+            if (File.Exists(tempPath))
+            {
+                File.Delete(tempPath);
+            }
+            throw;
         }
+    }
 
-        // 3. Bloques de Filtros Aplicados al pie (Exactamente en Rows.Count + 3 + z, Columna 1 como en la app de escritorio)
-        int filaInicioFiltros = raw.Filas.Count + 4;
-        for (int z = 0; z < raw.FiltrosAplicados.Count; z++)
+    private static Stylesheet CreateStylesheet()
+    {
+        return new Stylesheet(
+            new NumberingFormats(
+                new NumberingFormat { NumberFormatId = 164, FormatCode = "dd/mm/yyyy" },
+                new NumberingFormat { NumberFormatId = 165, FormatCode = "dd/mm/yyyy hh:mm:ss" })
+            { Count = 2 },
+            new Fonts(
+                new Font(),
+                new Font(new Bold(), new Color { Rgb = "FF0B253B" }),
+                new Font(new Italic(), new Color { Rgb = "FF334155" }))
+            { Count = 3 },
+            new Fills(
+                new Fill(new PatternFill { PatternType = PatternValues.None }),
+                new Fill(new PatternFill { PatternType = PatternValues.Gray125 }),
+                new Fill(new PatternFill(
+                    new ForegroundColor { Rgb = "FFF1F5F9" },
+                    new BackgroundColor { Indexed = 64 })
+                { PatternType = PatternValues.Solid }))
+            { Count = 3 },
+            new Borders(
+                new Border(),
+                new Border(
+                    new LeftBorder { Style = BorderStyleValues.Thin, Color = new Color { Rgb = "FFCBD5E1" } },
+                    new RightBorder { Style = BorderStyleValues.Thin, Color = new Color { Rgb = "FFCBD5E1" } },
+                    new TopBorder { Style = BorderStyleValues.Thin, Color = new Color { Rgb = "FFCBD5E1" } },
+                    new BottomBorder { Style = BorderStyleValues.Thin, Color = new Color { Rgb = "FFCBD5E1" } },
+                    new DiagonalBorder()))
+            { Count = 2 },
+            new CellFormats(
+                new CellFormat(),
+                new CellFormat { FontId = 1, FillId = 2, BorderId = 1, ApplyFont = true, ApplyFill = true, ApplyBorder = true },
+                new CellFormat { NumberFormatId = 164, ApplyNumberFormat = true },
+                new CellFormat { NumberFormatId = 165, ApplyNumberFormat = true },
+                new CellFormat { FontId = 2, ApplyFont = true })
+            { Count = 5 });
+    }
+
+    private static void WriteDataCell(
+        OpenXmlWriter writer,
+        string reference,
+        ColumnaResultadoLocalizacionDto column,
+        object value)
+    {
+        string text = Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
+        if (DateTime.TryParseExact(
+                text,
+                ["dd/MM/yyyy HH:mm:ss", "dd/MM/yyyy"],
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out var date))
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var filterCell = ws.Cell(filaInicioFiltros + z, 1);
-            filterCell.Value = raw.FiltrosAplicados[z];
-            filterCell.Style.Font.Italic = true;
-            filterCell.Style.Font.FontColor = XLColor.FromHtml("#334155");
+            writer.WriteStartElement(new Cell
+            {
+                CellReference = reference,
+                DataType = CellValues.Number,
+                StyleIndex = text.Length > 10 ? 3U : 2U,
+            });
+            writer.WriteElement(new CellValue(date.ToOADate().ToString(CultureInfo.InvariantCulture)));
+            writer.WriteEndElement();
+            return;
         }
 
-        // Ajuste de ancho de columnas (con límite de filas muestreadas para no penalizar CPU en exportaciones grandes)
-        cancellationToken.ThrowIfCancellationRequested();
-        ws.Columns(1, Math.Max(1, numCols)).AdjustToContents(1, Math.Min(ultimaFilaTabla, 500), 10, 55);
+        if ((column.TipoDato.Equals("N", StringComparison.OrdinalIgnoreCase) ||
+             column.TipoDato.Equals("E", StringComparison.OrdinalIgnoreCase) ||
+             column.TipoDato.Equals("M", StringComparison.OrdinalIgnoreCase)) &&
+            decimal.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out var number))
+        {
+            writer.WriteStartElement(new Cell { CellReference = reference, DataType = CellValues.Number });
+            writer.WriteElement(new CellValue(number.ToString(CultureInfo.InvariantCulture)));
+            writer.WriteEndElement();
+            return;
+        }
 
-        using var ms = new MemoryStream();
-        cancellationToken.ThrowIfCancellationRequested();
-        workbook.SaveAs(ms);
-        cancellationToken.ThrowIfCancellationRequested();
+        WriteInlineStringCell(writer, reference, text, 0);
+    }
 
-        string fileName = $"{nombreHoja}_{filtros.FechaInicio:yyyyMMdd}_{filtros.FechaFin:yyyyMMdd}.xlsx";
-        return (ms.ToArray(), fileName);
+    private static void WriteInlineStringCell(OpenXmlWriter writer, string reference, string value, uint styleIndex)
+    {
+        var cell = new Cell
+        {
+            CellReference = reference,
+            DataType = CellValues.InlineString,
+            StyleIndex = styleIndex,
+        };
+        writer.WriteStartElement(cell);
+        writer.WriteElement(new InlineString(new Text(XmlConvert.VerifyXmlChars(value))
+        {
+            Space = SpaceProcessingModeValues.Preserve,
+        }));
+        writer.WriteEndElement();
+    }
+
+    private static string CellReference(int zeroBasedColumn, int row)
+    {
+        var columnName = string.Empty;
+        for (int value = zeroBasedColumn + 1; value > 0; value = (value - 1) / 26)
+        {
+            columnName = (char)('A' + (value - 1) % 26) + columnName;
+        }
+        return $"{columnName}{row}";
     }
 }

@@ -89,6 +89,8 @@ try
     // Inyección de dependencias Clean Architecture con IConfiguration
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
+    builder.Services.AddSingleton<LocalizacionExportJobQueue>();
+    builder.Services.AddHostedService(provider => provider.GetRequiredService<LocalizacionExportJobQueue>());
 
     var app = builder.Build();
 

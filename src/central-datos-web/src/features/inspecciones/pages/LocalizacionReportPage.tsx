@@ -1,4 +1,4 @@
-import React, { startTransition, useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import React, { startTransition, useState, useMemo, useRef, useCallback } from 'react';
 import { TsAlert, TsButton, TsCard, TsBadge, TsIcon } from '@tuvsud/design-system/react';
 import { ReportPageHeader } from '../../informes/components/ReportPageHeader';
 import { ReportDateRangeAlert } from '../../informes/components/ReportDateRangeAlert';
@@ -11,6 +11,10 @@ import { BlockingLoadingModal } from '../../../components/common/BlockingLoading
 import { AppTooltip } from '../../../components/common/AppTooltip';
 import { SortIndicator } from '../../../components/common/SortIndicator';
 import { LocalizacionColumnSelectorModal } from '../components/LocalizacionColumnSelectorModal';
+import { InspectionRecordDetailModal } from '../components/InspectionRecordDetailModal';
+import { InspectionExcelExportAction } from '../components/InspectionExcelExportAction';
+import { formatInspectionAppliedFilter, InspectionAppliedFiltersFooter } from '../components/InspectionAppliedFiltersFooter';
+import { LocalizacionGridSearch } from '../components/LocalizacionGridSearch';
 import { useLocalizacionReport } from '../hooks/useLocalizacionReport';
 import { ESTACIONES_OFICIALES } from '../../../constants/estaciones.constants';
 import { SOCIEDADES } from '../../../constants/companies.constants';
@@ -78,31 +82,6 @@ function getColumnPixelWidth(col: ColumnaResultadoLocalizacion): number {
   return 150;
 }
 
-/**
- * Formatea una línea de filtro reemplazando códigos de estación por "XXXX - NOMBRE ESTACIÓN"
- */
-function formatFiltroEstacionesConNombre(filtro: string): string {
-  if (!filtro.toUpperCase().startsWith('ESTACIONES:')) return filtro;
-  const rawCodes = filtro.slice('ESTACIONES:'.length).trim();
-  if (!rawCodes || rawCodes.toLowerCase() === 'todos' || rawCodes.toLowerCase() === 'todas') {
-    return `ESTACIONES: Todas las estaciones (${ESTACIONES_OFICIALES.length})`;
-  }
-  const codes = rawCodes
-    .split(',')
-    .map((c) => c.trim())
-    .filter(Boolean);
-
-  const formattedList = codes.map((c) => {
-    const padded = c.padStart(4, '0');
-    const found = ESTACIONES_OFICIALES.find((e) => e.codigo === padded || e.codigo === c);
-    if (!found) return padded;
-    const cleanName = found.descripcion.replace(/^I\.T\.V\.\s*-\s*/i, '').trim();
-    return `${padded} - ${cleanName}`;
-  });
-
-  return `ESTACIONES (${codes.length}): ${formattedList.join(', ')}`;
-}
-
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '6px 10px',
@@ -122,107 +101,6 @@ const labelStyle: React.CSSProperties = {
   marginBottom: '4px',
 };
 
-interface LocalizacionGridSearchProps {
-  value: string;
-  searchableFields: string[];
-  onSearchChange: (value: string) => void;
-}
-
-const LocalizacionGridSearch: React.FC<LocalizacionGridSearchProps> = ({
-  value,
-  searchableFields,
-  onSearchChange,
-}) => {
-  const [draft, setDraft] = useState(value);
-
-  useEffect(() => {
-    setDraft(value);
-  }, [value]);
-
-  useEffect(() => {
-    if (draft === value) return;
-    const timer = window.setTimeout(() => onSearchChange(draft), 180);
-    return () => window.clearTimeout(timer);
-  }, [draft, value, onSearchChange]);
-
-  const clearSearch = () => {
-    setDraft('');
-    onSearchChange('');
-  };
-
-  return (
-    <div style={{ width: '100%', maxWidth: '520px' }}>
-      <AppTooltip
-        title={value ? 'Filtro visual activo en la tabla' : 'Filtro rápido sobre los resultados cargados'}
-        subtitle="La búsqueda se aplica solo a las filas cargadas en el grid."
-        content={
-          searchableFields.length > 0
-            ? `Campos incluidos: ${searchableFields.join(', ')}`
-            : 'No hay columnas de texto, fecha o identificación seleccionadas para buscar.'
-        }
-        position="top"
-        style={{ display: 'block', width: '100%' }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            backgroundColor: '#ffffff',
-            border: '1.5px solid #cbd5e1',
-            borderRadius: '6px',
-            padding: '0 10px',
-            height: '36px',
-            boxSizing: 'border-box',
-          }}
-        >
-          <span style={{ color: '#64748b', marginRight: '8px', display: 'flex', alignItems: 'center' }}>
-            <TsIcon name="search" style={{ fontSize: '16px' }} />
-          </span>
-          <input
-            type="text"
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder={
-              searchableFields.length > 0
-                ? `Buscar en ${searchableFields.slice(0, 3).join(', ')}${searchableFields.length > 3 ? '…' : ''}`
-                : 'No hay campos buscables seleccionados'
-            }
-            aria-label="Buscar en campos de texto, fecha e identificación del grid"
-            disabled={searchableFields.length === 0}
-            style={{
-              border: 'none',
-              outline: 'none',
-              width: '100%',
-              fontSize: '0.82rem',
-              color: '#0f172a',
-              backgroundColor: 'transparent',
-              fontWeight: 500,
-            }}
-          />
-          {draft && (
-            <button
-              type="button"
-              onClick={clearSearch}
-              aria-label="Limpiar búsqueda"
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#64748b',
-                cursor: 'pointer',
-                padding: '2px 4px',
-                display: 'flex',
-                alignItems: 'center',
-              }}
-            >
-              <TsIcon name="close" style={{ fontSize: '14px' }} />
-            </button>
-          )}
-        </div>
-      </AppTooltip>
-    </div>
-  );
-};
-
 export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
   tipo,
   onNavigateHome,
@@ -233,18 +111,11 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
 
   const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
   const [activeCriteriaTab, setActiveCriteriaTab] = useState<'vehiculo' | 'titular'>('vehiculo');
-  const [showChartSection, setShowChartSection] = useState(false);
+  const [showChartSection, setShowChartSection] = useState(true);
   const [chartMode, setChartMode] = useState<'barras' | 'donut'>('barras');
-  const [highVolumeNoticeDismissed, setHighVolumeNoticeDismissed] = useState(false);
-
   const gridTopRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setHighVolumeNoticeDismissed(false);
-  }, [r.data]);
-
   const hayDatos = Boolean(r.data && r.data.filas.length > 0 && !r.filters.alertaRangoFechas);
-  const exportacionSuperaLimite = (r.data?.kpis.totalRegistros ?? 0) > r.maxExportRows;
   const columnasTabla = r.data?.columnas ?? [];
   const handleGridSearchChange = useCallback(
     (value: string) => {
@@ -262,9 +133,13 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
   const resumenGrid = (
     <>
       Mostrando <strong>{r.filasPaginadas.length.toLocaleString('es-ES')}</strong> de{' '}
-      <strong>{r.totalFilas.toLocaleString('es-ES')}</strong> cargados de{' '}
+      {r.busqueda.trim() && (
+        <>
+          <strong>{r.totalFilas.toLocaleString('es-ES')}</strong> coincidencias en{' '}
+        </>
+      )}
+      <strong>{(r.data?.filas.length ?? 0).toLocaleString('es-ES')}</strong> cargados de{' '}
       <strong>{(r.data?.kpis.totalRegistros ?? 0).toLocaleString('es-ES')}</strong> encontrados
-      {' '}({columnasTabla.length} columnas)
     </>
   );
 
@@ -312,19 +187,9 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
   }, [r.data?.kpis.estacionLider]);
 
   const filtrosAplicadosFormateados = useMemo(
-    () => (r.data?.filtrosAplicados ?? []).map(formatFiltroEstacionesConNombre),
+    () => (r.data?.filtrosAplicados ?? []).map(formatInspectionAppliedFilter),
     [r.data?.filtrosAplicados]
   );
-
-  // Detalle estructurado para el pie: las estaciones se separan en una lista (una por línea)
-  const filtrosPieDetalle = useMemo(() => {
-    return (r.data?.filtrosAplicados ?? []).map((raw) => {
-      const formateado = formatFiltroEstacionesConNombre(raw);
-      const m = /^(ESTACIONES \(\d+\)):\s*(.+)$/.exec(formateado);
-      if (!m) return { texto: formateado, estaciones: undefined as string[] | undefined };
-      return { texto: m[1], estaciones: m[2].split(', ').filter(Boolean) };
-    });
-  }, [r.data?.filtrosAplicados]);
 
   const toggleMinerCode = (cod: string) => {
     r.setTiposVehiculoMiner((prev) =>
@@ -390,78 +255,7 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
         </div>
       )}
 
-      {r.exportError && (
-        <div
-          style={{
-            padding: '0.85rem 1.25rem',
-            backgroundColor: '#fffbeb',
-            border: '1px solid #f59e0b',
-            borderRadius: '6px',
-            color: '#92400e',
-            fontSize: '0.86rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
-        >
-          <TsIcon name="warning" size={18} style={{ color: '#d97706' }} />
-          <span>{r.exportError}</span>
-        </div>
-      )}
-
-      {r.data &&
-        !r.isLoading &&
-        !r.exportConfirmationRequired &&
-        !highVolumeNoticeDismissed &&
-        r.data.kpis.totalRegistros > r.highVolumeWarningThreshold && (
-          <TsAlert
-            variant="warning"
-            open
-            closable
-            onTsAfterHide={() => setHighVolumeNoticeDismissed(true)}
-            heading="Consulta con un volumen elevado"
-          >
-            <span>
-              Se encontraron <strong>{r.data.kpis.totalRegistros.toLocaleString('es-ES')}</strong> registros. La tabla
-              muestra los primeros <strong>{r.data.kpis.mostrandoRegistrosGrid.toLocaleString('es-ES')}</strong>. Puede
-              {exportacionSuperaLimite
-                ? ` acotar los filtros: se ha deshabilitado la exportación porque supera el límite de ${r.maxExportRows.toLocaleString('es-ES')} registros.`
-                : ' acotar los filtros para reducir el tiempo de consulta y exportación.'}{' '}
-              Este aviso desaparece al cerrarlo o realizar otra consulta.
-            </span>
-          </TsAlert>
-        )}
-
-      {r.exportConfirmationRequired && r.data && (
-        <div
-          role="alert"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 'var(--ts-semantic-size-space-300, 0.5rem)',
-            padding: 'var(--ts-semantic-size-space-400, 0.75rem)',
-            border: '1px solid var(--ts-semantic-color-border-warning, #d97706)',
-            borderRadius: 'var(--ts-semantic-size-radius-200, 0.375rem)',
-            backgroundColor: 'var(--ts-semantic-color-surface-warning-subtle, #fffbeb)',
-            color: 'var(--ts-semantic-color-text-default, #0b253b)',
-            boxSizing: 'border-box',
-          }}
-        >
-          <strong>Confirmar exportación de gran volumen</strong>
-          <span>
-            Se van a exportar {r.data.kpis.totalRegistros.toLocaleString('es-ES')} registros. La generación puede
-            tardar. El aviso desaparecerá al cancelar o continuar.
-          </span>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <TsButton type="button" variant="secondary" size="small" onClick={r.cancelarConfirmacionExportacion}>
-              Cancelar
-            </TsButton>
-            <TsButton type="button" variant="primary" size="small" onClick={r.confirmarExportacionExcel}>
-              Continuar exportación
-            </TsButton>
-          </div>
-        </div>
-      )}
+      {r.exportError && <TsAlert variant="danger" open heading="Error al exportar">{r.exportError}</TsAlert>}
 
       {/* Acciones de la consulta fuera del contenedor de filtros */}
       <div
@@ -487,42 +281,19 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
             </TsButton>
           </span>
         </AppTooltip>
-        <AppTooltip
-          title={`Exportar libro oficial (${cfg.hojaExcel}.xlsx)`}
-          subtitle="Exportación íntegra según los filtros globales"
-          content={
-            exportacionSuperaLimite
-              ? `No se puede exportar: el resultado supera el límite actual de ${r.maxExportRows.toLocaleString('es-ES')} registros. Acote los filtros y vuelva a consultar.`
-              : hayDatos
-                ? 'Genera el Excel con los registros de la consulta y los filtros aplicados. Para más de 50.000 registros se solicitará confirmación.'
-                : 'Realice una consulta con datos para habilitar la exportación a Excel.'
-          }
-          position="bottom"
-        >
-          <span>
-            <TsButton
-              type="button"
-              variant="primary"
-              size="medium"
-              onClick={r.handleExportarExcel}
-              disabled={!hayDatos || exportacionSuperaLimite || r.isExporting || r.isLoading}
-            >
-              <TsIcon slot="prefix" name={r.isExporting ? 'hourglass_empty' : 'download'} />
-              {r.isExporting ? 'Exportando...' : 'Exportar a Excel'}
-            </TsButton>
-          </span>
-        </AppTooltip>
-        {exportacionSuperaLimite && (
-          <AppTooltip
-            title="Exportación no disponible"
-            content={`No se puede exportar: el resultado supera el límite actual de ${r.maxExportRows.toLocaleString('es-ES')} registros. Acote los filtros y vuelva a consultar.`}
-            position="bottom"
-          >
-            <span style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--ts-semantic-color-text-subtle, #5c768d)', cursor: 'help' }}>
-              <TsIcon name="info" aria-label="Información sobre el límite de exportación" />
-            </span>
-          </AppTooltip>
-        )}
+        <InspectionExcelExportAction
+          fileTitle={`Exportar libro oficial (${cfg.hojaExcel}.xlsx)`}
+          totalRecords={r.data?.kpis.totalRegistros ?? 0}
+          confirmationThreshold={r.highVolumeWarningThreshold}
+          maxExportRows={r.maxExportRows}
+          hasData={hayDatos}
+          isLoading={r.isLoading}
+          isExporting={r.isExporting}
+          confirmationRequired={r.exportConfirmationRequired}
+          onExport={r.handleExportarExcel}
+          onConfirmExport={r.confirmarExportacionExcel}
+          onCancelExport={r.cancelarConfirmacionExportacion}
+        />
       </div>
 
       {/* 3. Barra Principal de Fechas, Sociedad, Estaciones, Fase y Único Botón "Consultar" */}
@@ -542,7 +313,171 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
         loading={r.isLoading}
       />
 
-      {/* 4. Panel de Criterios Avanzados Dividido en 2 Pestañas/Cajas (1. Datos Vehículo, 2. Titular / Cliente Facturación) */}
+      {tipo === 'elementos' && (
+        <TsCard className="cd-elements-criteria-card">
+          <div className="cd-elements-criteria-heading">
+            <div>
+              <h2>Filtros de localización de elementos</h2>
+              <p>Los cambios se aplican al pulsar «Consultar» o al presionar Enter.</p>
+            </div>
+            <TsButton
+              type="button"
+              variant="secondary"
+              size="small"
+              onClick={() => {
+                r.limpiarFiltrosVehiculo();
+                r.setCifTitular('');
+              }}
+            >
+              <TsIcon slot="prefix" name="close" />
+              Limpiar filtros
+            </TsButton>
+          </div>
+
+          <div className="cd-elements-criteria-grid">
+            <section className="cd-elements-criteria-group" aria-labelledby="elements-vehicle-title">
+              <h3 id="elements-vehicle-title">Datos vehículos</h3>
+              <div className="cd-elements-vehicle-fields">
+                <div>
+                  <label className="cd-elements-filter-label" htmlFor="elements-construccion">Construcción</label>
+                  <select
+                    id="elements-construccion"
+                    className="cd-elements-filter-control"
+                    value={r.construccion}
+                    onChange={(event) => r.setConstruccion(event.target.value)}
+                  >
+                    <option value="">Todas</option>
+                    {(r.catalogos?.construcciones ?? []).map((item) => (
+                      <option key={item.codigo} value={item.codigo}>{item.codigo}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="cd-elements-filter-label" htmlFor="elements-utilizacion">Utilización</label>
+                  <select
+                    id="elements-utilizacion"
+                    className="cd-elements-filter-control"
+                    value={r.utilizacion}
+                    onChange={(event) => r.setUtilizacion(event.target.value)}
+                  >
+                    <option value="">Todas</option>
+                    {(r.catalogos?.utilizaciones ?? []).map((item) => (
+                      <option key={item.codigo} value={item.codigo}>{item.codigo}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="cd-elements-category-field">
+                  <div className="cd-elements-category-label">
+                    <label className="cd-elements-filter-label" htmlFor="elements-categoria">Categoría</label>
+                    <label className="cd-elements-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={r.categoriaDistinto}
+                        onChange={(event) => r.setCategoriaDistinto(event.target.checked)}
+                      />
+                      Distinto (≠)
+                    </label>
+                  </div>
+                  <select
+                    id="elements-categoria"
+                    className="cd-elements-filter-control"
+                    value={r.categoria}
+                    onChange={(event) => r.setCategoria(event.target.value)}
+                  >
+                    <option value="">Todas</option>
+                    {(r.catalogos?.categorias ?? []).map((item) => (
+                      <option key={item.codigo} value={item.codigo}>{item.codigo} - {item.descripcion}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="cd-elements-filter-label" htmlFor="elements-motor">Tipo motor</label>
+                  <select
+                    id="elements-motor"
+                    className="cd-elements-filter-control"
+                    value={r.tipoMotor}
+                    onChange={(event) => r.setTipoMotor(event.target.value)}
+                  >
+                    <option value="">Todos</option>
+                    {(r.catalogos?.tiposMotor ?? []).map((item) => (
+                      <option key={item.codigo} value={item.codigo}>{item.codigo} - {item.descripcion}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="cd-elements-filter-label" htmlFor="elements-marca">Marca</label>
+                  <input
+                    id="elements-marca"
+                    className="cd-elements-filter-control"
+                    type="text"
+                    value={r.marca}
+                    onChange={(event) => r.setMarca(event.target.value)}
+                    onKeyDown={handleKeyDownInput}
+                    placeholder="Marca"
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section className="cd-elements-criteria-group" aria-labelledby="elements-manual-title">
+              <h3 id="elements-manual-title">Datos elementos</h3>
+              <div className="cd-elements-manual-fields">
+                <div>
+                  <label className="cd-elements-filter-label" htmlFor="elements-bloque">Bloque</label>
+                  <select
+                    id="elements-bloque"
+                    className="cd-elements-filter-control"
+                    value={r.bloque}
+                    onChange={(event) => {
+                      r.setBloque(event.target.value);
+                      r.setDefecto('');
+                    }}
+                  >
+                    <option value="">Todos</option>
+                    {r.bloquesDinamicos.map((item) => (
+                      <option key={item.codigo} value={item.codigo}>{item.codigo} - {item.descripcion}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="cd-elements-filter-label" htmlFor="elements-elemento">Elemento</label>
+                  <select
+                    id="elements-elemento"
+                    className="cd-elements-filter-control"
+                    value={r.defecto}
+                    onChange={(event) => r.setDefecto(event.target.value)}
+                    disabled={!r.bloque}
+                  >
+                    <option value="">{r.bloque ? 'Todos' : 'Seleccione primero un bloque'}</option>
+                    {r.elementosDinamicos.map((item) => (
+                      <option key={item.codigo} value={item.codigo}>
+                        {r.bloque}.{item.codigo} - {item.descripcion}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            <section className="cd-elements-criteria-group cd-elements-holder-group" aria-labelledby="elements-holder-title">
+              <h3 id="elements-holder-title">Titular</h3>
+              <label className="cd-elements-filter-label" htmlFor="elements-nif">NIF</label>
+              <input
+                id="elements-nif"
+                className="cd-elements-filter-control"
+                type="text"
+                value={r.cifTitular}
+                onChange={(event) => r.setCifTitular(event.target.value)}
+                onKeyDown={handleKeyDownInput}
+                placeholder="NIF titular"
+              />
+            </section>
+          </div>
+        </TsCard>
+      )}
+
+      {/* Criterios específicos del resto de localizadores */}
+      {tipo !== 'elementos' && (
       <TsCard
         style={{
           padding: '0.9rem 1.25rem',
@@ -701,7 +636,7 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
           {activeCriteriaTab === 'vehiculo' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               {/* Fila específica de Defectos / Elementos / Mediciones */}
-              {(tipo === 'defectos' || tipo === 'elementos' || tipo === 'mediciones') && (
+              {(tipo === 'defectos' || tipo === 'mediciones') && (
                 <div
                   style={{
                     display: 'grid',
@@ -736,7 +671,7 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
                     </div>
                   )}
 
-                  {(tipo === 'defectos' || tipo === 'elementos') && (
+                  {tipo === 'defectos' && (
                     <>
                       <div>
                         <label style={labelStyle}>Bloque del Manual</label>
@@ -1094,8 +1029,7 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
                 />
               </div>
 
-              {tipo === 'inspecciones' && (
-                <>
+              <>
                   <div>
                     <label style={labelStyle}>Apellidos / Nombre Titular (*)</label>
                     <input
@@ -1238,12 +1172,12 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
                       style={inputStyle}
                     />
                   </div>
-                </>
-              )}
+              </>
             </div>
           )}
         </div>
       </TsCard>
+      )}
 
       {/* 5. Tarjetas KPI ejecutivas informativas */}
       {r.data && !r.filters.alertaRangoFechas && (
@@ -1357,12 +1291,16 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
       )}
 
       {/* 6. Distribución Gráfica por Estación (Con Iconos Oficiales, Colores ATISAE/CAL y Leyenda Donut Compacta) */}
-      {r.data && puntosGraficoEstaciones.length > 0 && !r.filters.alertaRangoFechas && (
+      {r.data && !r.filters.alertaRangoFechas && (
         <div style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', borderRadius: '8px' }}>
         <TsCard style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', padding: '1rem 1.25rem', backgroundColor: '#ffffff' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <TsIcon name={chartMode === 'barras' ? 'bar_chart' : 'pie_chart'} size={20} style={{ color: '#0046ad' }} />
+              {chartMode === 'barras' ? (
+                <TsIcon name="bar_chart" size={20} style={{ color: '#0046ad' }} />
+              ) : (
+                <TsIcon name="pie_chart" size={20} style={{ color: '#0046ad' }} />
+              )}
               <span style={{ fontWeight: 700, fontSize: '0.92rem', color: '#0b253b' }}>
                 Distribución de Registros Localizados por Estación ITV ({puntosGraficoEstaciones.length} centros)
               </span>
@@ -1445,12 +1383,16 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
 
           {showChartSection && (
             <div style={{ marginTop: '1rem' }}>
-              {chartMode === 'barras' ? (
+              {puntosGraficoEstaciones.length === 0 ? (
+                <p style={{ margin: 0, color: '#64748b', textAlign: 'center' }}>
+                  No hay registros por estación para mostrar.
+                </p>
+              ) : chartMode === 'barras' ? (
                 <ReportBarChart
                   title="Ranking de Registros Localizados por Estación ITV"
                   subtitle="Desglose ordenado por volumen con distinción corporativa TÜV SÜD ATISAE (Azul) y TÜV SÜD CAL (Verde)"
                   data={puntosGraficoEstaciones}
-                  height={320}
+                  height={380}
                   badgeUnit="estaciones"
                   showLegend={true}
                 />
@@ -1597,18 +1539,10 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
                 <tr style={{ backgroundColor: '#0046ad', color: '#ffffff', borderBottom: '2px solid #003582' }}>
                   {/* 1ª Columna Fija (Frozen): Ficha */}
                   <th
-                    className="cd-table-th"
+                    className="cd-table-th cd-loc-grid-ficha-header"
                     style={{
-                      padding: '10px 8px',
                       textAlign: 'center',
                       fontWeight: 700,
-                      color: '#ffffff',
-                      position: 'sticky',
-                      left: 0,
-                      top: 0,
-                      zIndex: 5,
-                      backgroundColor: '#0046ad',
-                      boxShadow: '2px 0 5px rgba(0, 0, 0, 0.14)',
                     }}
                   >
                     Ficha
@@ -1697,14 +1631,7 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
                       >
                         {/* 1ª Celda fija: acceso a la ficha del registro */}
                         <td
-                          style={{
-                            padding: '6px 8px',
-                            textAlign: 'center',
-                            position: 'sticky',
-                            left: 0,
-                            zIndex: 2,
-                            boxShadow: '2px 0 5px rgba(0, 0, 0, 0.06)',
-                          }}
+                          className="cd-loc-grid-ficha-cell"
                         >
                           <AppTooltip
                             title="Ver Ficha Técnica Completa"
@@ -1796,6 +1723,8 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
                 totalPaginas={r.totalPages}
                 pageSize={r.pageSize}
                 totalFilas={r.totalFilas}
+                totalEncontrados={r.data?.kpis.totalRegistros}
+                showPageSizeSelector={false}
                 unidadRegistros="registros"
                 onPageChange={handleBottomPageChange}
                 onPageSizeChange={(newSize) => {
@@ -1809,92 +1738,7 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
             </>
           )}
 
-          {/* Pie de Filtros Aplicados: ajustado al ancho del grid, estaciones una por línea (código - nombre) */}
-          {r.data && filtrosPieDetalle.length > 0 && (
-            <div
-              style={{
-                padding: '0.75rem 1.25rem',
-                backgroundColor: '#f8fafc',
-                borderTop: '1px dashed #cbd5e1',
-                fontSize: '0.76rem',
-                color: '#475569',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                width: '100%',
-                maxWidth: '100%',
-                boxSizing: 'border-box',
-                minWidth: 0,
-              }}
-            >
-              <strong style={{ color: '#0b253b', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                <TsIcon name="filter_alt" size={14} style={{ color: '#0046ad' }} />
-                <span>Filtros registrados en el libro Excel:</span>
-              </strong>
-
-              {/* Criterios simples en chips que saltan de línea */}
-              {filtrosPieDetalle.some((f) => !f.estaciones) && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', minWidth: 0 }}>
-                  {filtrosPieDetalle
-                    .filter((f) => !f.estaciones)
-                    .map((f, i) => (
-                      <span
-                        key={i}
-                        style={{
-                          backgroundColor: '#ffffff',
-                          border: '1px solid #cbd5e1',
-                          borderRadius: '4px',
-                          padding: '2px 8px',
-                          color: '#1e293b',
-                          fontWeight: 500,
-                          maxWidth: '100%',
-                          overflowWrap: 'anywhere',
-                        }}
-                      >
-                        {f.texto}
-                      </span>
-                    ))}
-                </div>
-              )}
-
-              {/* Estaciones: una por línea con código y descripción, en columnas responsivas */}
-              {filtrosPieDetalle
-                .filter((f) => f.estaciones)
-                .map((f, i) => (
-                  <div key={`est-${i}`} style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, color: '#0b253b', marginBottom: '4px' }}>{f.texto}</div>
-                    <ul
-                      style={{
-                        listStyle: 'none',
-                        margin: 0,
-                        padding: 0,
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 230px), 1fr))',
-                        gap: '4px 12px',
-                      }}
-                    >
-                      {f.estaciones!.map((est) => (
-                        <li
-                          key={est}
-                          style={{
-                            backgroundColor: '#ffffff',
-                            border: '1px solid #e2e8f0',
-                            borderLeft: '3px solid #0046ad',
-                            borderRadius: '4px',
-                            padding: '3px 8px',
-                            color: '#1e293b',
-                            fontWeight: 500,
-                            overflowWrap: 'anywhere',
-                          }}
-                        >
-                          {est}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-            </div>
-          )}
+          <InspectionAppliedFiltersFooter filters={r.data?.filtrosAplicados ?? []} />
         </section>
       </div>
 
@@ -1908,125 +1752,13 @@ export const LocalizacionReportPage: React.FC<LocalizacionReportPageProps> = ({
         tituloModulo={cfg.titulo}
       />
 
-      {/* Modal de Ficha Técnica del Registro */}
-      {r.selectedRow && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(11, 37, 59, 0.55)',
-            backdropFilter: 'blur(2px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '1rem',
-          }}
-          onClick={() => r.setSelectedRow(null)}
-        >
-          <div
-            style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '10px',
-              width: '100%',
-              maxWidth: '720px',
-              maxHeight: '85vh',
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: '0 20px 45px rgba(0, 0, 0, 0.25)',
-              overflow: 'hidden',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              style={{
-                background: 'linear-gradient(135deg, #0046ad 0%, #1d63c8 100%)',
-                color: '#ffffff',
-                padding: '0.9rem 1.25rem',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <TsIcon name={cfg.icono} size={20} style={{ color: '#dbeafe' }} />
-                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#ffffff' }}>
-                  Ficha Técnica de Registro · {cfg.titulo}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => r.setSelectedRow(null)}
-                style={{
-                  background: 'rgba(255, 255, 255, 0.14)',
-                  border: '1px solid rgba(255, 255, 255, 0.25)',
-                  borderRadius: '6px',
-                  color: '#ffffff',
-                  cursor: 'pointer',
-                  padding: '4px',
-                  display: 'flex',
-                }}
-              >
-                <TsIcon name="close" size={20} />
-              </button>
-            </div>
-
-            <div
-              style={{
-                padding: '1.25rem',
-                overflowY: 'auto',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
-                gap: '0.75rem',
-              }}
-            >
-              {columnasTabla.map((col) => {
-                const val = r.selectedRow?.[col.columnaExcel];
-                return (
-                  <div
-                    key={col.idCampo}
-                    style={{
-                      padding: '0.6rem 0.75rem',
-                      backgroundColor: '#f8fafc',
-                      borderRadius: '6px',
-                      border: '1px solid #e2e8f0',
-                    }}
-                  >
-                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b' }}>
-                      {col.desCampo} ({col.columnaExcel})
-                    </div>
-                    <div
-                      style={{
-                        marginTop: '3px',
-                        fontSize: '0.86rem',
-                        fontWeight: 600,
-                        color: '#0b253b',
-                        wordBreak: 'break-word',
-                      }}
-                    >
-                      {val !== null && val !== undefined && String(val).trim() !== '' ? String(val) : '—'}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div
-              style={{
-                padding: '0.75rem 1.25rem',
-                backgroundColor: '#f8fafc',
-                borderTop: '1px solid #e2e8f0',
-                display: 'flex',
-                justifyContent: 'flex-end',
-              }}
-            >
-              <TsButton variant="primary" size="small" onClick={() => r.setSelectedRow(null)}>
-                Cerrar Ficha
-              </TsButton>
-            </div>
-          </div>
-        </div>
-      )}
+      <InspectionRecordDetailModal
+        row={r.selectedRow}
+        columns={columnasTabla}
+        title={cfg.titulo}
+        icon={cfg.icono}
+        onClose={() => r.setSelectedRow(null)}
+      />
 
       {/* Modal Bloqueante de Carga y Exportación */}
       <BlockingLoadingModal
